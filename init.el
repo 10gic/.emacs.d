@@ -1,0 +1,546 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(setq inhibit-startup-message t) ;启动emacs时不显示GNU Emacs窗口。
+(setq initial-scratch-message "") ;scratch信息中显示为空。
+
+(if (boundp 'tool-bar-mode)
+    (tool-bar-mode -1)) ;不显示工具栏(请设置为-1，设为nil在Ubuntu14.04下无效)
+(if (boundp 'menu-bar-mode)
+    (menu-bar-mode -1)) ;不显示菜单栏(请设置为-1，设为nil在Ubuntu14.04下无效)
+
+;; (setq make-backup-files nil) ;不要生成备份文件（以波浪线结尾）。
+
+(setq kill-whole-line t) ;在行首C-k时，同时删除换行符。
+
+(defalias 'yes-or-no-p 'y-or-n-p) ;设置y/n可代替yes/no
+
+(ffap-bindings) ;默认值为光标下单词，如C-x C-f，默认打开光标下的文件名对应文件。
+
+(which-function-mode 1) ;在mode line中显示当前函数名。powerline插件中显示不正常。
+;; By default ??? will be displayed when which-function-mode cannot determine the function name.
+(setq which-func-unknown "n/a") ;; Change ??? to n/a.
+
+(require 'ido)
+(ido-mode t) ;键入C-x b时，可用ido快速地切换buffer
+
+(when (fboundp 'winner-mode)
+  (winner-mode 1))
+;; Winner Mode is a global minor mode.
+;; When activated, it allows you to “undo” (and “redo”) changes in the window
+;;  configuration with the key commands ‘C-c left’ and ‘C-c right’.
+
+;; Use "Dired Extrs" instead of Dired.
+(add-hook 'dired-load-hook
+          (function (lambda () (load "dired-x"))))
+(setq dired-listing-switches "-lhFG") ; ls options in dired
+
+;; Recentf is a minor mode that builds a list of recently opened files.
+;; This mode is part of GNU Emacs 21.
+(require 'recentf)
+(recentf-mode 1)
+(setq recentf-max-menu-items 25)
+(global-set-key (kbd "C-c C-f") 'recentf-open-files)
+
+;; overrride the default function, put related file into directory ~/.emacs.d/cache
+(defun emacs-session-filename (SESSION-ID)
+  (concat "~/.emacs.d/cache/session." SESSION-ID))
+
+
+;; 用flyspell，必须安装aspell-en(sudo apt-get install aspell-en)，
+;; 否则提示错误No word lists can be found for the language “en_US”
+;;(add-hook 'text-mode-hook 'flyspell-mode) ;在text-mode下打开flyspell，使用M-$更正错误
+(setq ispell-personal-dictionary "~/.emacs.d/ispell-personal-dict.txt")
+
+
+;; ELPA is the Emacs Lisp Package Archive
+(when (>= emacs-major-version 24)
+  (require 'package)
+  (package-initialize)
+  (add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/"))
+  (add-to-list 'package-archives '("marmalade" . "https://marmalade-repo.org/packages/") t)
+  (add-to-list 'package-archives '("melpa" . "http://melpa.milkbox.net/packages/") t)
+  (add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/") t) ; Org-mode's repository
+  )
+
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(blink-cursor-mode t)
+ '(column-number-mode t)
+ '(custom-enabled-themes (quote (tango-dark)))
+ '(display-time-24hr-format t)
+ '(display-time-mode t)
+ '(mouse-wheel-mode t)
+ '(scroll-bar-mode (quote nil))
+ '(show-paren-mode t)
+ '(size-indication-mode t)
+ '(xterm-mouse-mode t))
+
+;; 说明:
+;; '(global-linum-mode t) ;显示行号
+;; '(blink-cursor-mode t) ;让光标闪烁。若不设置，但在deamon方式下，以图形方式启动时光标不闪烁。
+;; '(display-time-24hr-format t) ;可避免因显示中文“上午”或“下午”而导致mode line跨行显示。
+;; '(display-time-day-and-date t) ;显示日期
+;; '(size-indication-mode t) ;在Mode line中显示当前Buffer的大小
+;; '(mouse-wheel-mode t) ;终端下启动鼠标滚轮的支持。一般默认已启动，但有些系统下默认没有启动。
+
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(font-lock-comment-face ((t (:foreground "dim gray"))))
+ '(org-level-4 ((t (:inherit outline-4 :foreground "pink1")))))
+
+;; 说明：
+;; '(font-lock-comment-face ((t (:foreground "dim gray")))) ;让注释看起来颜色暗些。
+;; '(org-level-4 ((t (:inherit outline-4 :foreground "pink1"))))) ; org-mode中level-4的face继承的是font-lock-comment-face，太暗看不清楚，调亮一些
+
+
+;;; frame相关的设置
+;;字体的设置必须在after-make-frame-functions的hook中进行，否则其设置对emacsclient启动的窗口无效。
+(defun set-my-frame()
+  (cond ;设置字体，优先使用排在前面的
+   ((find-font (font-spec :name "Source Code Pro")) ;Source Code Pro是Adobe发布的开源免费等宽字体
+    (set-frame-font "Source Code Pro-14" nil)) ;set-frame-font可选参数设为nil表示不维持窗口大小
+   ((find-font (font-spec :name "Ubuntu Mono"))
+    (set-frame-font "Ubuntu Mono-14" nil))
+   ((find-font (font-spec :name "DejaVu Sans Mono"))
+    (set-frame-font "DejaVu Sans Mono-14" nil))
+   ((find-font (font-spec :name "Consolas"))  ;微软等宽字体，家里Windows笔记本比较小，设置字体为12
+    (set-frame-font "Consolas-14" nil)))
+  (when (or (string-equal system-type "cygwin")
+            (string-equal system-type "windows-nt"))
+    ;; 在cygwin环境中设置中文字体(nsimsun是新宋体的名称)。不设置有很多中文显示不出来。
+    ;; emacs-X11默认无法读取Windows中的字体，请把新宋体复制到~/.fonts
+    (dolist (charset '(kana han symbol cjk-misc bopomofo))
+      (if (display-graphic-p)
+          (set-fontset-font (frame-parameter nil 'font)
+                            charset
+                            (font-spec :family "nsimsun")))))
+  ;; (setq frame-title-format "%b") ;%b让标题栏显示buffer的名字。
+  (setq frame-title-format `(,(user-login-name) "@" ,(system-name) " %f" ))
+  ;;  (customize-set-variable 'scroll-bar-mode 'right) ;设置滚动栏在窗口右侧，而默认是在左侧
+  ;;  (setq default-frame-alist ;设置frame的默认大小
+  ;;        (append default-frame-alist
+  ;;                '((width . 85) (height . 25))))
+  )
+
+;;设置daemon方式和非deamon方式启动时都执行set-my-frame
+(if (and (fboundp 'daemonp) (daemonp))
+    (add-hook 'after-make-frame-functions ;以daemon方式启动时，要使与X相关配置生效，应使用这个hook
+              (lambda (frame)
+                (with-selected-frame frame
+                  (set-my-frame))))
+  (set-my-frame))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;设置自动备份
+(setq
+ version-control t ;启用版本控制，即可以备份多次
+ backup-by-copying t ;备份设置方法，直接拷贝
+ backup-directory-alist '(("." . "~/.emacs.backups")) ;设置自动备份目录
+ delete-old-versions t ;自动删除旧的备份
+ kept-new-versions 3 ;保留最近的3个备份
+ kept-old-versions 2) ;保留最早的2个备份，即第1次编辑前的文件和第2次编辑前的文件
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;buffer-local相关变量，用setq-default设置
+(setq-default indent-tabs-mode nil) ;只使用空格进行缩进，不使用tab键。
+(setq-default cursor-type 'bar) ;在X窗口下，光标将变成一根竖线，而不是方块。
+(setq-default require-final-newline t) ; Always end a file with a newline.
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;空格和tabs键显示设置
+;;显示尾部的空格。用whitespace-mode也可以显示尾部空格，但这个更方便
+(setq-default show-trailing-whitespace t)
+
+;;在下面这些mode中不显示trailing whiterspace
+(add-hook 'term-mode-hook (lambda () (setq show-trailing-whitespace nil)))
+(add-hook 'Info-mode-hook (lambda () (setq show-trailing-whitespace nil)))
+
+;; Draw tabs with the same color as trailing whitespace
+;; From http://emacswiki.org/emacs/ShowWhiteSpace
+(add-hook 'font-lock-mode-hook
+          (lambda ()
+            (font-lock-add-keywords
+             nil
+             '(("\t" 0 'trailing-whitespace prepend)))))
+
+;;定制whitespace-mode
+;; (global-whitespace-mode t) ;全局打开whitespace-mode
+;; (setq whitespace-style (quote (face tabs tab-mark))) ;仅显示tabs
+;; (setq whitespace-display-mappings
+;;       ;; all numbers are Unicode codepoint in decimal.
+;;       '(
+;;         (tab-mark 9 [8594 9]) ;; ascii 9 is TAB
+;;         ;; 8594 RIGHTWARDS ARROW 「→」
+;;         ;; 9655 WHITE RIGHT-POINTING TRIANGLE 「▷」
+;;         ;; 8680 RIGHTWARDS WHITE ARROW 「⇨」
+;;         ;; Note: Default, symbol 9655,8680 cannot show correctly in Windows.
+;;         ))
+;; (set-face-attribute 'whitespace-tab nil ;change the face for tabs to default.
+;;                    :background 'unspecified
+;;                    :foreground 'unspecified)
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;常规键绑定设置
+(global-set-key "\C-m" 'reindent-then-newline-and-indent) ;回车时格式化当前行后缩进下行
+(global-set-key (kbd "C-<return>") 'newline)
+
+(global-set-key [C-f4] 'kill-this-buffer)
+
+;; (global-set-key (kbd "<f5>") 'global-linum-mode)
+(global-set-key (kbd "<f5>") 'linum-mode)  ; show line number
+(global-set-key (kbd "<f8>") 'xterm-mouse-mode)
+;; (global-set-key (kbd "<f9>") 'view-mode)
+(global-set-key [C-f10] 'menu-bar-mode)
+
+(global-set-key (kbd "<C-mouse-4>") 'text-scale-increase) ;放大字体
+(global-set-key (kbd "<C-mouse-5>") 'text-scale-decrease) ;缩小字体
+
+(global-set-key (kbd "C-x C-b") 'ibuffer) ;用ibuffer替换BuferMenu
+(global-set-key (kbd "C-2") 'set-mark-command) ;由于C-@按键输入太麻烦，设置C-2为设置标记
+
+(global-set-key [(control x) (k)] 'kill-this-buffer) ;kill current buffer without confirmation unless the buffer has been modified.
+
+(global-set-key [M-up] 'windmove-up) ;移动到上一个窗口
+(global-set-key [M-down] 'windmove-down) ;移动到下一个窗口
+(global-set-key [M-left] 'windmove-left) ;移动到左一个窗口
+(global-set-key [M-right] 'windmove-right) ;移动到右一个窗口
+
+(global-set-key (kbd "M-g") 'goto-line) ;设置M-g为goto-line
+
+(global-set-key [f12] 'compile) ; compilation
+(global-set-key [C-f12] 'next-error) ; go to next error
+(global-set-key [S-f12] 'previous-error) ; go to previous error
+
+
+(global-set-key [(meta ?/)] 'hippie-expand) ;绑定M-/到hippie-expand，它比dabbrev-expand更强大
+;; 变量hippie-expand-try-functions-list控制hippie-expand的补全信息来源及顺序，但其默认值不够智能。
+;; 修改hippie-expand-try-functions-list调整补全信息来源的顺序。
+(setq hippie-expand-try-functions-list
+      '(try-expand-dabbrev
+        try-expand-dabbrev-visible
+        try-expand-dabbrev-all-buffers
+        try-expand-dabbrev-from-kill
+        try-complete-file-name-partially
+        try-complete-file-name
+        try-expand-all-abbrevs
+        try-expand-list
+        try-expand-line
+        try-complete-lisp-symbol-partially
+        try-complete-lisp-symbol))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;内置插件设置
+(require 'saveplace) ;打开文件时回到上次打开文件的位置
+(setq-default save-place t)
+(setq save-place-file "~/.emacs.d/saved-places.dat")
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;加载其它包及设置
+;; Extract packages
+(if (string-equal system-type "windows-nt")
+    (warn "Please extract packages into ~/.emacs.d/packages/extract/ manually.")
+  (message (shell-command-to-string "sh ~/.emacs.d/packages/extract.sh")))
+
+;; use newer org-mode, the builtin version is too old.
+(setq load-path (cons "~/.emacs.d/packages/extract/org-8.2.10/lisp" load-path))
+(setq load-path (cons "~/.emacs.d/packages/extract/org-8.2.10/contrib/lisp" load-path))
+
+(add-to-list 'load-path "~/.emacs.d/packages/extract/multiple-cursors.el-master")
+(require 'multiple-cursors)
+(global-set-key (kbd "C-c l") 'mc/edit-lines)
+(global-set-key (kbd "M-p") 'mc/mark-previous-like-this)
+(global-set-key (kbd "M-n") 'mc/mark-next-like-this)
+
+;;可通过安装emacs-goodies-el来安装tabbar
+;; (if (file-exists-p "~/.emacs.packages/tabbar.el")
+;;     (load-file "~/.emacs.packages/tabbar.el"))
+;; (if (require 'tabbar nil 'noerror) ;仅当用户安装了tabbar时，才加载其配置
+;;     (progn
+;;       (load-file "~/.emacs.d/customize-tabbar.el") ;该文件中设置了快捷键M-left和M-right用于切换窗口
+;;       (remove-hook 'kill-buffer-hook 'tabbar-buffer-track-killed)) ;kill buffer后，回到跳转前的buffer。请查看tabbar-buffer-track-killed定义
+;;   (warn "tabbar is not installed, skip configuring"))
+
+;; aquamacs-tabbar比原始的tabbar更友好
+;; Using aquamacs-tabbar from https://github.com/dholm/tabbar
+(add-to-list 'load-path "~/.emacs.d/packages/extract/tabbar-master")
+(require 'aquamacs-tabbar)
+(tabbar-mode 1)
+(load-file "~/.emacs.d/customize-aquamacs-tabbar.el")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; jdee (Java Development Environment for Emacs)
+;; jdee require wget
+(if (>= emacs-major-version 24) ; It has error in emacs 23, just skip it.
+  (if (executable-find (if (eq system-type 'windows-nt) "wget.exe" "wget"))
+      (progn
+        (add-to-list 'load-path "~/.emacs.d/packages/extract/jdee-2.4.1/lisp")
+        (load "jde"))
+    (warn "Cannot find wget, skip load jdee"))
+  (warn "Emacs is too old(<24) , skip load jdee"))
+
+
+(load-file "~/.emacs.d/region-bindings-mode.el")
+(require 'region-bindings-mode)
+(region-bindings-mode-enable)
+(define-key region-bindings-mode-map "a" 'mc/mark-all-like-this)
+(define-key region-bindings-mode-map "p" 'mc/mark-previous-like-this)
+(define-key region-bindings-mode-map "n" 'mc/mark-next-like-this)
+(define-key region-bindings-mode-map "m" 'mc/mark-more-like-this-extended)
+
+(load-file "~/.emacs.d/ace-jump-mode.el")
+(require 'ace-jump-mode)
+(define-key global-map (kbd "C-c SPC") 'ace-jump-mode)
+
+(load-file "~/.emacs.d/idle-highlight-mode.el") ;加载自动高亮的插件
+(global-set-key (kbd "<f6>") 'idle-highlight-mode)
+
+(load-file "~/.emacs.d/unicad-v1.1.6.el") ;该插件能自动识别文件编码
+
+;; (load-file "~/.emacs.d/powerline.el") ;该插件能使mode-line更好看
+
+;; (load-file "~/.emacs.d/window-numbering.el") ;可以用M-0…9在多窗口中跳转
+;; (require 'window-numbering)
+;; (window-numbering-mode 1)
+
+(if (file-exists-p "~/.emacs.d/personal-conf.el")
+    (load-file "~/.emacs.d/personal-conf.el"))
+
+(load-file "~/.emacs.d/customize-lisp.el")
+(load-file "~/.emacs.d/customize-sql.el")
+(load-file "~/.emacs.d/customize-perl.el")
+(load-file "~/.emacs.d/customize-c.el")
+(load-file "~/.emacs.d/customize-java.el")
+(load-file "~/.emacs.d/customize-sh.el")
+(load-file "~/.emacs.d/customize-term.el")
+(load-file "~/.emacs.d/customize-org.el")
+
+(if (require 'tex-buf nil 'noerror)
+    (load-file "~/.emacs.d/customize-latex.el")
+  (warn "tex-buf is not installed, skip configuring"))
+
+
+;;可通过安装emacs-goodies-el来安装folding
+(if (file-exists-p "~/.emacs.packages/folding.el")
+    (load-file "~/.emacs.packages/folding.el"))
+(if (require 'folding nil 'noerror)
+    (progn
+      (load "folding" 'nomessage 'noerror)
+      (load-file "~/.emacs.d/customize-folding.el"))
+  (warn "folding is not installed, skip configuring"))
+
+;;加载xcscope(Cscope的emacs扩展，依赖于Cscope)
+;;debian下可以这样安装xcscope: apt-get install cscope-el
+(if (file-exists-p "~/.emacs.packages/xcscope.el")
+    (load-file "~/.emacs.packages/xcscope.el"))
+(if (require 'xcscope nil 'noerror)
+    (progn
+      (when (fboundp 'cscope-setup) (cscope-setup)) ;ubuntu下默认不需要setup，但redhat中需要。
+      (setq cscope-display-cscope-buffer nil) ;不显示*cscope* buffer
+      (define-key global-map [(ctrl f3)] 'cscope-find-global-definition-no-prompting)
+      (define-key global-map [(ctrl f9)] 'cscope-history-backward-line-current-result)
+      (define-key global-map [(ctrl f11)] 'cscope-history-forward-line-current-result))
+  (warn "xcscope is not installed, skip configuring"))
+
+(load-file "~/.emacs.d/let-alist-1.0.3.el") ; Required by flycheck. Note; let-alist comes built-in with emacs 25.1
+(load-file "~/.emacs.d/dash.el") ; Required by flycheck. dash is a modern list api for Emacs.
+(load-file "~/.emacs.d/packages/extract/flycheck-master/flycheck.el") ; Note: It also require gcc 4.8 or newer.
+
+(load-file "~/.emacs.d/languages/my-refine-mode.el")
+(load-file "~/.emacs.d/languages/column-marker.el") ; cobol-mode用到了column-marker这个插件
+(load-file "~/.emacs.d/languages/cobol-mode.el") ; cobol-free-mode.el用到了cobol-mode.el
+(load-file "~/.emacs.d/languages/cobol-free-mode.el")
+(load-file "~/.emacs.d/languages/jcl-mode.el")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Idea from http://yakko.cs.wmich.edu/~rattles/development/misc/.emacs
+;; Get help on current word
+(defun man-current-word () "Manual entry for the current word"
+  (interactive)
+  (manual-entry (current-word)))
+
+(defun info-current-word () "Info page for the current word"
+  (interactive)
+  (info-lookup-symbol (current-word)))
+
+(global-set-key [f1]   'man-current-word)  ; Show man page for current word
+(global-set-key [C-f1] 'info-current-word) ; Show info page for current word
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; 配置auto-complete
+;; http://cx4a.org/software/auto-complete/
+;; http://blog.csdn.net/winterttr/article/details/7524336
+(add-to-list 'load-path "~/.emacs.d/packages/extract/auto-complete-1.3.1")
+(require 'auto-complete-config)
+(ac-config-default)
+(add-to-list 'ac-dictionary-directories "~/.emacs.d/packages/extract/auto-complete-1.3.1/dict")
+
+;; http://stackoverflow.com/questions/11715296/emacs-auto-complete-dont-work-with-jde
+(push 'jde-mode ac-modes) ; Auto start auto-complete-mode with jde-mode.
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; 当没有选择文本时，改变M-w的行为为复制当前行。
+;; Idea from http://www.emacswiki.org/emacs/WholeLineOrRegion
+;; 在slime-repl-mode下可能有问题，如何修复参见上面的链接。
+(defun my-kill-ring-save (beg end flash)
+  (interactive (if (use-region-p)
+                   (list (region-beginning) (region-end) nil)
+                 (list (line-beginning-position)
+                       (line-beginning-position 2) 'flash)))
+  (kill-ring-save beg end)
+  (when flash
+    (save-excursion
+      (if (equal (current-column) 0)
+          (goto-char end)
+        (goto-char beg))
+      (sit-for blink-matching-delay))))
+
+(global-set-key [remap kill-ring-save] 'my-kill-ring-save)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun my-save-buffers-kill-terminal ()
+  (interactive)
+  (if (window-system)  ;对于GUI窗口，为防止误操作，不小心关掉所有tab，让C-x C-c无法退出emacs。
+      (progn
+        ;;         (save-buffer)
+        ;;         (kill-this-buffer)
+        (message "%s" "Please type 'C-x 5 0' or use mouse to close frame!"))
+    (save-buffers-kill-terminal)))
+
+(global-set-key (kbd "C-x C-c") 'my-save-buffers-kill-terminal)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; F11全屏窗口，在Emacs 24.4中已经默认支持。
+(if (fboundp 'x-send-client-message)
+    (progn
+      (defun my-fullscreen ()
+        (interactive)
+        (x-send-client-message nil 0 nil "_NET_WM_STATE" 32
+                               '(2 "_NET_WM_STATE_FULLSCREEN" 0)))
+      (global-set-key [f11] 'my-fullscreen)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(setq auto-mode-alist
+      (append
+       '(
+         ("[Mm]akefile" . makefile-mode) ; 所有以makefile开头的文件都使用makefile mode
+         ("setenv" . sh-mode)   ; 所有以setenv开头的文件都使用sh mode
+         )
+       auto-mode-alist))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; 其它实用函数及设置
+;; Align with spaces only
+(defadvice align-regexp (around align-regexp-with-spaces)
+  "Never use tabs for alignment."
+  (let ((indent-tabs-mode nil))
+    ad-do-it))
+(ad-activate 'align-regexp)
+
+;; 重命名当前文件名
+(defun rename-this-buffer-and-file ()
+  "Renames current buffer and file it is visiting."
+  (interactive)
+  (let ((name (buffer-name))
+        (filename (buffer-file-name)))
+    (if (not (and filename (file-exists-p filename)))
+        (error "Buffer '%s' is not visiting a file!" name)
+      (let ((new-name (read-file-name "New name: " filename)))
+        (cond ((get-buffer new-name)
+               (error "A buffer named '%s' already exists!" new-name))
+              (t
+               (rename-file filename new-name 1)
+               (rename-buffer new-name)
+               (set-visited-file-name new-name)
+               (set-buffer-modified-p nil)
+               (message "File '%s' successfully renamed to '%s'" name (file-name-nondirectory new-name))))))))
+(global-set-key (kbd "C-c r") 'rename-this-buffer-and-file)
+
+;; 摘自Writing GNU Emacs Extensions
+(defun scroll-n-lines-ahead (&optional n)
+  "Scroll ahead N lines (1 by default)."
+  (interactive "P")
+  (scroll-up (prefix-numeric-value n)))
+(defun scroll-n-lines-behind (&optional n)
+  "Scroll behind N lines (1 by default)."
+  (interactive "P")
+  (scroll-down (prefix-numeric-value n)))
+(global-set-key "\C-z" 'scroll-n-lines-ahead) ;向下移动屏幕一行
+(global-set-key "\C-q" 'scroll-n-lines-behind) ;向上移动屏幕一行，默认quoted-insert绑定在C-q
+;;(global-set-key "\C-x\C-q" 'quoted-insert) ;重新绑定quoted-insert，默认dired-toggle-read-only绑定在C-x C-q
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; 在终端模式下，利用xsel实现clipboard共享
+;; Idea from: http://hugoheden.wordpress.com/2009/03/08/copypaste-with-emacs-in-terminal/
+;; Know Issue: 如果用/sudo:root@localhost:打开文件时，则clipboard不可用，会出错。
+(if (executable-find "xsel")
+    (progn
+      (defun xsel-cut-function (text &optional push)
+        (with-temp-buffer
+          (insert text)
+          (call-process-region (point-min) (point-max) "xsel" nil 0 nil "--clipboard" "--input")))
+      (defun xsel-paste-function()
+        (let ((xsel-output (shell-command-to-string "xsel --clipboard --output")))
+          (unless (string= (car kill-ring) xsel-output)
+            xsel-output )))
+      (setq interprogram-cut-function 'xsel-cut-function)
+      (setq interprogram-paste-function 'xsel-paste-function))
+  (warn "Cannot find xsel, skip configure clipboard in terminal mode"))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; from http://emacswiki.org/emacs/RecreateScratchBuffer
+(defun switch-to-scratch-and-back ()
+  "Toggle between *scratch* buffer and the current buffer.
+     If the *scratch* buffer does not exist, create it."
+  (interactive)
+  (let ((scratch-buffer-name (get-buffer-create "*scratch*")))
+    (if (equal (current-buffer) scratch-buffer-name)
+        (switch-to-buffer (other-buffer))
+      (switch-to-buffer scratch-buffer-name))))
+
+(global-set-key (kbd "M-0") 'switch-to-scratch-and-back)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; 放弃更改，加载文件内容到buffer
+(defun revert-buffer-no-confirm ()
+  "Revert buffer without confirmation."
+  (interactive) (revert-buffer t t))
+(global-set-key [C-f5] 'revert-buffer-no-confirm)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; 把当前行向上／下移动一行
+;; Idea from http://blog.csdn.net/g9yuayon/article/details/1520466
+;; (global-set-key (kbd "M-<up>") 'move-line-up)
+;; (global-set-key (kbd "M-<down>") 'move-line-down)
+(defun move-line (&optional n)
+  "Move current line N (1) lines up/down leaving point in place."
+  (interactive "p")
+  (when (null n)
+    (setq n 1))
+  (let ((col (current-column)))
+    (beginning-of-line)
+    (next-line 1)
+    (transpose-lines n)
+    (previous-line 1)
+    (forward-char col)))
+
+(defun move-line-up (n)
+  "Moves current line N (1) lines up leaving point in place."
+  (interactive "p")
+  (move-line (if (null n) -1 (- n))))
+(defun move-line-down (n)
+  "Moves current line N (1) lines down leaving point in place."
+  (interactive "p")
+  (move-line (if (null n) 1 n)))

@@ -1,0 +1,10 @@
+personal_ws-1.1 en 9 
+makefile
+ebcdic
+jcl
+emacs
+linux
+cics
+gcc
+sql
+cobol
