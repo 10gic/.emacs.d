@@ -50,6 +50,13 @@
 ;;(add-hook 'text-mode-hook 'flyspell-mode) ;在text-mode下打开flyspell，使用M-$更正错误
 (setq ispell-personal-dictionary "~/.emacs.d/ispell-personal-dict.txt")
 
+;; Suppress error "directory ~/.emacs.d/server is unsafe" on emacs-w32 (windows 8.1).
+;; http://stackoverflow.com/questions/885793/emacs-error-when-calling-server-start
+;; http://www.emacswiki.org/emacs/EmacsW32
+(require 'server)
+(when (and (>= emacs-major-version 23)
+           (equal window-system 'w32))
+  (defun server-ensure-safe-dir (dir) "Noop" t))
 
 ;; ELPA is the Emacs Lisp Package Archive
 (when (>= emacs-major-version 24)
@@ -250,7 +257,9 @@
 ;; Extract packages
 (if (string-equal system-type "windows-nt")
     (warn "Please extract packages into ~/.emacs.d/packages/extract/ manually.")
-  (message (shell-command-to-string "sh ~/.emacs.d/packages/extract.sh")))
+  (if (executable-find "unzip")
+      (message (shell-command-to-string "sh ~/.emacs.d/packages/extract.sh"))
+    (warn "Tool unzip is NOT found, you need extract .zip files manually.")))
 
 ;; use newer org-mode, the builtin version is too old.
 (setq load-path (cons "~/.emacs.d/packages/extract/org-8.2.10/lisp" load-path))
