@@ -9,7 +9,7 @@ if [ $? -ne 0 ]; then
    echo "WARN: unzip is NOT found in PATH."
 fi
 
-if [[ ! -d $extract_dir ]]; then
+if [ ! -d $extract_dir ]; then
     mkdir -p $extract_dir;
 
     for zip_file in `ls $current_dir/*.zip`; do
