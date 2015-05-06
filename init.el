@@ -275,34 +275,77 @@
     (warn "Tool unzip is NOT found, you need extract .zip files manually.")))
 
 ;; use newer org-mode, the builtin version is too old.
-(setq load-path (cons "~/.emacs.d/packages/extract/org-8.2.10/lisp" load-path))
-(setq load-path (cons "~/.emacs.d/packages/extract/org-8.2.10/contrib/lisp"
-                      load-path))
+(if (file-exists-p "~/.emacs.d/packages/extract/org-8.2.10/lisp")
+    (progn
+      (setq load-path (cons "~/.emacs.d/packages/extract/org-8.2.10/lisp"
+                 load-path))
+      (setq load-path (cons
+                       "~/.emacs.d/packages/extract/org-8.2.10/contrib/lisp"
+                       load-path)))
+  (warn "Cannot find org-mode package, skip loading."))
 
-(add-to-list 'load-path
-             "~/.emacs.d/packages/extract/multiple-cursors.el-master")
-(require 'multiple-cursors)
-(global-set-key (kbd "C-c l") 'mc/edit-lines)
-(global-set-key (kbd "M-p") 'mc/mark-previous-like-this)
-(global-set-key (kbd "M-n") 'mc/mark-next-like-this)
+;; Multiple cursors for Emacs. https://github.com/magnars/multiple-cursors.el
+(if (file-exists-p "~/.emacs.d/packages/extract/multiple-cursors.el-master")
+    (progn
+      (add-to-list 'load-path
+                   "~/.emacs.d/packages/extract/multiple-cursors.el-master")
+      (require 'multiple-cursors)
+      (global-set-key (kbd "C-c l") 'mc/edit-lines)
+      (global-set-key (kbd "M-p") 'mc/mark-previous-like-this)
+      (global-set-key (kbd "M-n") 'mc/mark-next-like-this))
+  (warn "Cannot find multiple-cursors package, skip loading."))
 
 ;; aquamacs-tabbar比原始的tabbar更友好
 ;; Using aquamacs-tabbar from https://github.com/dholm/tabbar
-(add-to-list 'load-path "~/.emacs.d/packages/extract/tabbar-master")
-(require 'aquamacs-tabbar)
-(tabbar-mode 1)
-(load-file "~/.emacs.d/customize-aquamacs-tabbar.el")
+(if (file-exists-p "~/.emacs.d/packages/extract/tabbar-master")
+    (progn
+      (add-to-list 'load-path "~/.emacs.d/packages/extract/tabbar-master")
+      (require 'aquamacs-tabbar)
+      (tabbar-mode 1)
+      (load-file "~/.emacs.d/customize-aquamacs-tabbar.el"))
+  (warn "Cannot find aquamacs-tabbar, skip loading."))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; jdee (Java Development Environment for Emacs)
 ;; jdee require wget
-(if (>= emacs-major-version 24) ; It has error in emacs 23, just skip it.
-  (if (executable-find (if (eq system-type 'windows-nt) "wget.exe" "wget"))
-      (progn
-        (add-to-list 'load-path "~/.emacs.d/packages/extract/jdee-2.4.1/lisp")
-        (load "jde"))
-    (warn "Cannot find wget, skip load jdee"))
-  (warn "Emacs is too old(<24) , skip load jdee"))
+(if (file-exists-p "~/.emacs.d/packages/extract/jdee-2.4.1/lisp")
+    (progn
+      (if (>= emacs-major-version 24) ; It has error in emacs 23, just skip it.
+          (if (executable-find
+               (if (eq system-type 'windows-nt) "wget.exe" "wget"))
+              (progn
+                (add-to-list 'load-path
+                             "~/.emacs.d/packages/extract/jdee-2.4.1/lisp")
+                (load "jde"))
+            (warn "Cannot find wget, skip load jdee"))
+        (warn "Emacs is too old(<24) , skip load jdee")))
+  (warn "Cannot find jdee, skip loading."))
+
+;; Load flycheck.
+;; Note: It also require gcc 4.8 or newer.
+;; let-alist (comes built-in with emacs 25.1) is reequired by flycheck.
+;; dash (a modern list api for Emacs) is required by flycheck.
+(load-file "~/.emacs.d/let-alist-1.0.3.el")
+(load-file "~/.emacs.d/dash.el")
+(if (file-exists-p "~/.emacs.d/packages/extract/flycheck-master/flycheck.el")
+    (load-file "~/.emacs.d/packages/extract/flycheck-master/flycheck.el")
+  (warn "Cannot find flycheck, skip loading."))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; 配置auto-complete
+;; http://cx4a.org/software/auto-complete/
+;; http://blog.csdn.net/winterttr/article/details/7524336
+(if (file-exists-p "~/.emacs.d/packages/extract/auto-complete-1.3.1")
+    (progn
+      (add-to-list 'load-path "~/.emacs.d/packages/extract/auto-complete-1.3.1")
+      (require 'auto-complete-config)
+      (ac-config-default)
+      (add-to-list 'ac-dictionary-directories
+                   "~/.emacs.d/packages/extract/auto-complete-1.3.1/dict")
+      ;; Auto start auto-complete-mode with jde-mode.
+      ;; http://stackoverflow.com/questions/11715296/emacs-auto-complete-dont-work-with-jde
+      (push 'jde-mode ac-modes))
+  (warn "Cannot find auto-complete, skip loading."))
 
 
 (load-file "~/.emacs.d/region-bindings-mode.el")
@@ -371,14 +414,6 @@
         'cscope-history-forward-line-current-result))
   (warn "xcscope is not installed, skip configuring"))
 
-;; Load flycheck.
-;; Note: It also require gcc 4.8 or newer.
-;; let-alist (comes built-in with emacs 25.1) is reequired by flycheck.
-;; dash (a modern list api for Emacs) is required by flycheck.
-(load-file "~/.emacs.d/let-alist-1.0.3.el")
-(load-file "~/.emacs.d/dash.el")
-(load-file "~/.emacs.d/packages/extract/flycheck-master/flycheck.el")
-
 (load-file "~/.emacs.d/languages/my-refine-mode.el")
 (load-file "~/.emacs.d/languages/jcl-mode.el")
 
@@ -402,19 +437,6 @@
 
 (global-set-key [f1]   'man-current-word)  ; Show man page for current word
 (global-set-key [C-f1] 'info-current-word) ; Show info page for current word
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; 配置auto-complete
-;; http://cx4a.org/software/auto-complete/
-;; http://blog.csdn.net/winterttr/article/details/7524336
-(add-to-list 'load-path "~/.emacs.d/packages/extract/auto-complete-1.3.1")
-(require 'auto-complete-config)
-(ac-config-default)
-(add-to-list 'ac-dictionary-directories
-             "~/.emacs.d/packages/extract/auto-complete-1.3.1/dict")
-
-;; http://stackoverflow.com/questions/11715296/emacs-auto-complete-dont-work-with-jde
-(push 'jde-mode ac-modes) ; Auto start auto-complete-mode with jde-mode.
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
