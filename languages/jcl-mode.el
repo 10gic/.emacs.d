@@ -44,15 +44,21 @@
      ))
 
 (defvar jcl-builtin-util-directives
-  '( "IKJEFT01"      "IDCAMS"
+  '( "IKJEFT01"      "IKJEFT1A"      "IKJEFT1B"      "IDCAMS"
+     "IEFFILE"
      ))
 
 (defvar jcl-variables-directives
   '( "SYSOUT"        "SYSIN"         "SYSTSIN"       "DSN"
+     ;; Keyword Parameters on JOB statement.
+     "ADDRSPC"       "COND"          "GROUP"         "RD"
+     "LINES"         "RESTART"       "CARDS"         "USER"
      "REGION"        "CLASS"         "MSGCLASS"      "MSGLEVEL"
+     "NOTIFY"        "TIME"          "CCSID"
+     ;; Others
      "UNIT"          "DISP"          "SPACE"         "PARM"
-     "NOTIFY"        "MAXCC"         "LASTCC"        "DCB"
-     "PGM"
+     "DYNAMNBR"      "MAXCC"         "LASTCC"        "DCB"
+     "PGM"           "DUMMY"
      ))
 
 (setq jcl-keywords
