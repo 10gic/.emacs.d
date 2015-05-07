@@ -1,0 +1,4 @@
+# Refer to http://git-scm.com/docs/gitattributes
+
+# Declare files that will always have LF line endings on checkout.
+*.sh text eol=lf
