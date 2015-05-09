@@ -628,3 +628,10 @@
     (when new-kill-string
       (message "%s copied" new-kill-string)
       (kill-new new-kill-string))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; http://www.emacswiki.org/emacs/DosToUnix
+(defun dos2unix ()
+      "Not exactly but it's easier to remember"
+      (interactive)
+      (set-buffer-file-coding-system 'unix 't) )
