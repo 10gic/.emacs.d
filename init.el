@@ -414,6 +414,10 @@
         'cscope-history-forward-line-current-result))
   (warn "xcscope is not installed, skip configuring"))
 
+;; Load mode for YAML
+;; https://github.com/yoshiki/yaml-mode
+(load-file "~/.emacs.d/languages/yaml-mode.el")
+
 (load-file "~/.emacs.d/languages/my-refine-mode.el")
 (load-file "~/.emacs.d/languages/jcl-mode.el")
 
