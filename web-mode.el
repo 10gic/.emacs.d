@@ -1,11 +1,11 @@
 ;;; web-mode.el --- major mode for editing web templates
 ;;; -*- coding: utf-8 -*-
 
-;; Copyright 2011-2015 Fran莽ois-Xavier Bois
+;; Copyright 2011-2015 François-Xavier Bois
 
 ;; Version: 11.1.04
-;; Author: Fran莽ois-Xavier Bois <fxbois AT Google Mail Service>
-;; Maintainer: Fran莽ois-Xavier Bois
+;; Author: François-Xavier Bois <fxbois AT Google Mail Service>
+;; Maintainer: François-Xavier Bois
 ;; Created: July 2011
 ;; Keywords: languages
 ;; Homepage: http://web-mode.org
