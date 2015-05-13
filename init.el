@@ -374,6 +374,8 @@
 (if (file-exists-p "~/.emacs.d/personal-conf.el")
     (load-file "~/.emacs.d/personal-conf.el"))
 
+(load-file "~/.emacs.d/web-mode.el")
+
 (load-file "~/.emacs.d/customize-lisp.el")
 (load-file "~/.emacs.d/customize-sql.el")
 (load-file "~/.emacs.d/customize-perl.el")
@@ -382,6 +384,7 @@
 (load-file "~/.emacs.d/customize-sh.el")
 (load-file "~/.emacs.d/customize-term.el")
 (load-file "~/.emacs.d/customize-org.el")
+(load-file "~/.emacs.d/customize-html.el")
 
 (if (require 'tex-buf nil 'noerror)
     (load-file "~/.emacs.d/customize-latex.el")
