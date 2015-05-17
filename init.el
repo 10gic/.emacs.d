@@ -45,6 +45,9 @@
 (setq recentf-max-menu-items 25)
 (global-set-key (kbd "C-c C-f") 'recentf-open-files)
 
+;; set comment char to '#' in assembly mode (GNU Assembler style)
+(setq asm-comment-char 35)
+
 ;; Overrride the default function, put related file into directory
 ;; ~/.emacs.d/cache
 (defun emacs-session-filename (SESSION-ID)
