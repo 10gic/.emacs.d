@@ -621,7 +621,7 @@
 ;; If you are in dired mode already, you don't need it. w will copy the file
 ;; name, c-u w will copy the relative file name and c-u 0 w will copy the
 ;; absolute file name
-(defun copy-buffer-file-name-as-kill (choice)
+(defun copy-path (choice)
   "Copy the buffer-file-name to the kill-ring"
   (interactive "cCopy Buffer Name (F) Full, (D) Directory, (N) Name")
   (let ((new-kill-string)
