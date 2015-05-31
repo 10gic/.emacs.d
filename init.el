@@ -664,9 +664,10 @@
   (setq special-display-regexps (remove "[ ]?\\*[hH]elp.*"
                                         special-display-regexps))
   (setq frame-title-format "%f" )
-  (custom-set-variables    ;; 在启动时设置主题在Aquamacs中有bug，故禁止它。
-   '(custom-enabled-themes nil))
+  (custom-set-variables
+   '(custom-enabled-themes nil)) ;; 启动时设置主题在Aquamacs中有bug，故禁止它。
+  (custom-set-faces      ;; 为Aquamacs设置字体
+   '(default ((t (:height 140 :width normal :family "Source Code Pro")))))
   (global-set-key [C-f4] 'kill-buffer) ;; kill-this-buffer在Aquamacs中有bug。
   (global-set-key [(control x) (k)] 'kill-buffer)
   )
-
