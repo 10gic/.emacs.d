@@ -23,7 +23,8 @@
                ))
   (let ((is-term (string= "term-mode" major-mode))
         (is-running (term-check-proc (buffer-name)))
-        (term-cmd (if (executable-find "zsh") "/bin/zsh" "/bin/bash")) ;(term-cmd "/bin/bash")
+        ;; (term-cmd (if (executable-find "zsh") "/bin/zsh" "/bin/bash"))
+        (term-cmd "/bin/bash")
         (anon-term (get-buffer "*ansi-term*")))
     (cond
      ((string= arg nil)
