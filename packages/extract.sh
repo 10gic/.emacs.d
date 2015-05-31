@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 
-current_dir="$(readlink -f $(dirname "$0"))"
+current_dir="$(dirname "$0")"
 extract_dir="$current_dir/extract"
 
 # check unzip is avaiable

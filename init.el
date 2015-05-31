@@ -2,12 +2,12 @@
 (setq inhibit-startup-message t) ; 启动emacs时不显示GNU Emacs窗口。
 (setq initial-scratch-message "") ; scratch信息中显示为空。
 
-;; Disable tool bar. Note: (tool-bar-mode nil) does not work in Ubuntu 14.04
-(if (boundp 'tool-bar-mode)
-    (tool-bar-mode -1))
-;; Disable menu bar. Note: (memu-bar-mode nil) does not work in Ubuntu 14.04
-(if (boundp 'menu-bar-mode)
-    (menu-bar-mode -1))
+;; Disable tool bar unless it's Aquamacs
+(if (and (boundp 'tool-bar-mode) (not (boundp 'aquamacs-version)))
+    (tool-bar-mode -1)) ; Note: (tool-bar-mode nil) cannot work in Ubuntu 14.04
+;; Disable menu bar unless it's Aquamacs
+(if (and (boundp 'menu-bar-mode) (not (boundp 'aquamacs-version)))
+    (menu-bar-mode -1)) ; Note: (memu-bar-mode nil) cannot work in Ubuntu 14.04
 
 ;; (setq make-backup-files nil) ; 不要生成备份文件（以波浪线结尾）。
 
@@ -69,15 +69,15 @@
   (defun server-ensure-safe-dir (dir) "Noop" t))
 
 ;; ELPA is the Emacs Lisp Package Archive
-(when (>= emacs-major-version 24)
-  (require 'package)
-  (package-initialize)
-  (add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/"))
-  (add-to-list 'package-archives '("marmalade"
-                                   . "https://marmalade-repo.org/packages/") t)
-  (add-to-list 'package-archives '("melpa"
-                                   . "http://melpa.milkbox.net/packages/") t)
-  (add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/") t))
+;; (when (>= emacs-major-version 24)
+;;   (require 'package)
+;;   (package-initialize)
+;;   (add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/"))
+;;   (add-to-list 'package-archives '("marmalade"
+;;                                    . "https://marmalade-repo.org/packages/") t)
+;;   (add-to-list 'package-archives '("melpa"
+;;                                    . "http://melpa.milkbox.net/packages/") t)
+;;   (add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/") t))
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -278,14 +278,28 @@
     (warn "Tool unzip is NOT found, you need extract .zip files manually.")))
 
 ;; use newer org-mode, the builtin version is too old.
-(if (file-exists-p "~/.emacs.d/packages/extract/org-8.2.10/lisp")
-    (progn
-      (setq load-path (cons "~/.emacs.d/packages/extract/org-8.2.10/lisp"
-                 load-path))
-      (setq load-path (cons
-                       "~/.emacs.d/packages/extract/org-8.2.10/contrib/lisp"
-                       load-path)))
-  (warn "Cannot find org-mode package, skip loading."))
+;; org-mode in Aquamacs is newest, don't need load it.
+(if (not (boundp 'aquamacs-version))
+    (if (file-exists-p "~/.emacs.d/packages/extract/org-8.2.10/lisp")
+        (progn
+          (setq load-path (cons "~/.emacs.d/packages/extract/org-8.2.10/lisp"
+                                load-path))
+          (setq load-path (cons
+                           "~/.emacs.d/packages/extract/org-8.2.10/contrib/lisp"
+                           load-path)))
+      (warn "Cannot find org-mode package, skip loading.")))
+
+;; aquamacs-tabbar比原始的tabbar更友好
+;; Using aquamacs-tabbar (from https://github.com/dholm/tabbar)
+;; aquamacs-tabbar is already in Auqamacs
+(if (not (boundp 'aquamacs-version))
+    (if (file-exists-p "~/.emacs.d/packages/extract/tabbar-master")
+        (progn
+          (add-to-list 'load-path "~/.emacs.d/packages/extract/tabbar-master")
+          (require 'aquamacs-tabbar)
+          (tabbar-mode 1)
+          (load-file "~/.emacs.d/customize-aquamacs-tabbar.el"))
+      (warn "Cannot find aquamacs-tabbar, skip loading.")))
 
 ;; Multiple cursors for Emacs. https://github.com/magnars/multiple-cursors.el
 (if (file-exists-p "~/.emacs.d/packages/extract/multiple-cursors.el-master")
@@ -298,15 +312,6 @@
       (global-set-key (kbd "M-n") 'mc/mark-next-like-this))
   (warn "Cannot find multiple-cursors package, skip loading."))
 
-;; aquamacs-tabbar比原始的tabbar更友好
-;; Using aquamacs-tabbar from https://github.com/dholm/tabbar
-(if (file-exists-p "~/.emacs.d/packages/extract/tabbar-master")
-    (progn
-      (add-to-list 'load-path "~/.emacs.d/packages/extract/tabbar-master")
-      (require 'aquamacs-tabbar)
-      (tabbar-mode 1)
-      (load-file "~/.emacs.d/customize-aquamacs-tabbar.el"))
-  (warn "Cannot find aquamacs-tabbar, skip loading."))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; jdee (Java Development Environment for Emacs)
@@ -642,6 +647,26 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; http://www.emacswiki.org/emacs/DosToUnix
 (defun dos2unix ()
-      "Not exactly but it's easier to remember"
-      (interactive)
-      (set-buffer-file-coding-system 'unix 't) )
+  "Not exactly but it's easier to remember"
+  (interactive)
+  (set-buffer-file-coding-system 'unix 't) )
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Other settings for Aquamacs
+;;
+;; Useful links for Aquamacs
+;; http://www.emacswiki.org/emacs/AquamacsFAQ
+;; http://www.emacswiki.org/emacs/CustomizeAquamacs
+
+(when (boundp 'aquamacs-version)
+  ;; open *help* in current frame
+  (setq special-display-regexps (remove "[ ]?\\*[hH]elp.*"
+                                        special-display-regexps))
+  (setq frame-title-format "%f" )
+  (custom-set-variables    ;; 在启动时设置主题在Aquamacs中有bug，故禁止它。
+   '(custom-enabled-themes nil))
+  (global-set-key [C-f4] 'kill-buffer) ;; kill-this-buffer在Aquamacs中有bug。
+  (global-set-key [(control x) (k)] 'kill-buffer)
+  )
+
