@@ -43,6 +43,8 @@
             (define-key org-mode-map
               "\C-\M-\\" 'my-indent-org-block-automatically)
 
+            (auto-fill-mode -1) ;; disable auto-fill-mode
+
             ;; 让不同级别的标题采用不同大小的字体
             (set-face-attribute 'org-level-1 nil :height 1.3 :bold t)
             (set-face-attribute 'org-level-2 nil :height 1.2 :bold t)
