@@ -182,9 +182,9 @@
 (add-hook 'term-mode-hook (lambda () (setq show-trailing-whitespace nil)))
 (add-hook 'Info-mode-hook (lambda () (setq show-trailing-whitespace nil)))
 
-;; Draw tabs with the same color as trailing whitespace
+;; Draw tabs with the same color as trailing whitespace in prog-mode
 ;; From http://emacswiki.org/emacs/ShowWhiteSpace
-(add-hook 'font-lock-mode-hook
+(add-hook 'prog-mode-hook
           (lambda ()
             (font-lock-add-keywords
              nil
