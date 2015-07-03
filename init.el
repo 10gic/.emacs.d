@@ -336,7 +336,9 @@
 (load-file "~/.emacs.d/let-alist-1.0.3.el")
 (load-file "~/.emacs.d/dash.el")
 (if (file-exists-p "~/.emacs.d/packages/extract/flycheck-master/flycheck.el")
-    (load-file "~/.emacs.d/packages/extract/flycheck-master/flycheck.el")
+    (if (>= emacs-major-version 24)
+        (load-file "~/.emacs.d/packages/extract/flycheck-master/flycheck.el")
+      (warn "Emacs is too old(<24) , skip load flycheck"))
   (warn "Cannot find flycheck, skip loading."))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
