@@ -330,8 +330,8 @@
   (warn "Cannot find jdee, skip loading."))
 
 ;; Load flycheck.
-;; Note: It also require gcc 4.8 or newer.
-;; let-alist (comes built-in with emacs 25.1) is reequired by flycheck.
+;; Note: It requires gcc 4.8 or newer.
+;; let-alist (comes built-in with emacs 25.1) is required by flycheck.
 ;; dash (a modern list api for Emacs) is required by flycheck.
 (load-file "~/.emacs.d/let-alist-1.0.3.el")
 (load-file "~/.emacs.d/dash.el")
