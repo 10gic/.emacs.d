@@ -442,11 +442,25 @@
 (load-file "~/.emacs.d/languages/cobol-free-mode.el")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; http://stackoverflow.com/questions/17755665/how-to-call-describe-function-for-current-word-in-emacs
+(defun describe-function-or-variable ()
+  (interactive)
+  (let ((sym (intern-soft (current-word))))
+    (unless
+        (cond ((null sym))
+              ((not (eq t (help-function-arglist sym)))
+               (describe-function sym))
+              ((boundp sym)
+               (describe-variable sym)))
+      (message "Nothing found"))))
+
 ;; Idea from http://yakko.cs.wmich.edu/~rattles/development/misc/.emacs
 ;; Get help on current word
 (defun man-current-word () "Manual entry for the current word"
   (interactive)
-  (manual-entry (current-word)))
+  (if (member major-mode '(emacs-lisp-mode scheme-mode lisp-mode))
+      (describe-function-or-variable)
+  (manual-entry (current-word))))
 
 (defun info-current-word () "Info page for the current word"
   (interactive)
