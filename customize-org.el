@@ -43,6 +43,9 @@
             (define-key org-mode-map
               "\C-\M-\\" 'my-indent-org-block-automatically)
 
+            (define-key org-mode-map
+              (kbd "C-c C-f") 'recentf-open-files)
+
             (auto-fill-mode -1) ;; disable auto-fill-mode
 
             ;; 让不同级别的标题采用不同大小的字体
