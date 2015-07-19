@@ -402,8 +402,8 @@
 
 
 ;; 可通过安装emacs-goodies-el来安装folding
-(if (file-exists-p "~/.emacs.packages/folding.el")
-    (load-file "~/.emacs.packages/folding.el"))
+(if (file-exists-p "~/.emacs.d/folding.el")
+    (load-file "~/.emacs.d/folding.el"))
 (if (require 'folding nil 'noerror)
     (progn
       (load "folding" 'nomessage 'noerror)
@@ -412,8 +412,9 @@
 
 ;; 加载xcscope(Cscope的emacs扩展，依赖于Cscope)
 ;; debian下可以这样安装xcscope: apt-get install cscope-el
-(if (file-exists-p "~/.emacs.packages/xcscope.el")
-    (load-file "~/.emacs.packages/xcscope.el"))
+;; Refer to: https://github.com/dkogan/xcscope.el
+(if (file-exists-p "~/.emacs.d/xcscope.el")
+    (load-file "~/.emacs.d/xcscope.el"))
 (if (require 'xcscope nil 'noerror)
     (progn
       ;; ubuntu下默认不需要cscope-setup，但redhat中需要。
