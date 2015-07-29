@@ -381,8 +381,8 @@
 ;; (require 'window-numbering)
 ;; (window-numbering-mode 1)
 
-(if (file-exists-p "~/.emacs.d/personal-conf.el")
-    (load-file "~/.emacs.d/personal-conf.el"))
+(if (file-exists-p "~/.emacs-personal-init.el")
+    (load-file "~/.emacs-personal-init.el"))
 
 (load-file "~/.emacs.d/web-mode.el")
 
