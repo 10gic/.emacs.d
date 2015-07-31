@@ -68,17 +68,6 @@
            (equal window-system 'w32))
   (defun server-ensure-safe-dir (dir) "Noop" t))
 
-;; ELPA is the Emacs Lisp Package Archive
-;; (when (>= emacs-major-version 24)
-;;   (require 'package)
-;;   (package-initialize)
-;;   (add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/"))
-;;   (add-to-list 'package-archives '("marmalade"
-;;                                    . "https://marmalade-repo.org/packages/") t)
-;;   (add-to-list 'package-archives '("melpa"
-;;                                    . "http://melpa.milkbox.net/packages/") t)
-;;   (add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/") t))
-
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -134,9 +123,9 @@
     (set-frame-font "Consolas-14" nil)))
   (when (or (string-equal system-type "cygwin")
             (string-equal system-type "windows-nt"))
-    ;; cygwin环境或Windows中设置中文字体(nsimsun是新宋体的名称)。不设置有很多中
-    ;; 文显示不出来。注：cygwin中emacs-X11默认无法读取Windows中的字体(emacs-w32
-    ;; 则没有问题)，若用emacs-X11请把新宋体复制到~/.fonts
+    ;; cygwin或Windows中设置中文字体(nsimsun是新宋体的名称)。若不设置会有一些中
+    ;; 文显示不出来。注：cygwin中使用emacs-X11时无法加载Windows默认路径中的字体
+    ;; (使用emacs-w32则没有问题)，若用emacs-X11请把新宋体复制到~/.fonts
     (dolist (charset '(kana han symbol cjk-misc bopomofo))
       (if (display-graphic-p)
           (set-fontset-font (frame-parameter nil 'font)
@@ -190,22 +179,7 @@
              nil
              '(("\t" 0 'trailing-whitespace prepend)))))
 
-;; 定制whitespace-mode
 ;; (global-whitespace-mode t) ;全局打开whitespace-mode
-;; (setq whitespace-style (quote (face tabs tab-mark))) ;仅显示tabs
-;; (setq whitespace-display-mappings
-;;       ;; all numbers are Unicode codepoint in decimal.
-;;       '(
-;;         (tab-mark 9 [8594 9]) ;; ascii 9 is TAB
-;;         ;; 8594 RIGHTWARDS ARROW 「→」
-;;         ;; 9655 WHITE RIGHT-POINTING TRIANGLE 「▷」
-;;         ;; 8680 RIGHTWARDS WHITE ARROW 「⇨」
-;;         ;; Note: Default, symbol 9655,8680 cannot show correctly in Windows.
-;;         ))
-;; (set-face-attribute 'whitespace-tab nil ;change the face for tabs to default.
-;;                    :background 'unspecified
-;;                    :foreground 'unspecified)
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 常规键绑定设置
@@ -269,6 +243,7 @@
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 加载其它包及设置
 ;; Extract packages
 (if (string-equal system-type "windows-nt")
@@ -277,57 +252,51 @@
       (message (shell-command-to-string "sh ~/.emacs.d/packages/extract.sh"))
     (warn "Tool unzip is NOT found, you need extract .zip files manually.")))
 
-;; use newer org-mode, the builtin version is too old.
+(setq my-pkg-path "~/.emacs.d/packages/extract/")
+(setq my-org-path1 (concat my-pkg-path "org-8.2.10/lisp"))
+(setq my-org-path2 (concat my-pkg-path "org-8.2.10/contrib/lisp"))
+(setq my-tabbar-path (concat my-pkg-path "tabbar-master"))
+(setq my-multiple-cursors-path (concat my-pkg-path "multiple-cursors.el-master"))
+(setq my-jdee-path (concat my-pkg-path "jdee-2.4.1/lisp"))
+(setq my-flycheck-path (concat my-pkg-path "flycheck-master"))
+(setq my-auto-complete-path (concat my-pkg-path "auto-complete-1.3.1"))
+(setq my-auto-complete-dict-path (concat my-pkg-path "auto-complete-1.3.1/dict"))
+
+
+;; Use newer org-mode, the builtin version is too old.
 ;; org-mode in Aquamacs is newest, don't need load it.
 (if (not (boundp 'aquamacs-version))
-    (if (file-exists-p "~/.emacs.d/packages/extract/org-8.2.10/lisp")
-        (progn
-          (setq load-path (cons "~/.emacs.d/packages/extract/org-8.2.10/lisp"
-                                load-path))
-          (setq load-path (cons
-                           "~/.emacs.d/packages/extract/org-8.2.10/contrib/lisp"
-                           load-path)))
-      (warn "Cannot find org-mode package, skip loading.")))
+    (progn
+      (setq load-path (cons my-org-path1 load-path))
+      (setq load-path (cons my-org-path2 load-path))))
 
 ;; aquamacs-tabbar比原始的tabbar更友好
 ;; Using aquamacs-tabbar (from https://github.com/dholm/tabbar)
 ;; aquamacs-tabbar is already in Auqamacs
 (if (not (boundp 'aquamacs-version))
-    (if (file-exists-p "~/.emacs.d/packages/extract/tabbar-master")
-        (progn
-          (add-to-list 'load-path "~/.emacs.d/packages/extract/tabbar-master")
-          (require 'aquamacs-tabbar)
-          (tabbar-mode 1)
-          (load-file "~/.emacs.d/customize-aquamacs-tabbar.el"))
-      (warn "Cannot find aquamacs-tabbar, skip loading.")))
+    (progn
+      (add-to-list 'load-path my-tabbar-path)
+      (require 'aquamacs-tabbar)
+      (tabbar-mode 1)
+      (load-file "~/.emacs.d/customize-aquamacs-tabbar.el")))
 
 ;; Multiple cursors for Emacs. https://github.com/magnars/multiple-cursors.el
-(if (file-exists-p "~/.emacs.d/packages/extract/multiple-cursors.el-master")
-    (progn
-      (add-to-list 'load-path
-                   "~/.emacs.d/packages/extract/multiple-cursors.el-master")
-      (require 'multiple-cursors)
-      (global-set-key (kbd "C-c l") 'mc/edit-lines)
-      (global-set-key (kbd "M-p") 'mc/mark-previous-like-this)
-      (global-set-key (kbd "M-n") 'mc/mark-next-like-this))
-  (warn "Cannot find multiple-cursors package, skip loading."))
+(add-to-list 'load-path my-multiple-cursors-path)
+(require 'multiple-cursors)
+(global-set-key (kbd "C-c l") 'mc/edit-lines)
+(global-set-key (kbd "M-p") 'mc/mark-previous-like-this)
+(global-set-key (kbd "M-n") 'mc/mark-next-like-this)
 
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; jdee (Java Development Environment for Emacs)
 ;; jdee require wget
-(if (file-exists-p "~/.emacs.d/packages/extract/jdee-2.4.1/lisp")
-    (progn
-      (if (>= emacs-major-version 24) ; It has error in emacs 23, just skip it.
-          (if (executable-find
-               (if (eq system-type 'windows-nt) "wget.exe" "wget"))
-              (progn
-                (add-to-list 'load-path
-                             "~/.emacs.d/packages/extract/jdee-2.4.1/lisp")
-                (load "jde"))
-            (warn "Cannot find wget, skip load jdee"))
-        (warn "Emacs is too old(<24) , skip load jdee")))
-  (warn "Cannot find jdee, skip loading."))
+(if (>= emacs-major-version 24) ; It has error in emacs 23, just skip it.
+    (if (executable-find
+         (if (eq system-type 'windows-nt) "wget.exe" "wget"))
+        (progn
+          (add-to-list 'load-path my-jdee-path)
+          (load "jde"))
+      (warn "Cannot find wget, skip loading jdee"))
+  (warn "Emacs is too old(<24) , skip loading jdee"))
 
 ;; Load flycheck.
 ;; Note: It requires gcc 4.8 or newer.
@@ -335,29 +304,26 @@
 ;; dash (a modern list api for Emacs) is required by flycheck.
 (load-file "~/.emacs.d/let-alist-1.0.3.el")
 (load-file "~/.emacs.d/dash.el")
-(if (file-exists-p "~/.emacs.d/packages/extract/flycheck-master/flycheck.el")
-    (if (>= emacs-major-version 24)
-        (load-file "~/.emacs.d/packages/extract/flycheck-master/flycheck.el")
-      (warn "Emacs is too old(<24) , skip load flycheck"))
-  (warn "Cannot find flycheck, skip loading."))
+(if (>= emacs-major-version 24)
+    (progn
+      (add-to-list 'load-path my-flycheck-path)
+      (load "flycheck"))
+  (warn "Emacs is too old(<24) , skip load flycheck"))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 配置auto-complete
 ;; http://cx4a.org/software/auto-complete/
 ;; http://blog.csdn.net/winterttr/article/details/7524336
-(if (file-exists-p "~/.emacs.d/packages/extract/auto-complete-1.3.1")
-    (progn
-      (add-to-list 'load-path "~/.emacs.d/packages/extract/auto-complete-1.3.1")
-      (require 'auto-complete-config)
-      (ac-config-default)
-      (add-to-list 'ac-dictionary-directories
-                   "~/.emacs.d/packages/extract/auto-complete-1.3.1/dict")
-      ;; Auto start auto-complete-mode with jde-mode.
-      ;; http://stackoverflow.com/questions/11715296/emacs-auto-complete-dont-work-with-jde
-      (push 'jde-mode ac-modes))
-  (warn "Cannot find auto-complete, skip loading."))
+(add-to-list 'load-path my-auto-complete-path)
+(require 'auto-complete-config)
+(ac-config-default)
+(add-to-list 'ac-dictionary-directories my-auto-complete-dict-path)
+;; Auto start auto-complete-mode with jde-mode.
+;; http://stackoverflow.com/questions/11715296/emacs-auto-complete-dont-work-with-jde
+(push 'jde-mode ac-modes)
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (load-file "~/.emacs.d/region-bindings-mode.el")
 (require 'region-bindings-mode)
 (region-bindings-mode-enable)
@@ -398,23 +364,22 @@
 
 (if (require 'tex-buf nil 'noerror)
     (load-file "~/.emacs.d/customize-latex.el")
-  (warn "tex-buf is not installed, skip configuring"))
+  (warn "tex-buf is not available, skip configuring"))
 
 
 ;; 可通过安装emacs-goodies-el来安装folding
-(if (file-exists-p "~/.emacs.d/folding.el")
-    (load-file "~/.emacs.d/folding.el"))
+;; http://www.emacswiki.org/emacs/FoldingMode
+(load-file "~/.emacs.d/folding.el")
 (if (require 'folding nil 'noerror)
     (progn
       (load "folding" 'nomessage 'noerror)
       (load-file "~/.emacs.d/customize-folding.el"))
-  (warn "folding is not installed, skip configuring"))
+  (warn "folding is not available, skip configuring"))
 
 ;; 加载xcscope(Cscope的emacs扩展，依赖于Cscope)
 ;; debian下可以这样安装xcscope: apt-get install cscope-el
 ;; Refer to: https://github.com/dkogan/xcscope.el
-(if (file-exists-p "~/.emacs.d/xcscope.el")
-    (load-file "~/.emacs.d/xcscope.el"))
+(load-file "~/.emacs.d/xcscope.el")
 (if (require 'xcscope nil 'noerror)
     (progn
       ;; ubuntu下默认不需要cscope-setup，但redhat中需要。
@@ -426,21 +391,15 @@
         'cscope-history-backward-line-current-result)
       (define-key global-map [(ctrl f11)]
         'cscope-history-forward-line-current-result))
-  (warn "xcscope is not installed, skip configuring"))
+  (warn "xcscope is not available, skip configuring"))
 
-;; Load mode for YAML
-;; https://github.com/yoshiki/yaml-mode
-(load-file "~/.emacs.d/languages/yaml-mode.el")
+(add-to-list 'load-path "~/.emacs.d/languages/")
+(require 'yaml-mode)
+(require 'jcl-mode)
+(require 'my-refine-mode)
+(require 'cobol-mode)
+(require 'cobol-free-mode)
 
-(load-file "~/.emacs.d/languages/my-refine-mode.el")
-(load-file "~/.emacs.d/languages/jcl-mode.el")
-
-;; Load mode for COBOL
-;; column-marker is required by cobol-mode
-(load-file "~/.emacs.d/languages/column-marker.el")
-(load-file "~/.emacs.d/languages/cobol-mode.el")
-;; cobol-free-mode.el用到了cobol-mode.el，要先加载cobol-mode
-(load-file "~/.emacs.d/languages/cobol-free-mode.el")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; http://stackoverflow.com/questions/17755665/how-to-call-describe-function-for-current-word-in-emacs
@@ -569,7 +528,7 @@
 ;; (global-set-key "\C-x\C-q" 'quoted-insert)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; 在终端模式下，利用xsel实现clipboard共享
+;; Linux中，在终端模式下，利用xsel实现clipboard共享
 ;; Idea from:
 ;; http://hugoheden.wordpress.com/2009/03/08/copypaste-with-emacs-in-terminal/
 ;; Know Issue: 如果用/sudo:root@localhost:打开文件时，则clipboard不可用，会出错。
@@ -588,7 +547,7 @@
                 xsel-output )))
           (setq interprogram-cut-function 'xsel-cut-function)
           (setq interprogram-paste-function 'xsel-paste-function))
-      (warn "Cannot find xsel, skip configure clipboard")))
+      (warn "Cannot find xsel, skip configuring clipboard")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; from http://emacswiki.org/emacs/RecreateScratchBuffer
