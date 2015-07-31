@@ -573,21 +573,22 @@
 ;; Idea from:
 ;; http://hugoheden.wordpress.com/2009/03/08/copypaste-with-emacs-in-terminal/
 ;; Know Issue: 如果用/sudo:root@localhost:打开文件时，则clipboard不可用，会出错。
-(if (executable-find "xsel")
-    (progn
-      (defun xsel-cut-function (text &optional push)
-        (with-temp-buffer
-          (insert text)
-          (call-process-region (point-min) (point-max)
-                               "xsel" nil 0 nil "--clipboard" "--input")))
-      (defun xsel-paste-function()
-        (let ((xsel-output
-               (shell-command-to-string "xsel --clipboard --output")))
-          (unless (string= (car kill-ring) xsel-output)
-            xsel-output )))
-      (setq interprogram-cut-function 'xsel-cut-function)
-      (setq interprogram-paste-function 'xsel-paste-function))
-  (warn "Cannot find xsel, skip configure clipboard for terminal mode"))
+(if (string-equal system-type "gnu/linux")
+    (if (executable-find "xsel")
+        (progn
+          (defun xsel-cut-function (text &optional push)
+            (with-temp-buffer
+              (insert text)
+              (call-process-region (point-min) (point-max)
+                                   "xsel" nil 0 nil "--clipboard" "--input")))
+          (defun xsel-paste-function()
+            (let ((xsel-output
+                   (shell-command-to-string "xsel --clipboard --output")))
+              (unless (string= (car kill-ring) xsel-output)
+                xsel-output )))
+          (setq interprogram-cut-function 'xsel-cut-function)
+          (setq interprogram-paste-function 'xsel-paste-function))
+      (warn "Cannot find xsel, skip configure clipboard")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; from http://emacswiki.org/emacs/RecreateScratchBuffer
