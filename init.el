@@ -179,7 +179,7 @@
              nil
              '(("\t" 0 'trailing-whitespace prepend)))))
 
-;; (global-whitespace-mode t) ;全局打开whitespace-mode
+;; (global-whitespace-mode t) ; 全局打开whitespace-mode
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 常规键绑定设置
@@ -245,9 +245,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 加载其它包及设置
-;; Extract packages
+;; Extract packages into ~/.emacs.d/packages/extract/
 (if (string-equal system-type "windows-nt")
-    (warn "Please extract packages into ~/.emacs.d/packages/extract/ manually.")
+    (warn "Detect windows-nt, please extract packages manually if necessary.")
   (if (executable-find "unzip")
       (message (shell-command-to-string "sh ~/.emacs.d/packages/extract.sh"))
     (warn "Tool unzip is NOT found, you need extract .zip files manually.")))
@@ -347,9 +347,6 @@
 ;; (require 'window-numbering)
 ;; (window-numbering-mode 1)
 
-(if (file-exists-p "~/.emacs-personal-init.el")
-    (load-file "~/.emacs-personal-init.el"))
-
 (load-file "~/.emacs.d/web-mode.el")
 
 (load-file "~/.emacs.d/customize-lisp.el")
@@ -417,14 +414,14 @@
 ;; Idea from http://yakko.cs.wmich.edu/~rattles/development/misc/.emacs
 ;; Get help on current word
 (defun man-current-word () "Manual entry for the current word"
-  (interactive)
-  (if (member major-mode '(emacs-lisp-mode scheme-mode lisp-mode))
-      (describe-function-or-variable)
-  (manual-entry (current-word))))
+       (interactive)
+       (if (member major-mode '(emacs-lisp-mode scheme-mode lisp-mode))
+           (describe-function-or-variable)
+         (manual-entry (current-word))))
 
 (defun info-current-word () "Info page for the current word"
-  (interactive)
-  (info-lookup-symbol (current-word)))
+       (interactive)
+       (info-lookup-symbol (current-word)))
 
 (global-set-key [f1]   'man-current-word)  ; Show man page for current word
 (global-set-key [C-f1] 'info-current-word) ; Show info page for current word
@@ -648,3 +645,9 @@
   (global-set-key [C-f4] 'kill-buffer) ;; kill-this-buffer在Aquamacs中有bug。
   (global-set-key [(control x) (k)] 'kill-buffer)
   )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Load other personal setting
+(if (file-exists-p "~/.emacs-personal-init.el")
+    (load-file "~/.emacs-personal-init.el"))
