@@ -111,3 +111,145 @@
 
         ;; combine "org-static" and "org-static" into one function call
         ("org" :components ("org-notes" "org-static"))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; 下面为导出latex/pdf相关设置
+
+;; Use XeLaTeX to export PDF in Org-mode
+;; Note that 'org-latex-to-pdf-process' now is renamed to 'org-latex-pdf-process'
+(setq org-latex-pdf-process
+      '("xelatex -shell-escape -interaction nonstopmode -output-directory %o %f"
+        "xelatex -shell-escape -interaction nonstopmode -output-directory %o %f"
+        "xelatex -shell-escape -interaction nonstopmode -output-directory %o %f"))
+
+;; Export source code using the listings package
+(add-to-list 'org-latex-listings '("" "listings"))
+(add-to-list 'org-latex-listings '("" "color"))
+
+;; 自定义新的LaTex导出模板
+;; https://github.com/w0mTea/An.Emacs.Tutorial.for.Vim.User/blob/master/An.Emacs.Tutorial.for.Vim.User.zh-CN.org
+;; Add a template for article
+(add-to-list 'org-latex-classes
+          '("my-org-article-zh"
+"\\documentclass{article}
+\\usepackage[slantfont, boldfont]{xeCJK}
+[NO-DEFAULT-PACKAGES]
+[PACKAGES]
+\\usepackage{ifplatform}  % Note: \iflinux \ifmacosx \ifcygwin don't work if shell escape is disabled.
+\\ifmacosx
+\\setCJKmainfont{STSong}  % Default chinese font in Mac OS
+\\else
+\\setCJKmainfont{SimSun}
+\\fi
+
+% \\setmainfont{DejaVu Sans} % 英文衬线字体
+% \\setsansfont{DejaVu Serif} % 英文无衬线字体
+% \\setmonofont{DejaVu Sans Mono} % 英文等宽字体
+% \\punctstyle{DejaVu Sans} % 开明式标点格式
+
+\\parindent 2em
+\\usepackage{indentfirst} % 首段缩进
+
+\\defaultfontfeatures{Mapping=tex-text} %如果没有它，会有一些 tex 特殊字符无法正常使用，比如连字符。
+
+% 中文断行
+\\XeTeXlinebreaklocale \"zh\"
+\\XeTeXlinebreakskip = 0pt plus 1pt minus 0.1pt
+
+\\usepackage{listings}      % listings能方便处理程序源码
+\\usepackage{caption}
+\\usepackage[colorlinks,    % 将超链接以颜色来标识，而并非使用默认的方框来标识
+            linkcolor=black,
+            anchorcolor=black,
+            citecolor=black,
+            urlcolor=black
+            ]{hyperref}
+\\usepackage{graphicx}
+
+% 代码设置
+\\lstset{
+%language=C,
+basicstyle=\\ttfamily,
+%columns=fixed,
+numbers=left,          % where to put the line-numbers
+numberstyle=\\tiny,
+breaklines=true,       % sets automatic line breaking
+frame=tb               % adds a frame around the code
+}
+
+[EXTRA]
+"
+             ("\\section{%s}" . "\\section*{%s}")
+             ("\\subsection{%s}" . "\\subsection*{%s}")
+             ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
+             ("\\paragraph{%s}" . "\\paragraph*{%s}")
+             ("\\subparagraph{%s}" . "\\subparagraph*{%s}")))
+
+;; Add a template for book
+;; 和my-org-article-zh的设置差不多，增加了chapter相关内容。
+(add-to-list 'org-latex-classes
+             '("my-org-book-zh"
+               "\\documentclass{book}
+\\usepackage[slantfont, boldfont]{xeCJK} % 允许斜体和粗体
+% chapter set
+\\usepackage[Lenny]{fncychap}
+[NO-DEFAULT-PACKAGES]
+[PACKAGES]
+
+% \\setCJKmainfont{SimSun} % 设置缺省中文字体
+
+\\usepackage{ifplatform}  % Note: \iflinux \ifmacosx \ifcygwin don't work when shell escape is disabled.
+\\ifmacosx
+\\setCJKmainfont{STSong}  % Default Chinese font in Mac OS
+\\else
+\\setCJKmainfont{SimSun}
+\\fi
+
+% \\setmainfont{DejaVu Sans} % 英文衬线字体
+% \\setsansfont{DejaVu Serif} % 英文无衬线字体
+% \\setmonofont{DejaVu Sans Mono} % 英文等宽字体
+
+\\parindent 2em
+\\usepackage{indentfirst} % 首段缩进
+
+\\defaultfontfeatures{Mapping=tex-text} % 如果没有它，会有一些 tex 特殊字符无法正常使用，比如连字符。
+
+% 中文断行
+\\XeTeXlinebreaklocale \"zh\"
+\\XeTeXlinebreakskip = 0pt plus 1pt minus 0.1pt
+
+\\usepackage{listings}      % listings能方便处理程序源码
+\\usepackage{caption}
+\\usepackage[colorlinks,    % 将超链接以颜色来标识，而并非使用默认的方框来标识
+            linkcolor=black,
+            anchorcolor=black,
+            citecolor=black,
+            urlcolor=black
+            ]{hyperref}
+\\usepackage{graphicx}
+
+% 代码设置
+\\lstset{
+%language=C,
+basicstyle=\\ttfamily,
+%columns=fixed,
+numbers=left,          % where to put the line-numbers
+numberstyle=\\tiny,
+breaklines=true,       % sets automatic line breaking
+frame=tb               % adds a frame around the code
+}
+
+[EXTRA]
+"
+             ("\\chapter{%s}" . "\\chapter*{%s}")
+             ("\\section{%s}" . "\\section*{%s}")
+             ("\\subsection{%s}" . "\\subsection*{%s}")
+             ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
+             ("\\paragraph{%s}" . "\\paragraph*{%s}")
+             ("\\subparagraph{%s}" . "\\subparagraph*{%s}")))
+
+
+;; 默认使用自定义的LaTex导出模板my-org-article-zh
+;; 在org文件中单独设置LATEX_CLASS可使用指定的模板
+(setq org-latex-default-class "my-org-article-zh")
