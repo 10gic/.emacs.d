@@ -530,7 +530,7 @@
 ;; http://hugoheden.wordpress.com/2009/03/08/copypaste-with-emacs-in-terminal/
 ;; Know Issue: 如果用/sudo:root@localhost:打开文件时，则clipboard不可用，会出错。
 (if (string-equal system-type "gnu/linux")
-    (if (executable-find "xsel")
+    (if (and (executable-find "xsel") (getenv "DISPLAY"))
         (progn
           (defun xsel-cut-function (text &optional push)
             (with-temp-buffer
@@ -544,7 +544,7 @@
                 xsel-output )))
           (setq interprogram-cut-function 'xsel-cut-function)
           (setq interprogram-paste-function 'xsel-paste-function))
-      (warn "Cannot find xsel, skip configuring clipboard")))
+      (warn "Tool xsel does not works, skip configuring clipboard")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; from http://emacswiki.org/emacs/RecreateScratchBuffer
