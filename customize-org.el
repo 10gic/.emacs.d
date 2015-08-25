@@ -15,6 +15,9 @@
 ;; 设置图片宽度不一定为实际大小
 (setq org-image-actual-width nil)
 
+;; 执行代码时的不用用户确认
+(setq org-confirm-babel-evaluate nil)
+
 ;; 保留代码块中的缩进空格。
 (setq org-src-preserve-indentation t)
 
