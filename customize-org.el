@@ -115,6 +115,12 @@
         ;; combine "org-static" and "org-static" into one function call
         ("org" :components ("org-notes" "org-static"))))
 
+;; These helper functions can be used in batch mode of emacs.
+(defun my-export-html (&optional force)
+  (org-publish-project "org" force))
+
+(defun my-force-export-html ()
+  (my-export-html t))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 下面为导出latex/pdf相关设置
