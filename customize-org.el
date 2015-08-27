@@ -95,7 +95,7 @@
               <div>
                   <ul class=\"nav navbar-nav\">
                       <li><a href=\"/\">Home</a></li>
-                      <li><a href=\"/catalog.html\">Catalog</a></li>
+                      <li><a href=\"/categories.html\">Categories</a></li>
                       <li><a href=\"/archives.html\">Archives</a></li>
                       <li><a href=\"/about.html\">About</a></li>
                   </ul>
