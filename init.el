@@ -148,7 +148,7 @@
 ;; 设置自动备份
 (setq
  version-control t ; 启用版本控制，即可以备份多次。
- backup-by-copying t ; 备份设置方法，直接拷贝。
+ backup-by-copying t ; 用复制（而不是mv）的方式备份文件。这可维持文件的硬链接。
  backup-directory-alist '(("." . "~/.emacs.backups")) ; 设置自动备份目录。
  delete-old-versions t ; 自动删除旧的备份。
  kept-new-versions 3 ; 保留最近的3个备份。
