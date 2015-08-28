@@ -15,6 +15,15 @@
 ;; 设置图片宽度不一定为实际大小
 (setq org-image-actual-width nil)
 
+;; Configure languages which can be evaluated in Org-mode buffers.
+;; By default only Emacs Lisp can be evaluated.
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '((emacs-lisp . t)
+   (ditaa . t)
+   (dot . t)
+   (gnuplot . t)))
+
 ;; 执行代码时的不用用户确认
 (setq org-confirm-babel-evaluate nil)
 
