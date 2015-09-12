@@ -116,7 +116,7 @@
 
         ("org-static"                ;; Used to publish static files
          :base-directory "~/www/"
-         :base-extension "html\\|css\\|js\\|png\\|jpg\\|gif\\|pdf"
+         :base-extension "html\\|css\\|js\\|png\\|jpg\\|gif\\|svg\\|pdf"
          :publishing-directory "~/public_html/"
          :recursive t
          :publishing-function org-publish-attachment
