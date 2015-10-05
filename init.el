@@ -397,6 +397,9 @@
 (require 'cobol-mode)
 (require 'cobol-free-mode)
 
+;; Load htmlize
+;; Patch it by changing running-xemacs to html-running-xemacs
+(load-file "~/.emacs.d/htmlize.el")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; http://stackoverflow.com/questions/17755665/how-to-call-describe-function-for-current-word-in-emacs
