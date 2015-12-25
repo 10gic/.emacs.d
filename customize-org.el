@@ -272,3 +272,45 @@ frame=tb               % adds a frame around the code
 ;; 默认使用自定义的LaTex导出模板my-org-article-zh
 ;; 在org文件中单独设置LATEX_CLASS可使用指定的模板
 (setq org-latex-default-class "my-org-article-zh")
+
+
+;; 定制在org-mode中，拖拽图片文件到emacs时的处理方式
+;; 参考：http://kitchingroup.cheme.cmu.edu/blog/2015/07/10/Drag-images-and-files-onto-org-mode-and-insert-a-link-to-them/
+;; NOTE: 下面代码仅在OSX系统中有效。
+(defun my-dnd-func (event)
+  (interactive "e")
+  (goto-char (nth 1 (event-start event)))
+  (x-focus-frame nil)
+  (let* ((payload (car (last event)))
+         (type (car payload))
+         (fname (cadr payload))
+         (img-regexp "\\(png\\|svg\\|jp[e]?g\\)\\>"))
+    (cond
+     ;; In case of C-drag-n-drop, insert "#+ATTR_HTML: :width 500px\n" addtionally
+     ((and  (eq 'C-drag-n-drop (car event))
+            (eq 'file type)
+            (string-match img-regexp fname))
+      (insert "#+ATTR_HTML: :width 500px\n")
+      (insert (concat  "#+CAPTION: " (file-name-base fname) "\n"))
+      (insert (format "[[%s]]\n" (concat "./images/" (file-name-nondirectory fname))))
+      (let ((target-dir (concat (file-name-directory (buffer-file-name)) "./images/")))
+        (if (file-exists-p target-dir)
+            (copy-file fname target-dir)
+          (message "%s does not exist, cannot copy image into it." target-dir))))
+     ((and  (eq 'drag-n-drop (car event))
+            (eq 'file type)
+            (string-match img-regexp fname))
+      (insert (concat  "#+CAPTION: " (file-name-base fname) "\n"))
+      (insert (format "[[%s]]\n" (concat "./images/" (file-name-nondirectory fname))))
+      (let ((target-dir (concat (file-name-directory (buffer-file-name)) "./images/")))
+        (if (file-exists-p target-dir)
+            (copy-file fname target-dir)
+          (message "%s does not exist, cannot copy image into it." target-dir))))
+     ;; regular drag and drop on file
+     ((eq 'file type)
+      (insert (format "[[%s]]\n" fname)))
+     (t
+      (error "I am not equipped for dnd on %s" payload)))))
+
+(define-key org-mode-map (kbd "<drag-n-drop>") 'my-dnd-func)
+(define-key org-mode-map (kbd "<C-drag-n-drop>") 'my-dnd-func)
