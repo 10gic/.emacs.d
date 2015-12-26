@@ -167,8 +167,9 @@
 % \\setmonofont{DejaVu Sans Mono} % 英文等宽字体
 % \\punctstyle{DejaVu Sans} % 开明式标点格式
 
-\\parindent 2em
-\\usepackage{indentfirst} % 首段缩进
+% \\parindent 2em
+% \\usepackage{indentfirst} % 首段缩进
+\\usepackage{parskip}  % 不要段缩进
 
 \\defaultfontfeatures{Mapping=tex-text} %如果没有它，会有一些 tex 特殊字符无法正常使用，比如连字符。
 
@@ -229,8 +230,9 @@ frame=tb               % adds a frame around the code
 % \\setsansfont{DejaVu Serif} % 英文无衬线字体
 % \\setmonofont{DejaVu Sans Mono} % 英文等宽字体
 
-\\parindent 2em
-\\usepackage{indentfirst} % 首段缩进
+% \\parindent 2em
+% \\usepackage{indentfirst} % 首段缩进
+\\usepackage{parskip}  % 不要段缩进
 
 \\defaultfontfeatures{Mapping=tex-text} % 如果没有它，会有一些 tex 特殊字符无法正常使用，比如连字符。
 
