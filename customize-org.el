@@ -177,6 +177,8 @@
 \\XeTeXlinebreaklocale \"zh\"
 \\XeTeXlinebreakskip = 0pt plus 1pt minus 0.1pt
 
+\\usepackage{amsmath}       % 这个宏包提供了很多扩展数学公式的环境，如cases
+
 \\usepackage{listings}      % listings能方便处理程序源码
 \\usepackage{caption}
 \\usepackage[colorlinks,    % 将超链接以颜色来标识，而并非使用默认的方框来标识
@@ -185,7 +187,14 @@
             citecolor=black,
             urlcolor=black
             ]{hyperref}
+
 \\usepackage{graphicx}
+
+\\usepackage{svg}
+%% org-mode中插入svg图片时，需要上面的包。
+%% 不过由于\pdffilemoddate没有在XeTex中实现等原因，无法正常用xelatex导出svg图片。
+%% 参考：http://tex.stackexchange.com/questions/84837/svg-from-inkscape-doesnt-work-in-xelatex）
+
 
 % 代码设置
 \\lstset{
@@ -240,6 +249,8 @@ frame=tb               % adds a frame around the code
 \\XeTeXlinebreaklocale \"zh\"
 \\XeTeXlinebreakskip = 0pt plus 1pt minus 0.1pt
 
+\\usepackage{amsmath}       % 这个宏包提供了很多扩展数学公式的环境，如cases
+
 \\usepackage{listings}      % listings能方便处理程序源码
 \\usepackage{caption}
 \\usepackage[colorlinks,    % 将超链接以颜色来标识，而并非使用默认的方框来标识
@@ -248,7 +259,14 @@ frame=tb               % adds a frame around the code
             citecolor=black,
             urlcolor=black
             ]{hyperref}
+
 \\usepackage{graphicx}
+
+\\usepackage{svg}
+%% org-mode中插入svg图片时，需要上面的包。
+%% 不过由于\pdffilemoddate没有在XeTex中实现等原因，无法正常用xelatex导出svg图片。
+%% 参考：http://tex.stackexchange.com/questions/84837/svg-from-inkscape-doesnt-work-in-xelatex）
+
 
 % 代码设置
 \\lstset{
