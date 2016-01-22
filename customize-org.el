@@ -60,6 +60,23 @@
 
             (auto-fill-mode -1) ;; disable auto-fill-mode
 
+            ;; 对齐org-table中的英文和中文（即让两个英文恰好和一个中文等宽）
+            ;; 参考 http://www.cnblogs.com/galaxy-gao/p/4445757.html
+            (when (eq system-type 'darwin)
+              ;; 创建一个fontset
+              (create-fontset-from-fontset-spec
+               "-apple-monaco-medium-r-normal--12-*-*-*-*-*-fontset-myfixed")
+
+              ;; 当英文使用大小12，中文使用大小14时，两个英文恰好和一个中文等宽
+              (dolist (charset '(kana han symbol cjk-misc bopomofo))
+                (set-fontset-font "fontset-myfixed"
+                                  charset
+                                  (font-spec :family "STHeiti" :size 14)))
+
+              ;; 对org-table设置指定fontset
+              (set-face-attribute 'org-table nil :fontset "fontset-myfixed" )
+              )
+
             ;; 让不同级别的标题采用不同大小的字体
             (set-face-attribute 'org-level-1 nil :height 1.3 :bold t)
             (set-face-attribute 'org-level-2 nil :height 1.2 :bold t)
