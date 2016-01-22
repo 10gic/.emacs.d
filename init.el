@@ -79,7 +79,6 @@
  '(display-time-24hr-format t)
  '(display-time-mode t)
  '(mouse-wheel-mode t)
- '(scroll-bar-mode (quote nil))
  '(show-paren-mode t)
  '(size-indication-mode t)
  '(xterm-mouse-mode t))
@@ -93,6 +92,7 @@
 ;; '(size-indication-mode t) ; 在Mode line中显示当前Buffer的大小。
 ;; ;; 下面设置终端下启动鼠标滚轮的支持。一般默认已启动，但有些系统下默认没有启动。
 ;; '(mouse-wheel-mode t)
+;; '(scroll-bar-mode (quote nil))
 
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
@@ -653,3 +653,6 @@
 ;; Load other personal setting
 (if (file-exists-p "~/.emacs-personal-init.el")
     (load-file "~/.emacs-personal-init.el"))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; You can run ‘M-x emacs-init-time’ to check emacs initialize time.
