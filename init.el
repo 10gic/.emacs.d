@@ -628,6 +628,14 @@
   (interactive)
   (set-buffer-file-coding-system 'unix 't) )
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Invalid emacs config may break the normal behavior of kill-emacs such that it
+;; stops at an error. In this case, we need a reliable method to kill emacs.
+(defun kill-emacs-ignore-hooks ()
+  "Like `kill-emacs', but ignores `kill-emacs-hook'."
+  (interactive)
+  (let (kill-emacs-hook) ; set kill-emacs-hook to nil before calling kill-emacs
+    (kill-emacs)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Other settings for Aquamacs
