@@ -60,26 +60,9 @@
 
             (auto-fill-mode -1) ;; disable auto-fill-mode
 
-            ;; 创建一个“中英文对齐”的fontset（名为fontset-myfixed）。
-            (create-fontset-from-fontset-spec
-             "-*-*-medium-r-normal-*-*-*-*-*-*-*-fontset-myfixed")
-            (when (eq system-type 'darwin)
-              ;; Mac下测试时，英文字体的大小为12，这里设置中文大小为14，
-              ;; 这时，两个英文恰好和一个中文等宽。
-              (dolist (charset '(kana han symbol cjk-misc bopomofo))
-                (set-fontset-font "fontset-myfixed"
-                                  charset
-                                  (font-spec :family "STHeiti" :size 14))))
-            (when (memq system-type '(windows-nt cygwin))
-              ;; Windows下测试时，英文字体的大小为19，这里设置中文大小为21，
-              ;; 这时，两个英文恰好和一个中文等宽。
-              (dolist (charset '(kana han symbol cjk-misc bopomofo))
-                (set-fontset-font "fontset-myfixed"
-                                  charset
-                                  (font-spec :family "nsimsun" :size 21))))
-
-            ;; 设置使用fontset-myfixed，这样org-table中的中英文就能对齐了。
-            (set-face-attribute 'org-table nil :fontset "fontset-myfixed")
+            ;; 设置org-table中使用字体集fontset-myfixed，这样org-table中的中英文就能对齐了。
+            (if (display-graphic-p)
+                (set-face-attribute 'org-table nil :fontset "fontset-myfixed"))
 
             ;; 让不同级别的标题采用不同大小的字体
             (set-face-attribute 'org-level-1 nil :height 1.3 :bold t)

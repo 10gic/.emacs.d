@@ -68,6 +68,27 @@
            (equal window-system 'w32))
   (defun server-ensure-safe-dir (dir) "Noop" t))
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; 创建一个“中英文对齐（两个英文和一个中文等宽）”的fontset，命名为fontset-myfixed
+(create-fontset-from-fontset-spec
+ "-*-*-medium-r-normal-*-*-*-*-*-*-*-fontset-myfixed")
+;; 在不同系统下调整中文字体大小，以保证两个英文和一个中文等宽
+(when (eq system-type 'darwin)
+  ;; Mac下测试时，英文字体的大小为12，这里设置中文大小为14，
+  ;; 这时，两个英文恰好和一个中文等宽。
+  (dolist (charset '(kana han symbol cjk-misc bopomofo))
+    (set-fontset-font "fontset-myfixed"
+                      charset
+                      (font-spec :family "STHeiti" :size 14))))
+(when (memq system-type '(windows-nt cygwin))
+  ;; Windows下测试时，英文字体的大小为19，这里设置中文大小为21，
+  ;; 这时，两个英文恰好和一个中文等宽。
+  (dolist (charset '(kana han symbol cjk-misc bopomofo))
+    (set-fontset-font "fontset-myfixed"
+                      charset
+                      (font-spec :family "nsimsun" :size 21))))
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
