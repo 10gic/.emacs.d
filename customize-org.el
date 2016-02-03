@@ -308,7 +308,7 @@ frame=tb               % adds a frame around the code
   (let* ((payload (car (last event)))
          (type (car payload))
          (fname (cadr payload))
-         (img-regexp "\\(png\\|svg\\|jp[e]?g\\)\\>"))
+         (img-regexp "\\(png\\|gif\\|svg\\|jp[e]?g\\)\\>"))
     (cond
      ;; In case of C-drag-n-drop, insert "#+ATTR_HTML: :width 500px\n" addtionally
      ((and  (eq 'C-drag-n-drop (car event))
@@ -336,5 +336,42 @@ frame=tb               % adds a frame around the code
      (t
       (error "I am not equipped for dnd on %s" payload)))))
 
+;; In emacs-w32 in Cygwin. drag-n-drop event looks like
+;; (drag-n-drop (#<window 26 on 1.org> 466 (323 . 240) 779451523 nil 466 (29 . 10) nil (323 . 0) (11 . 24)) (C:\Users\user1\Desktop\1.png))
+;; the first element is type of event,
+;; the second element is position,
+;; the 3rd element is the files.
+(if (memq system-type '(cygwin))
+  (defun my-dnd-func (event)
+    (interactive "e")
+    (goto-char (nth 1 (event-start event)))
+    (x-focus-frame nil)
+    (let* ((fname (car (caddr event)))
+           ;; Change C:\Users\user1\Desktop\1.png to /cygdrive/c/Users/user1/Desktop/1.png
+           (fname-unix (replace-regexp-in-string "\n$" "" (shell-command-to-string (concat "cygpath --unix '" fname "'"))))
+           (img-regexp "\\(png\\|gif\\|svg\\|jp[e]?g\\)\\>")
+           (target-dir (concat (file-name-directory (buffer-file-name)) "./images/")))
+      (cond
+       ;; In case of C-drag-n-drop, insert "#+ATTR_HTML: :width 500px\n" addtionally
+       ((and  (eq 'C-drag-n-drop (car event))
+              (string-match img-regexp fname))
+        (insert "#+ATTR_HTML: :width 500px\n")
+        (insert (concat  "#+CAPTION: " (file-name-base fname) "\n"))
+        (insert (format "[[%s]]\n" (concat "./images/" (file-name-nondirectory fname-unix))))
+        (if (file-exists-p target-dir)
+            (copy-file fname-unix target-dir)
+          (message "%s does not exist, cannot copy image into it." target-dir)))
+       ((and  (eq 'drag-n-drop (car event))
+              (string-match img-regexp fname))
+        (insert (concat  "#+CAPTION: " (file-name-base fname) "\n"))
+        (insert (format "[[%s]]\n" (concat "./images/" (file-name-nondirectory fname-unix))))
+        (if (file-exists-p target-dir)
+            (copy-file fname-unix target-dir)
+          (message "%s does not exist, cannot copy image into it." target-dir)))
+       ;; regular drag and drop on file
+       (t
+        (insert (format "[[%s]]\n" fname))))))
+  )
+ 
 (define-key org-mode-map (kbd "<drag-n-drop>") 'my-dnd-func)
 (define-key org-mode-map (kbd "<C-drag-n-drop>") 'my-dnd-func)
