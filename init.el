@@ -24,6 +24,8 @@
 ;; cannot determine the function name.
 (setq which-func-unknown "n/a")
 
+(add-to-list 'load-path "~/.emacs.d/lisp/")
+
 (require 'ido)
 (ido-mode t) ; 启动ido-mode。如：键入C-x b时，可用ido快速地切换buffer
 
