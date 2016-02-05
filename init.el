@@ -317,7 +317,8 @@
          (if (eq system-type 'windows-nt) "wget.exe" "wget"))
         (progn
           (add-to-list 'load-path my-jdee-path)
-          (load "jde"))
+          (autoload 'jde-mode "jde" "JDE mode." t)
+          (add-to-list 'auto-mode-alist '("\\.java\\'" . jde-mode)))
       (warn "Cannot find wget, skip loading jdee"))
   (warn "Emacs is too old(<24) , skip loading jdee"))
 
@@ -347,30 +348,21 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(load-file "~/.emacs.d/region-bindings-mode.el")
 (require 'region-bindings-mode)
 (region-bindings-mode-enable)
+;; setup integrating the multiple-cursors package
 (define-key region-bindings-mode-map "a" 'mc/mark-all-like-this)
 (define-key region-bindings-mode-map "p" 'mc/mark-previous-like-this)
 (define-key region-bindings-mode-map "n" 'mc/mark-next-like-this)
 (define-key region-bindings-mode-map "m" 'mc/mark-more-like-this-extended)
 
-(load-file "~/.emacs.d/ace-jump-mode.el")
-(require 'ace-jump-mode)
+(autoload 'ace-jump-mode "ace-jump-mode" "Emacs quick move minor mode" t)
 (define-key global-map (kbd "C-c SPC") 'ace-jump-mode)
 
-(load-file "~/.emacs.d/idle-highlight-mode.el") ; 加载自动高亮的插件
+(require 'idle-highlight-mode) ; 加载自动高亮的插件
 (global-set-key (kbd "<f6>") 'idle-highlight-mode)
 
-(load-file "~/.emacs.d/unicad-v1.1.6.el") ; 该插件能自动识别文件编码
-
-;; (load-file "~/.emacs.d/powerline.el") ; 该插件能使mode-line更好看
-
-;; (load-file "~/.emacs.d/window-numbering.el") ; 可以用M-0…9在多窗口中跳转
-;; (require 'window-numbering)
-;; (window-numbering-mode 1)
-
-(load-file "~/.emacs.d/web-mode.el")
+(require 'unicad) ; 该插件能自动识别文件编码
 
 (load-file "~/.emacs.d/customize-lisp.el")
 (load-file "~/.emacs.d/customize-sql.el")
@@ -384,22 +376,18 @@
 
 (if (require 'tex-buf nil 'noerror)
     (load-file "~/.emacs.d/customize-latex.el")
-  (warn "tex-buf is not available, skip configuring"))
+  (warn "tex-buf is not available, skip its configuring"))
 
 
 ;; 可通过安装emacs-goodies-el来安装folding
 ;; http://www.emacswiki.org/emacs/FoldingMode
-(load-file "~/.emacs.d/folding.el")
-(if (require 'folding nil 'noerror)
-    (progn
-      (load "folding" 'nomessage 'noerror)
-      (load-file "~/.emacs.d/customize-folding.el"))
-  (warn "folding is not available, skip configuring"))
+(autoload 'folding-mode          "folding" "Folding mode" t)
+(autoload 'turn-off-folding-mode "folding" "Folding mode" t)
+(autoload 'turn-on-folding-mode  "folding" "Folding mode" t)
 
 ;; 加载xcscope(Cscope的emacs扩展，依赖于Cscope)
 ;; debian下可以这样安装xcscope: apt-get install cscope-el
 ;; Refer to: https://github.com/dkogan/xcscope.el
-(load-file "~/.emacs.d/xcscope.el")
 (if (require 'xcscope nil 'noerror)
     (progn
       ;; ubuntu下默认不需要cscope-setup，但redhat中需要。
@@ -411,18 +399,39 @@
         'cscope-history-backward-line-current-result)
       (define-key global-map [(ctrl f11)]
         'cscope-history-forward-line-current-result))
-  (warn "xcscope is not available, skip configuring"))
-
-(add-to-list 'load-path "~/.emacs.d/languages/")
-(require 'yaml-mode)
-(require 'jcl-mode)
-(require 'my-refine-mode)
-(require 'cobol-mode)
-(require 'cobol-free-mode)
+  (warn "find error when loading xcscope, skip its configuring"))
 
 ;; Load htmlize
-;; Patch it by changing running-xemacs to html-running-xemacs
-(load-file "~/.emacs.d/htmlize.el")
+;; Patch it by changing running-xemacs to htmlize-running-xemacs
+(require 'htmlize)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(add-to-list 'load-path "~/.emacs.d/languages/")
+
+(autoload 'yaml-mode "yaml-mode" "yaml mode" t)
+(add-to-list 'auto-mode-alist '("\\.ya?ml$" . yaml-mode))
+
+(autoload 'jcl-mode "jcl-mode" "jcl mode" t)
+(add-to-list 'auto-mode-alist '("\\.jcl\\'" . jcl-mode))
+
+(autoload 'my-refine-mode "my-refine-mode" "refine mode" t)
+(add-to-list 'auto-mode-alist '("\\.re\\'" . my-refine-mode))
+
+(autoload 'cobol-mode "cobol-mode" "cobol mode" t)
+(autoload 'cobol-free-mode "cobol-free-mode" "cobol mode for free format" t)
+(setq auto-mode-alist
+      (append
+       '(
+         ("\\.cpy\\'" . cobol-mode)
+         ("\\.cbl\\'" . cobol-mode)
+         ("\\.cob\\'" . cobol-mode)
+         ("\\.pco\\'" . cobol-mode)  ;; File name ends in '.pco', Oracle Pro*COBOL files.
+         ("\\.sqb\\'" . cobol-mode)) ;; File name ends in '.sqb', Db2 files.
+       auto-mode-alist))
+;; 当关键字IDENTIFICATION前面的空格为0-6(不到7)个时，设置为cobol-free-mode
+(add-to-list 'magic-mode-alist '("\\(^.*\n\\)*[ ]\\{0,6\\}IDENTIFICATION" . cobol-free-mode))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; http://stackoverflow.com/questions/17755665/how-to-call-describe-function-for-current-word-in-emacs
@@ -497,10 +506,8 @@
 (setq auto-mode-alist
       (append
        '(
-         ;; 所有以makefile开头的文件都使用makefile mode
-         ("[Mm]akefile" . makefile-mode)
-         ;; 所有以setenv开头的文件都使用sh mode
-         ("setenv" . sh-mode))
+         ("[Mm]akefile" . makefile-mode) ;; 以makefile开头的文件使用makefile mode
+         ("setenv" . sh-mode))           ;; 以setenv开头的文件使用sh mode
        auto-mode-alist))
 
 
@@ -687,3 +694,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; You can run ‘M-x emacs-init-time’ to check emacs initialize time.
+;;
+;; 使用工具profile-dotemacs.el，可以检查哪段代码执行比较耗时。
+;; $ emacs -Q -l path/to/profile-dotemacs.el -f profile-dotemacs
+;; 参考：http://www.emacswiki.org/emacs/ProfileDotEmacs

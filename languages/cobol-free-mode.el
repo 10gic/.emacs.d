@@ -259,9 +259,6 @@
 ;; Used to create the `font-lock-keywords' table.")
 
 
-
-
-
 (defvar cobol-free-keyword-fcn-names-regexp
   "^.\\{6\\}\\s-\\{1,4\\}\\(\\w+\\)\\s-*\\."
   "Defines a regexp that finds the names of paragraphs.
@@ -344,9 +341,5 @@ turns on font-lock-mode"
   (cobol-free-setup-font-lock)
 
 )
-
-
-(add-to-list 'magic-mode-alist '("\\(^.*\n\\)*[ ]\\{0,6\\}IDENTIFICATION" . cobol-free-mode))
-;; 当IDENTIFICATION前面的空格为0-6(不到7)个时，设置为cobol-free-mode
 
 (provide 'cobol-free-mode)

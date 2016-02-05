@@ -1,4 +1,4 @@
-(require 'web-mode)
+(autoload 'web-mode "web-mode" "major-mode for editing web templates" t)
 ;; web-mode.el is an autonomous emacs major-mode for editing web templates.
 ;; http://web-mode.org/
 

@@ -697,7 +697,7 @@ machine, controlled by `cobol-find-syntactic--state' sequences the searches."
   "Creates `font-lock-keywords' based on current customize settings."
   (append '(("[']+[[:print:]]*[']+" . font-lock-string-face)
             ("[\"]+[[:print:]]*[\"]+" . font-lock-string-face))
-           cobol-free-static-font-lock-keywords))
+           cobol-static-font-lock-keywords))
 
 
 (defvar cobol-font-lock-syntactic-keywords
@@ -1028,20 +1028,6 @@ CUA mode has some really great rectangle functions."
 ;  (set (make-local-variable 'outline-regexp) cobol-outline-regexp)
   (show-paren-mode 1)
   (run-hooks 'cobol-mode-hook))
-
-
-(setq auto-mode-alist
-      (append
-       '(
-         ("\\.cpy\\'" . cobol-mode)
-         ;; File name ends in '.cbl'.
-         ("\\.cbl\\'" . cobol-mode)
-         ;; File name ends in '.pco', Oracle Pro*COBOL files.
-         ("\\.pco\\'" . cobol-mode)
-         ("\\.cob\\'" . cobol-mode)
-         ;; File name ends in '.sqb', Db2 files.
-         ("\\.sqb\\'" . cobol-mode))
-       auto-mode-alist))
 
 (provide 'cobol-mode)
 

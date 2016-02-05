@@ -201,6 +201,10 @@ to perform."
       (add-to-list 'menu-item-list `("Rename local variable (Current file)"
                                      rename-local-var
                                      ("(Current file)"))))
+    (when (srefactor--menu-add-rename-function-name-p tag)
+      (add-to-list 'menu-item-list `("Rename function name (Current file)"
+                                     rename-function-name
+                                     ,srefactor--file-options)))
     (when (region-active-p)
       (add-to-list 'menu-item-list `("Extract function (Current file)"
                                      extract-function
@@ -271,6 +275,23 @@ FILE-OPTION is a file destination associated with OPERATION."
       (cond
        ((eq operation 'extract-function)
         (srefactor--extract-region 'function))
+       ((eq operation 'rename-function-name)
+        (let* ((local-func (srefactor--tag-at-point))
+               (search-start (point-min))
+               (search-end (point-max))
+               prompt)
+          (unwind-protect
+              (condition-case nil
+                  (let ((tag-occurrences (srefactor--collect-tag-occurrences local-func
+                                                                             search-start
+                                                                             search-end)))
+                    (srefactor--highlight-tag local-func tag-occurrences refactor-tag 'match)
+                    (setq prompt (format "Replace function (%s) with: " (semantic-tag-name local-func)))
+                    (srefactor--rename-function-name local-func
+                                                     tag-occurrences
+                                                     (read-from-minibuffer prompt)))
+                (error nil))
+            (srefactor--unhighlight-tag local-func))))
        ((eq operation 'rename-local-var)
         (let* ((local-var (srefactor--tag-at-point))
                (function-tag (semantic-current-tag))
@@ -998,13 +1019,32 @@ TAG-TYPE is the return type such as int, long, float, double..."
     (indent-region beg end)
     (setq mark-active nil)))
 
+(defun srefactor--rename-function-name (tag tag-occurrences new-name)
+  "Rename the function instances in TAG-OCCURRENCES to NEW-NAME."
+  (save-excursion
+    (goto-char (point-min))
+    (let* ((distance (- (length new-name)
+                        (length (semantic-tag-name tag))))
+           (var-list (loop for v in tag-occurrences
+                           for i from 0 upto (1- (length tag-occurrences))
+                           collect (if (consp v)
+                                       (cons (+ (car v) (* 14 i)) (cdr v))
+                                     (+ v (* distance i))))))
+      (mapc (lambda (c)
+              (goto-char c)
+              (search-forward-regexp (srefactor--local-var-regexp tag)
+                                     (point-max)
+                                     t)
+              (replace-match new-name t t nil 1))
+            var-list)
+      (message (format "Renamed %d occurrences of %s to %s" (length var-list) (semantic-tag-name tag) new-name)))))
+
 ;;
 ;; VARIABLE
 ;;
 (defun srefactor--rename-local-var (tag tag-occurrences function-tag new-name)
   "Rename the variable instances in TAG-OCCURRENCES in FUNCTION-TAG to NEW-NAME."
   (save-excursion
-    (message "xxxyyy")
     (goto-char (semantic-tag-start function-tag))
     (let* ((distance (- (length new-name)
                         (length (semantic-tag-name tag))))
@@ -1191,11 +1231,14 @@ The returned string is formatted as:
   (semantic-tag-get-attribute tag :constructor-flag))
 
 (defun srefactor--local-var-regexp (tag)
-  "Return regexp for seraching local variable TAG."
-  (format (concat "\\(\\_\<%s\\)[ ]*\\([^[:alnum:]_"
-                  (unless (srefactor--tag-lambda-p tag) "(")
-                  "]\\)")
-          (regexp-quote (semantic-tag-name tag))))
+  "Return regexp for seraching function or local variable TAG."
+  (if (eq (semantic-tag-class tag) 'function)
+      (format (concat "\\(\\_\<%s\\)[ ]*\\([^[:alnum:]_]\\)")
+              (regexp-quote (semantic-tag-name tag)))
+    (format (concat "\\(\\_\<%s\\)[ ]*\\([^[:alnum:]_"
+                    (unless (srefactor--tag-lambda-p tag) "(")
+                    "]\\)")
+            (regexp-quote (semantic-tag-name tag)))))
 
 (defun srefactor--tag-pointer (tag)
   "Return `:pointer' attribute of a TAG."
@@ -1429,22 +1472,12 @@ tag and OPTIONS is a list of possible choices for each menu item.
   (let* ((local-var (srefactor--tag-at-point))
          (cur-tag (semantic-current-tag))
          cur-tag-start cur-tag-end tag-name)
-    ;; (message "cur-tag %s" cur-tag)
-    ;; (message "local-var %s" local-var)
-    ;; (message "semantic-tag-class %s" (semantic-tag-class cur-tag))
-    ;; (message "semantic-tag-prototype-p %s" (semantic-tag-prototype-p cur-tag))
-    ;; (message "semantic-tag-name %s" (semantic-tag-name cur-tag))
-    ;; (message "semantic-ctxt-current-symbol %s" (car (semantic-ctxt-current-symbol)))
-    (when (or (and local-var
-                   (eq (semantic-tag-class cur-tag) 'function)
-                   (not (equal (car (semantic-ctxt-current-symbol))
-                               (semantic-tag-name cur-tag)))
-                   (not (semantic-tag-prototype-p cur-tag))
-                   (not (region-active-p)))
-              (and local-var
-                   (eq (semantic-tag-class cur-tag) 'variable)
-                   (equal (car (semantic-ctxt-current-symbol))
-                          (semantic-tag-name cur-tag))))
+    (when (and local-var
+               (eq (semantic-tag-class cur-tag) 'function)
+               (not (equal (car (semantic-ctxt-current-symbol))
+                           (semantic-tag-name cur-tag)))
+               (not (semantic-tag-prototype-p cur-tag))
+               (not (region-active-p)))
       local-var)))
 
 (defun srefactor--menu-add-function-pointer-p (tag)
@@ -1471,6 +1504,12 @@ tag and OPTIONS is a list of possible choices for each menu item.
 (defun srefactor--menu-add-move-p ()
   "Check whether to add move menu."
   (and (semantic-current-tag)
+       (not (region-active-p))))
+
+(defun srefactor--menu-add-rename-function-name-p (tag)
+  "Check whether to add renmae function memu."
+  (and (eq (semantic-tag-class (srefactor--tag-at-point)) 'function)
+       (eq (semantic-tag-class tag) 'function)
        (not (region-active-p))))
 
 (defun srefactor--tag-at-point ()
