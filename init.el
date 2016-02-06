@@ -104,6 +104,7 @@
  '(mouse-wheel-mode t)
  '(show-paren-mode t)
  '(size-indication-mode t)
+ '(scroll-bar-mode (quote nil))
  '(xterm-mouse-mode t))
 
 ;; 说明:
