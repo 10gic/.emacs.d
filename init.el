@@ -2,11 +2,11 @@
 (setq inhibit-startup-message t) ; 启动emacs时不显示GNU Emacs窗口。
 (setq initial-scratch-message "") ; scratch信息中显示为空。
 
-;; Disable tool bar unless it's Aquamacs
-(if (and (boundp 'tool-bar-mode) (not (boundp 'aquamacs-version)))
+;; Disable tool bar unless it's Mac OS
+(if (and (boundp 'tool-bar-mode) (not (eq system-type 'darwin)))
     (tool-bar-mode -1)) ; Note: (tool-bar-mode nil) cannot work in Ubuntu 14.04
-;; Disable menu bar unless it's Aquamacs
-(if (and (boundp 'menu-bar-mode) (not (boundp 'aquamacs-version)))
+;; Disable menu bar unless it's Mac OS
+(if (and (boundp 'menu-bar-mode) (not (eq system-type 'darwin)))
     (menu-bar-mode -1)) ; Note: (memu-bar-mode nil) cannot work in Ubuntu 14.04
 
 ;; (setq make-backup-files nil) ; 不要生成备份文件（以波浪线结尾）。
@@ -803,6 +803,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Other settings for Aquamacs
 ;;
+;; ~/Library/Preferences/Aquamacs Emacs/
+;;
 ;; Useful links for Aquamacs
 ;; http://www.emacswiki.org/emacs/AquamacsFAQ
 ;; http://www.emacswiki.org/emacs/CustomizeAquamacs
@@ -813,9 +815,11 @@
                                         special-display-regexps))
   (setq frame-title-format "%f" )
   (custom-set-variables
-   '(custom-enabled-themes nil)) ;; 启动时设置主题在Aquamacs中有bug，故禁止它。
-  (custom-set-faces      ;; 为Aquamacs设置字体
-   '(default ((t (:height 140 :width normal :family "Source Code Pro")))))
+   '(ns-tool-bar-size-mode (quote small) t) ;; Aquamacs工具栏使用小图标
+   '(custom-enabled-themes nil))  ;; 不设置主题，因为Aquamacs中使用其它主题太难看
+  (if (find-font (font-spec :name "Source Code Pro"))
+      (custom-set-faces      ;; 为Aquamacs设置字体
+       '(default ((t (:height 140 :width normal :family "Source Code Pro"))))))
   (server-start)   ;; auto enable server-mode
   )
 
