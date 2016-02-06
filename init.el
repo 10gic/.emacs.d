@@ -323,15 +323,15 @@
   (warn "Emacs is too old(<24) , skip loading jdee"))
 
 ;; Load flycheck.
-;; Note: It requires gcc 4.8 or newer.
-;; let-alist (comes built-in with emacs 25.1) is required by flycheck.
-;; dash (a modern list api for Emacs) is required by flycheck.
-(load-file "~/.emacs.d/let-alist-1.0.3.el")
-(load-file "~/.emacs.d/dash.el")
+;; It requires:
+;; gcc 4.8 or newer.
+;; let-alist (comes built-in with emacs 25.1).
+;; dash (a modern list api for Emacs).
 (if (>= emacs-major-version 24)
     (progn
       (add-to-list 'load-path my-flycheck-path)
-      (load "flycheck"))
+      ;; 仅在第一次进入cc-mode时加载flycheck
+      (eval-after-load 'cc-mode '(load "flycheck")))
   (warn "Emacs is too old(<24) , skip load flycheck"))
 
 ;; 配置auto-complete
