@@ -300,8 +300,8 @@
 
 ;; aquamacs-tabbar比原始的tabbar更友好
 ;; Using aquamacs-tabbar (from https://github.com/dholm/tabbar)
-;; aquamacs-tabbar is already in Auqamacs
-(if (not (boundp 'aquamacs-version))
+;; Mac中Auqamacs内置tabbar，且默认配置很好，无需再配置。
+(if (not (eq system-type 'darwin))
     (progn
       (add-to-list 'load-path my-tabbar-path)
       (require 'aquamacs-tabbar)
@@ -369,15 +369,108 @@
 
 (require 'unicad) ; 该插件能自动识别文件编码
 
-(load-file "~/.emacs.d/customize-lisp.el")
-(load-file "~/.emacs.d/customize-sql.el")
-(load-file "~/.emacs.d/customize-perl.el")
-(load-file "~/.emacs.d/customize-c.el")
-(load-file "~/.emacs.d/customize-java.el")
-(load-file "~/.emacs.d/customize-sh.el")
-(load-file "~/.emacs.d/customize-term.el")
-(load-file "~/.emacs.d/customize-html.el")
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; For C
+;; 默认M-x compiler时，make命令会提取下面环境变量。
+(setenv "CFLAGS" "-ggdb3 -Wall")
+(setenv "CXXFLAGS" "-ggdb3 -Wall")
 
+;; Semantic Refactor is a C/C++ refactoring tool based on Semantic parser framework.
+;; https://github.com/tuhdo/semantic-refactor
+;; https://github.com/10gic/semantic-refactor
+;; 说明：(require 'srefactor)比较耗时。
+;; 为加快启动速度，把它放到eval-after-load中执行，这样，仅当第一次加载cc-mode时会比较慢。
+(eval-after-load 'cc-mode
+  '(progn
+     (require 'srefactor)
+     (semantic-mode 1) ;; this is needed by srefactor
+     (define-key c-mode-map (kbd "M-RET") 'srefactor-refactor-at-point)
+     (define-key c++-mode-map (kbd "M-RET") 'srefactor-refactor-at-point)))
+
+(add-hook 'c-mode-hook 'imenu-add-menubar-index) ;打开c-mode的index菜单
+(add-hook 'c++-mode-hook 'imenu-add-menubar-index) ;打开c++-mode的index菜单
+
+(setq-default c-basic-offset 4  ;调整缩进时，默认4个空格
+              tab-width 4)      ;显示tab为4个空格
+
+;;;; For perl
+(defalias 'perl-mode 'cperl-mode) ;设置默认使用cperl-mode代替perl-mode
+
+(add-hook 'cperl-mode-hook 'imenu-add-menubar-index) ;打开cperl-mode的index菜单
+(add-hook 'cperl-mode-hook
+          (function (lambda ()  ;only work in GUI.
+                      (local-set-key [f1] 'cperl-perldoc-at-point))))
+
+;;;; For sql
+(add-to-list 'auto-mode-alist '("\\.ddl\\'" . sql-mode))
+
+;;;; For java
+(add-to-list 'auto-mode-alist '("\\.jj\\'" . java-mode))  ;javacc grammar file
+(add-to-list 'auto-mode-alist '("\\.jjt\\'" . java-mode)) ;javacc jjtree file
+
+(add-hook 'java-mode-hook (lambda () (setq c-basic-offset 2
+                                           tab-width 2)))
+
+;;;; For shell
+(add-to-list 'auto-mode-alist '("setenv" . sh-mode)) ;; 以setenv开头的文件使用sh-mode
+(add-hook 'sh-mode-hook (function (lambda () (setq tab-width 4))))
+
+;;;; For html
+;; web-mode.el is an autonomous emacs major-mode for editing web templates.
+(autoload 'web-mode "web-mode" "major-mode for editing web templates" t)
+
+(add-to-list 'auto-mode-alist '("\\.phtml\\'" . web-mode))
+(add-to-list 'auto-mode-alist '("\\.tpl\\.php\\'" . web-mode))
+(add-to-list 'auto-mode-alist '("\\.[agj]sp\\'" . web-mode))
+(add-to-list 'auto-mode-alist '("\\.as[cp]x\\'" . web-mode))
+(add-to-list 'auto-mode-alist '("\\.erb\\'" . web-mode))
+(add-to-list 'auto-mode-alist '("\\.mustache\\'" . web-mode))
+(add-to-list 'auto-mode-alist '("\\.djhtml\\'" . web-mode))
+(add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode))
+
+;; Highlight current HTML element (highlight matched tags).
+(setq web-mode-enable-current-element-highlight t)
+
+;; Set indentation offset
+(setq web-mode-markup-indent-offset 2)
+(setq web-mode-css-indent-offset 2)
+(setq web-mode-code-indent-offset 2)
+
+;;;; For makefile
+(add-to-list 'auto-mode-alist '("[Mm]akefile" . makefile-mode)) ;; 以makefile开头的文件使用makefile mode
+
+
+(load-file "~/.emacs.d/customize-lisp.el")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(add-to-list 'load-path "~/.emacs.d/languages/")
+
+(autoload 'yaml-mode "yaml-mode" "yaml mode" t)
+(add-to-list 'auto-mode-alist '("\\.ya?ml$" . yaml-mode))
+
+(autoload 'jcl-mode "jcl-mode" "jcl mode" t)
+(add-to-list 'auto-mode-alist '("\\.jcl\\'" . jcl-mode))
+
+(autoload 'my-refine-mode "my-refine-mode" "refine mode" t)
+(add-to-list 'auto-mode-alist '("\\.re\\'" . my-refine-mode))
+
+(autoload 'cobol-mode "cobol-mode" "cobol mode" t)
+(autoload 'cobol-free-mode "cobol-free-mode" "cobol mode for free format" t)
+(setq auto-mode-alist
+      (append
+       '(
+         ("\\.cpy\\'" . cobol-mode)
+         ("\\.cbl\\'" . cobol-mode)
+         ("\\.cob\\'" . cobol-mode)
+         ("\\.pco\\'" . cobol-mode)  ;; File name ends in '.pco', Oracle Pro*COBOL files.
+         ("\\.sqb\\'" . cobol-mode)) ;; File name ends in '.sqb', Db2 files.
+       auto-mode-alist))
+;; 当关键字IDENTIFICATION前面的空格为0-6(不到7)个时，设置为cobol-free-mode
+(add-to-list 'magic-mode-alist '("\\(^.*\n\\)*[ ]\\{0,6\\}IDENTIFICATION" . cobol-free-mode))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 加载customize-org.el耗时比较多，仅在第一次进入org-mode时加载它
 ;; Using "org", because org-mode is defined in org.el
 (eval-after-load "org" '(load-file "~/.emacs.d/customize-org.el"))
@@ -415,32 +508,73 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(add-to-list 'load-path "~/.emacs.d/languages/")
+;; Idea from http://www.enigmacurry.com/2008/12/26/emacs-ansi-term-tricks/
+(require 'term)
+(defun visit-ansi-term (arg)
+  "If the current buffer is:
+     1) a running ansi-term named *ansi-term*, rename it.
+     2) a stopped ansi-term, kill it and create a new one.
+     3) a non ansi-term, go to an already running ansi-term
+        or start a new one while killing a defunt one
+     4) on a named term (i.e., not *ansi-term*) create a new one
+     4) if called with CTRL-u create a new ansi-term regardless
+     5) C-u C-u create a new ansi-term and prompt for name
+   Within an existing ansi-term one need to use C-x C-u F2 for a new term"
+  (interactive
+               (cond
+                ((equal current-prefix-arg nil)
+                 (list nil))
+                ((equal current-prefix-arg '(4))
+                 (list "*ansi-term*"))
+                ((equal current-prefix-arg '(16))
+                 (list (read-string "Name (*ansi-term*):" nil nil "*ansi-term*")))
+               ))
+  (let ((is-term (string= "term-mode" major-mode))
+        (is-running (term-check-proc (buffer-name)))
+        ;; (term-cmd (if (executable-find "zsh") "/bin/zsh" "/bin/bash"))
+        (term-cmd "/bin/bash")
+        (anon-term (get-buffer "*ansi-term*")))
+    (cond
+     ((string= arg nil)
+      (if is-term
+          (if is-running
+              (if (string= "*ansi-term*" (buffer-name))
+                  (call-interactively 'rename-buffer)
+                (if anon-term
+                    (switch-to-buffer "*ansi-term*")
+                  (ansi-term term-cmd)))
+            (kill-buffer (buffer-name))
+            (ansi-term term-cmd))
+        (if anon-term
+            (if (term-check-proc "*ansi-term*")
+                (switch-to-buffer "*ansi-term*")
+              (kill-buffer "*ansi-term*")
+              (ansi-term term-cmd))
+          (ansi-term term-cmd))))
+     ((string= arg "*ansi-term*")
+      (ansi-term term-cmd))
+     (t
+      (ansi-term term-cmd arg)))))
 
-(autoload 'yaml-mode "yaml-mode" "yaml mode" t)
-(add-to-list 'auto-mode-alist '("\\.ya?ml$" . yaml-mode))
+;; Do not bind key "<f2>" when system is windows
+(when (not (eq system-type 'windows-nt))
+  (global-set-key (kbd "<f2>") 'visit-ansi-term))
 
-(autoload 'jcl-mode "jcl-mode" "jcl mode" t)
-(add-to-list 'auto-mode-alist '("\\.jcl\\'" . jcl-mode))
+; term 模式下不绑定M-0, M-1等，它们有其它用处。
+(eval-after-load "term"
+  '(progn
+     (define-key term-raw-map (kbd "M-0") nil)
+     (define-key term-raw-map (kbd "M-1") nil)
+     (define-key term-raw-map (kbd "M-2") nil)
+     (define-key term-raw-map (kbd "M-3") nil)
+     (define-key term-raw-map (kbd "M-4") nil)
+     (define-key term-raw-map (kbd "M-5") nil)
+     (define-key term-raw-map (kbd "M-6") nil)
+     (define-key term-raw-map (kbd "M-7") nil)
+     (define-key term-raw-map (kbd "M-8") nil)
+     (define-key term-raw-map (kbd "M-9") nil)))
 
-(autoload 'my-refine-mode "my-refine-mode" "refine mode" t)
-(add-to-list 'auto-mode-alist '("\\.re\\'" . my-refine-mode))
-
-(autoload 'cobol-mode "cobol-mode" "cobol mode" t)
-(autoload 'cobol-free-mode "cobol-free-mode" "cobol mode for free format" t)
-(setq auto-mode-alist
-      (append
-       '(
-         ("\\.cpy\\'" . cobol-mode)
-         ("\\.cbl\\'" . cobol-mode)
-         ("\\.cob\\'" . cobol-mode)
-         ("\\.pco\\'" . cobol-mode)  ;; File name ends in '.pco', Oracle Pro*COBOL files.
-         ("\\.sqb\\'" . cobol-mode)) ;; File name ends in '.sqb', Db2 files.
-       auto-mode-alist))
-;; 当关键字IDENTIFICATION前面的空格为0-6(不到7)个时，设置为cobol-free-mode
-(add-to-list 'magic-mode-alist '("\\(^.*\n\\)*[ ]\\{0,6\\}IDENTIFICATION" . cobol-free-mode))
-
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; http://stackoverflow.com/questions/17755665/how-to-call-describe-function-for-current-word-in-emacs
 (defun describe-function-or-variable ()
@@ -509,15 +643,6 @@
         (x-send-client-message nil 0 nil "_NET_WM_STATE" 32
                                '(2 "_NET_WM_STATE_FULLSCREEN" 0)))
       (global-set-key [f11] 'my-fullscreen)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(setq auto-mode-alist
-      (append
-       '(
-         ("[Mm]akefile" . makefile-mode) ;; 以makefile开头的文件使用makefile mode
-         ("setenv" . sh-mode))           ;; 以setenv开头的文件使用sh mode
-       auto-mode-alist))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 其它实用函数及设置
