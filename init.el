@@ -371,8 +371,11 @@
 (load-file "~/.emacs.d/customize-java.el")
 (load-file "~/.emacs.d/customize-sh.el")
 (load-file "~/.emacs.d/customize-term.el")
-(load-file "~/.emacs.d/customize-org.el")
 (load-file "~/.emacs.d/customize-html.el")
+
+;; 加载customize-org.el耗时比较多，仅在第一次进入org-mode时加载它
+;; Using "org", because org-mode is defined in org.el
+(eval-after-load "org" '(load-file "~/.emacs.d/customize-org.el"))
 
 (if (require 'tex-buf nil 'noerror)
     (load-file "~/.emacs.d/customize-latex.el")
