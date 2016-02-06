@@ -269,11 +269,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 加载其它包及设置
 ;; Extract packages into ~/.emacs.d/packages/extract/
-(if (string-equal system-type "windows-nt")
-    (warn "Detect windows-nt, please extract packages manually if necessary.")
-  (if (executable-find "unzip")
-      (message (shell-command-to-string "sh ~/.emacs.d/packages/extract.sh"))
-    (warn "Tool unzip is NOT found, you need extract .zip files manually.")))
+(if (and (executable-find "unzip") (executable-find "tar"))
+    (message (shell-command-to-string "sh ~/.emacs.d/packages/extract.sh"))
+  (message "Warn: Tool unzip or tar is NOT found, you need decompress files manually."))
 
 (setq my-pkg-path "~/.emacs.d/packages/extract/")
 (setq my-org-path1 (concat my-pkg-path "org-8.2.10/lisp"))
@@ -319,8 +317,8 @@
           (add-to-list 'load-path my-jdee-path)
           (autoload 'jde-mode "jde" "JDE mode." t)
           (add-to-list 'auto-mode-alist '("\\.java\\'" . jde-mode)))
-      (warn "Cannot find wget, skip loading jdee"))
-  (warn "Emacs is too old(<24) , skip loading jdee"))
+      (message "Warn: Cannot find wget, skip loading jdee"))
+  (message "Warn: Emacs is too old(<24) , skip loading jdee"))
 
 ;; Load flycheck.
 ;; It requires:
@@ -332,7 +330,7 @@
       (add-to-list 'load-path my-flycheck-path)
       ;; 仅在第一次进入cc-mode时加载flycheck
       (eval-after-load 'cc-mode '(load "flycheck")))
-  (warn "Emacs is too old(<24) , skip load flycheck"))
+  (message "Warn: Emacs is too old(<24) , skip loading flycheck"))
 
 ;; 配置auto-complete
 ;; http://cx4a.org/software/auto-complete/
@@ -379,7 +377,7 @@
 
 (if (require 'tex-buf nil 'noerror)
     (load-file "~/.emacs.d/customize-latex.el")
-  (warn "tex-buf is not available, skip its configuring"))
+  (message "Warn: tex-buf is not available, skip its configuring"))
 
 
 ;; 可通过安装emacs-goodies-el来安装folding
@@ -402,7 +400,7 @@
         'cscope-history-backward-line-current-result)
       (define-key global-map [(ctrl f11)]
         'cscope-history-forward-line-current-result))
-  (warn "find error when loading xcscope, skip its configuring"))
+  (message "Warn: Find error when loading xcscope, skip its configuring"))
 
 ;; Load htmlize
 ;; Patch it by changing running-xemacs to htmlize-running-xemacs
@@ -580,7 +578,7 @@
                 xsel-output )))
           (setq interprogram-cut-function 'xsel-cut-function)
           (setq interprogram-paste-function 'xsel-paste-function))
-      (warn "Tool xsel does not works, skip configuring clipboard")))
+      (message "Warn: Tool xsel does not works, skip configuring clipboard")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; from http://emacswiki.org/emacs/RecreateScratchBuffer
