@@ -376,6 +376,44 @@
 (setenv "CFLAGS" "-ggdb3 -Wall")
 (setenv "CXXFLAGS" "-ggdb3 -Wall")
 
+(setq-default c-basic-offset 2  ;调整缩进时，默认2个空格
+              tab-width 4)      ;显示tab为4个空格
+
+;; 格式化C/C++程序代码
+;; 参考：
+;; https://en.wikipedia.org/wiki/Indent_style
+;; http://algo13.net/clang/clang-format-style-oputions.html
+;; http://clang.llvm.org/docs/ClangFormat.html
+(defun c-reformat-current-buffer()
+  "Use external tool `lang-format' (if not find, try to use `indent') to
+reformat current entire buffer."
+  (interactive)
+  (when (and (not (executable-find "clang-format"))
+             (not (executable-find "indent")))
+    (error "Error: cannot find external tool `clang-format' or `indent'"))
+  (let (sh-indent-command)
+    (if (eq system-type 'darwin)
+        ;; Mac OS中自带的indent不支持-kr等选项，比GNU indent功能少很多
+        (setq sh-indent-command (concat "indent -nbad -bap -nbc -br -brs "
+                                        "-c33 -cd33 -ncdb -ce -ci4 -cli0 "
+                                        "-d0 -di1 -nfc1 -i4 -ip0 -l80 -lp "
+                                        "-npcs -npsl -nsc -nsob -nut"))
+      ;; 假设GNU indent
+      (setq sh-indent-command "indent -kr -nut"))
+    ;; 如果发现系统中有clang-format，则优先使用它
+    (when (executable-find "clang-format")
+      (setq sh-indent-command "clang-format -style=LLVM"))
+    (save-buffer)
+    (shell-command-on-region
+     (point-min)
+     (point-max)
+     sh-indent-command
+     (buffer-name)
+     nil
+     "*Error*"
+     t
+     )))
+
 ;; Semantic Refactor is a C/C++ refactoring tool based on Semantic parser framework.
 ;; https://github.com/tuhdo/semantic-refactor
 ;; https://github.com/10gic/semantic-refactor
@@ -386,13 +424,14 @@
      (require 'srefactor)
      (semantic-mode 1) ;; this is needed by srefactor
      (define-key c-mode-map (kbd "M-RET") 'srefactor-refactor-at-point)
-     (define-key c++-mode-map (kbd "M-RET") 'srefactor-refactor-at-point)))
+     (define-key c++-mode-map (kbd "M-RET") 'srefactor-refactor-at-point)
+
+     (define-key c-mode-map [f7] 'c-reformat-current-buffer)
+     (define-key c++-mode-map [f7] 'c-reformat-current-buffer)
+     ))
 
 (add-hook 'c-mode-hook 'imenu-add-menubar-index) ;打开c-mode的index菜单
 (add-hook 'c++-mode-hook 'imenu-add-menubar-index) ;打开c++-mode的index菜单
-
-(setq-default c-basic-offset 4  ;调整缩进时，默认4个空格
-              tab-width 4)      ;显示tab为4个空格
 
 ;;;; For perl
 (defalias 'perl-mode 'cperl-mode) ;设置默认使用cperl-mode代替perl-mode
