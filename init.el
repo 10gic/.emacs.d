@@ -385,7 +385,7 @@
 ;; http://algo13.net/clang/clang-format-style-oputions.html
 ;; http://clang.llvm.org/docs/ClangFormat.html
 (defun c-reformat-current-buffer()
-  "Use external tool `lang-format' (if not find, try to use `indent') to
+  "Use external tool `clang-format' (if not find, try to use `indent') to
 reformat current entire buffer."
   (interactive)
   (when (and (not (executable-find "clang-format"))
