@@ -412,7 +412,8 @@ reformat current entire buffer."
      nil
      "*Error*"
      t
-     )))
+     )
+    (save-buffer)))
 
 ;; Semantic Refactor is a C/C++ refactoring tool based on Semantic parser framework.
 ;; https://github.com/tuhdo/semantic-refactor
@@ -560,14 +561,14 @@ reformat current entire buffer."
      5) C-u C-u create a new ansi-term and prompt for name
    Within an existing ansi-term one need to use C-x C-u F2 for a new term"
   (interactive
-               (cond
-                ((equal current-prefix-arg nil)
-                 (list nil))
-                ((equal current-prefix-arg '(4))
-                 (list "*ansi-term*"))
-                ((equal current-prefix-arg '(16))
-                 (list (read-string "Name (*ansi-term*):" nil nil "*ansi-term*")))
-               ))
+   (cond
+    ((equal current-prefix-arg nil)
+     (list nil))
+    ((equal current-prefix-arg '(4))
+     (list "*ansi-term*"))
+    ((equal current-prefix-arg '(16))
+     (list (read-string "Name (*ansi-term*):" nil nil "*ansi-term*")))
+    ))
   (let ((is-term (string= "term-mode" major-mode))
         (is-running (term-check-proc (buffer-name)))
         ;; (term-cmd (if (executable-find "zsh") "/bin/zsh" "/bin/bash"))
@@ -599,7 +600,7 @@ reformat current entire buffer."
 (when (not (eq system-type 'windows-nt))
   (global-set-key (kbd "<f2>") 'visit-ansi-term))
 
-; term 模式下不绑定M-0, M-1等，它们有其它用处。
+;; term 模式下不绑定M-0, M-1等，它们有其它用处。
 (eval-after-load "term"
   '(progn
      (define-key term-raw-map (kbd "M-0") nil)
