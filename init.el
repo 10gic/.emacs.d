@@ -515,10 +515,10 @@ reformat current entire buffer."
 ;; Using "org", because org-mode is defined in org.el
 (eval-after-load "org" '(load-file "~/.emacs.d/customize-org.el"))
 
-(if (require 'tex-buf nil 'noerror)
-    (load-file "~/.emacs.d/customize-latex.el")
-  (message "Warn: tex-buf is not available, skip its configuring"))
-
+(eval-after-load "tex-mode"
+  '(if (require 'tex-buf nil 'noerror)
+         (load-file "~/.emacs.d/customize-latex.el")
+       (message "Warn: tex-buf is not available, skip its configuring")))
 
 ;; 可通过安装emacs-goodies-el来安装folding
 ;; http://www.emacswiki.org/emacs/FoldingMode
