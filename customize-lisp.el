@@ -1,6 +1,6 @@
-;;buildin macro
 (setq common-lisp-mode-keywords
  `(
+;;buildin macro
         ( ,(regexp-opt '(
 "and"
 "assert"
