@@ -276,11 +276,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 加载其它包及设置
 ;; Extract packages into ~/.emacs.d/packages/extract/
-(if (and (executable-find "unzip") (executable-find "tar"))
-    (message (shell-command-to-string "sh ~/.emacs.d/packages/extract.sh"))
-  (message "Warn: Tool unzip or tar is NOT found, you need decompress files manually."))
-
 (setq my-pkg-path "~/.emacs.d/packages/extract/")
+
+(when (not (file-exists-p my-pkg-path))
+  (if (and (executable-find "unzip") (executable-find "tar"))
+      (message (shell-command-to-string "sh ~/.emacs.d/packages/extract.sh"))
+    (message "Warn: Tool unzip or tar is NOT found, you need decompress files manually.")))
+
 (setq my-org-path1 (concat my-pkg-path "org-8.2.10/lisp"))
 (setq my-org-path2 (concat my-pkg-path "org-8.2.10/contrib/lisp"))
 (setq my-tabbar-path (concat my-pkg-path "tabbar-master"))
