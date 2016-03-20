@@ -182,6 +182,7 @@
 \\XeTeXlinebreakskip = 0pt plus 1pt minus 0.1pt
 
 \\usepackage{amsmath}       % 这个宏包提供了很多扩展数学公式的环境，如cases
+\\usepackage{amssymb}       % 引入这个宏包后，可以使用 \mathbb{R} 等
 
 \\usepackage{listings}      % listings能方便处理程序源码
 \\usepackage{caption}
@@ -254,6 +255,7 @@ frame=tb               % adds a frame around the code
 \\XeTeXlinebreakskip = 0pt plus 1pt minus 0.1pt
 
 \\usepackage{amsmath}       % 这个宏包提供了很多扩展数学公式的环境，如cases
+\\usepackage{amssymb}       % 引入这个宏包后，可以使用 \mathbb{R} 等
 
 \\usepackage{listings}      % listings能方便处理程序源码
 \\usepackage{caption}
@@ -372,6 +374,6 @@ frame=tb               % adds a frame around the code
        (t
         (insert (format "[[%s]]\n" fname))))))
   )
- 
+
 (define-key org-mode-map (kbd "<drag-n-drop>") 'my-dnd-func)
 (define-key org-mode-map (kbd "<C-drag-n-drop>") 'my-dnd-func)
