@@ -86,7 +86,7 @@
 (require 'ox-publish)
 (setq org-publish-project-alist
       '(
-        ("org-notes"               ;; Used to export .org file
+        ("org-notes-html"          ;; Used to export .org file
          :base-directory "~/www/"  ;; directory holds .org files
          :base-extension "org"     ;; process .org file only
          :publishing-directory "~/public_html/"
@@ -118,7 +118,7 @@
          :style-include-default nil  ;; Disable the default css style
          )
 
-        ("org-static"                ;; Used to publish static files
+        ("org-static-html"            ;; Used to publish static files
          :base-directory "~/www/"
          :base-extension "html\\|css\\|js\\|png\\|jpg\\|gif\\|svg\\|pdf"
          :publishing-directory "~/public_html/"
@@ -126,15 +126,26 @@
          :publishing-function org-publish-attachment
          )
 
-        ;; combine "org-static" and "org-static" into one function call
-        ("org" :components ("org-notes" "org-static"))))
+        ("pdf"
+         :base-directory "~/www2pdf.tmp/"
+         :base-extension "org"
+         :publishing-directory "~/public_pdf/"
+         :recursive t
+         :publishing-function org-latex-publish-to-pdf
+         )
+
+        ;; combine "org-static-html" and "org-static-html" into one function call
+        ("html" :components ("org-notes-html" "org-static-html"))))
 
 ;; These helper functions can be used in batch mode of emacs.
 (defun my-export-html (&optional force)
-  (org-publish-project "org" force))
+  (org-publish-project "html" force))
 
 (defun my-force-export-html ()
   (my-export-html t))
+
+(defun my-export-pdf (&optional force)
+  (org-publish-project "pdf" force))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 下面为导出latex/pdf相关设置
