@@ -120,7 +120,7 @@
 
         ("org-static-html"            ;; Used to publish static files
          :base-directory "~/www/"
-         :base-extension "html\\|css\\|js\\|png\\|jpg\\|gif\\|svg\\|pdf"
+         :base-extension "html\\|css\\|js\\|png\\|jpg\\|gif\\|svg"
          :publishing-directory "~/public_html/"
          :recursive t
          :publishing-function org-publish-attachment
@@ -131,6 +131,7 @@
          :base-extension "org"
          :publishing-directory "~/public_pdf/"
          :recursive t
+         :exclude "categories.org\\|archives.org\\|sitemap0-auto.org"
          :publishing-function org-latex-publish-to-pdf
          )
 
