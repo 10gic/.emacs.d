@@ -112,6 +112,17 @@
                       <li><a href=\"/archives.html\">Archives</a></li>
                       <li><a href=\"/about.html\">About</a></li>
                   </ul>
+                  <div class=\"nav navbar-nav navbar-right\">
+                    <form method=\"get\" action=\"http://www.bing.com/search\" target=\"_blank\" class=\"navbar-form\" role=\"search\">
+                      <div class=\"input-group\">
+                        <input type=\"text\" name=\"q\" class=\"form-control pull-right\" placeholder=\"Keywords\">
+                        <input type=\"hidden\" name=\"q1\" value=\"site:aandds.com\" />
+                        <span class=\"input-group-btn\">
+                          <button type=\"submit\" class=\"btn btn-default form-control\" style=\"background-color: #e5e5e5;\">Search Site</button>
+                        </span>
+                      </div>
+                    </form>
+                  </div>
               </div>
           </div>
       </nav>"                        ;; change this to your style
