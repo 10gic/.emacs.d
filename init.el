@@ -482,6 +482,13 @@ reformat current entire buffer."
 ;;;; For makefile
 (add-to-list 'auto-mode-alist '("[Mm]akefile" . makefile-mode)) ;; 以makefile开头的文件使用makefile mode
 
+;; For CMake
+(autoload 'cmake-mode "cmake-mode" "cmake mode" t)
+(setq auto-mode-alist
+      (append
+       '(("CMakeLists\\.txt\\'" . cmake-mode))
+       '(("\\.cmake\\'" . cmake-mode))
+       auto-mode-alist))
 
 (load-file "~/.emacs.d/customize-lisp.el")
 

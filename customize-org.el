@@ -82,10 +82,18 @@
 <p class=\"creator\">Creator: %c</p>\n
 <p class=\"validation\">%v</p>")))
 
+(defun get-string-from-file (file-path)
+  "Return file-path's file content."
+  (with-temp-buffer
+    (insert-file-contents file-path)
+    (buffer-string)))
+
+(setq my-html-preamble (get-string-from-file "~/.emacs.d/html-preamble.tmpl"))
+
 ;; Refer to: http://orgmode.org/manual/Publishing.html
 (require 'ox-publish)
 (setq org-publish-project-alist
-      '(
+      `(
         ("org-notes-html"          ;; Used to export .org file
          :base-directory "~/www/"  ;; directory holds .org files
          :base-extension "org"     ;; process .org file only
@@ -99,33 +107,7 @@
          :sitemap-file-entry-format "%t (%d)"     ;; %t: title, %d: date
          :sitemap-sort-files anti-chronologically ;; newer date first
          :table-of-contents t
-         :html-preamble "
-      <nav class=\"navbar navbar-inverse navbar-fixed-top\">
-          <div class=\"container-fluid\">
-              <div class=\"navbar-header\">
-                  <a class=\"navbar-brand\" href=\"#\">AandDS</a>
-              </div>
-              <div>
-                  <ul class=\"nav navbar-nav\">
-                      <li><a href=\"/\">Home</a></li>
-                      <li><a href=\"/categories.html\">Categories</a></li>
-                      <li><a href=\"/archives.html\">Archives</a></li>
-                      <li><a href=\"/about.html\">About</a></li>
-                  </ul>
-                  <div class=\"nav navbar-nav navbar-right\">
-                    <form method=\"get\" action=\"http://www.bing.com/search\" target=\"_blank\" class=\"navbar-form\" role=\"search\">
-                      <div class=\"input-group\">
-                        <input type=\"text\" name=\"q\" class=\"form-control pull-right\" placeholder=\"Keywords\">
-                        <input type=\"hidden\" name=\"q1\" value=\"site:aandds.com\" />
-                        <span class=\"input-group-btn\">
-                          <button type=\"submit\" class=\"btn btn-default form-control\" style=\"background-color: #e5e5e5;\">Search Site</button>
-                        </span>
-                      </div>
-                    </form>
-                  </div>
-              </div>
-          </div>
-      </nav>"                        ;; change this to your style
+         :html-preamble ,my-html-preamble         ;; change this to your style
          :style-include-default nil  ;; Disable the default css style
          )
 
@@ -137,9 +119,17 @@
          :publishing-function org-publish-attachment
          )
 
+        ("org-static-others"            ;; Used to publish static files
+         :base-directory "~/www/attachments/"
+         :base-extension "png\\|pdf\\|tex\\|c"
+         :publishing-directory "~/public_html/attachments/"
+         :recursive t
+         :publishing-function org-publish-attachment
+         )
+
         ("pdf"
          :base-directory "~/www2pdf.tmp/"
-         :base-extension "org"
+         :base-extension 'any
          :publishing-directory "~/public_pdf/"
          :recursive t
          :exclude "categories.org\\|archives.org\\|sitemap0-auto.org"
@@ -147,7 +137,7 @@
          )
 
         ;; combine "org-static-html" and "org-static-html" into one function call
-        ("html" :components ("org-notes-html" "org-static-html"))))
+        ("html" :components ("org-notes-html" "org-static-html" "org-static-others"))))
 
 ;; These helper functions can be used in batch mode of emacs.
 (defun my-export-html (&optional force)
