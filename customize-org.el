@@ -172,12 +172,8 @@
 \\usepackage[slantfont, boldfont]{xeCJK}
 [NO-DEFAULT-PACKAGES]
 [PACKAGES]
-\\usepackage{ifplatform}  % Note: \iflinux \ifmacosx \ifcygwin don't work if shell escape is disabled.
-\\ifmacosx
-\\setCJKmainfont{STSong}  % Default chinese font in Mac OS
-\\else
-\\setCJKmainfont{SimSun}
-\\fi
+
+\\setmainfont{SimSun}
 
 % \\setmainfont{DejaVu Sans} % 英文衬线字体
 % \\setsansfont{DejaVu Serif} % 英文无衬线字体
@@ -244,14 +240,7 @@ frame=tb               % adds a frame around the code
 [NO-DEFAULT-PACKAGES]
 [PACKAGES]
 
-% \\setCJKmainfont{SimSun} % 设置缺省中文字体
-
-\\usepackage{ifplatform}  % Note: \iflinux \ifmacosx \ifcygwin don't work when shell escape is disabled.
-\\ifmacosx
-\\setCJKmainfont{STSong}  % Default Chinese font in Mac OS
-\\else
-\\setCJKmainfont{SimSun}
-\\fi
+\\setmainfont{SimSun}
 
 % \\setmainfont{DejaVu Sans} % 英文衬线字体
 % \\setsansfont{DejaVu Serif} % 英文无衬线字体
