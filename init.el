@@ -457,6 +457,7 @@ reformat current entire buffer."
 ;;;; For shell
 (add-to-list 'auto-mode-alist '("setenv" . sh-mode)) ;; 以setenv开头的文件使用sh-mode
 (add-hook 'sh-mode-hook (function (lambda () (setq tab-width 4))))
+(add-hook 'sh-mode-hook 'imenu-add-menubar-index)
 
 ;;;; For html
 ;; web-mode.el is an autonomous emacs major-mode for editing web templates.
