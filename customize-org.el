@@ -129,7 +129,7 @@
 
         ("pdf"
          :base-directory "~/www2pdf.tmp/"
-         :base-extension 'any
+         :base-extension "org"
          :publishing-directory "~/public_pdf/"
          :recursive t
          :exclude "categories.org\\|archives.org\\|sitemap0-auto.org"
