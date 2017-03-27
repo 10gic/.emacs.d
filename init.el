@@ -283,8 +283,8 @@
       (message (shell-command-to-string "sh ~/.emacs.d/packages/extract.sh"))
     (message "Warn: Tool unzip or tar is NOT found, you need decompress files manually.")))
 
-(setq my-org-path1 (concat my-pkg-path "org-8.2.10/lisp"))
-(setq my-org-path2 (concat my-pkg-path "org-8.2.10/contrib/lisp"))
+(setq my-org-path1 (concat my-pkg-path "org-9.0.5/lisp"))
+(setq my-org-path2 (concat my-pkg-path "org-9.0.5/contrib/lisp"))
 (setq my-tabbar-path (concat my-pkg-path "tabbar-master"))
 (setq my-multiple-cursors-path (concat my-pkg-path "multiple-cursors.el-master"))
 (setq my-jdee-path (concat my-pkg-path "jdee-2.4.1/lisp"))
@@ -294,11 +294,8 @@
 
 
 ;; Use newer org-mode, the builtin version is too old.
-;; org-mode in Aquamacs is newest, don't need load it.
-(if (not (boundp 'aquamacs-version))
-    (progn
-      (setq load-path (cons my-org-path1 load-path))
-      (setq load-path (cons my-org-path2 load-path))))
+(setq load-path (cons my-org-path1 load-path))
+(setq load-path (cons my-org-path2 load-path))
 
 ;; aquamacs-tabbar比原始的tabbar更友好
 ;; Using aquamacs-tabbar (from https://github.com/dholm/tabbar)
