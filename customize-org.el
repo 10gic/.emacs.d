@@ -15,6 +15,15 @@
 ;; 设置图片宽度不一定为实际大小
 (setq org-image-actual-width nil)
 
+;; 设置导出latex时，默认的图片宽度。默认为.9\textwidth，这时设置得更窄一些。
+(setq org-latex-image-default-width ".7\\textwidth")
+
+;; 忽略应用于文本页的审美条件，试图用最严格的标准来放置浮动图形，这样图片会尽量出现在它放置的位置附近。
+(setq org-latex-default-figure-position '!htbp)
+
+;; 设置latex表格为“三线表”。
+(setq org-latex-tables-booktabs t)
+
 ;; Configure languages which can be evaluated in Org-mode buffers.
 ;; By default only Emacs Lisp can be evaluated.
 (org-babel-do-load-languages
@@ -167,8 +176,11 @@
 ;; https://github.com/w0mTea/An.Emacs.Tutorial.for.Vim.User/blob/master/An.Emacs.Tutorial.for.Vim.User.zh-CN.org
 ;; Add a template for article
 (add-to-list 'org-latex-classes
-          '("my-org-article-zh"
-"\\documentclass{article}
+             '("my-org-article-zh"
+               "\\documentclass{article}
+\\usepackage{geometry}
+\\geometry{left=3.0cm,right=2.5cm,top=2.5cm,bottom=2.5cm}   % 调整页边距
+
 \\usepackage[slantfont, boldfont]{xeCJK}
 [NO-DEFAULT-PACKAGES]
 [PACKAGES]
@@ -209,6 +221,9 @@
 %% 不过由于\pdffilemoddate没有在XeTex中实现等原因，无法正常用xelatex导出svg图片。
 %% 参考：http://tex.stackexchange.com/questions/84837/svg-from-inkscape-doesnt-work-in-xelatex）
 
+\\usepackage{tabularx}       % 定制表格时可能会用到，如 #+ATTR_LaTeX: :environment tabularx :width \textwidth :align l|l|X
+
+\\usepackage{booktabs}    % 定制org-latex-tables-booktabs时，需要这个包。
 
 % 代码设置
 \\lstset{
@@ -234,6 +249,9 @@ frame=tb               % adds a frame around the code
 (add-to-list 'org-latex-classes
              '("my-org-book-zh"
                "\\documentclass{book}
+\\usepackage{geometry}
+\\geometry{left=3.0cm,right=2.5cm,top=2.5cm,bottom=2.5cm}   % 调整页边距
+
 \\usepackage[slantfont, boldfont]{xeCJK} % 允许斜体和粗体
 % chapter set
 \\usepackage[Lenny]{fncychap}
@@ -275,6 +293,9 @@ frame=tb               % adds a frame around the code
 %% 不过由于\pdffilemoddate没有在XeTex中实现等原因，无法正常用xelatex导出svg图片。
 %% 参考：http://tex.stackexchange.com/questions/84837/svg-from-inkscape-doesnt-work-in-xelatex）
 
+\\usepackage{tabularx}       % 定制表格时可能会用到，如 #+ATTR_LaTeX: :environment tabularx :width \textwidth :align l|l|X
+
+\\usepackage{booktabs}    % 定制org-latex-tables-booktabs时，需要这个包。
 
 % 代码设置
 \\lstset{
