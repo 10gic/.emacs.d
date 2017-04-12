@@ -69,7 +69,7 @@
 
             (auto-fill-mode -1) ;; disable auto-fill-mode
 
-            ;; 设置org-table中使用字体集fontset-myfixed，这样org-table中的中英文就能对齐了。
+            ;; 设置org-table中使用字体集fontset-myfixed，这样org-table中的中英文就能对齐显示了。
             (if (display-graphic-p)
                 (set-face-attribute 'org-table nil :fontset "fontset-myfixed"))
 
@@ -85,9 +85,8 @@
 (setq org-html-postamble-format  ;; change this to your style
       '(("en"
          "<p class=\"author\">Author: <a href=\"http://www.aandds.com\"> %a</a></p>\n
-<p class=\"date\">Created: %d</p>\n
-<p class=\"date\">Last updated: <span class=\"timestamp-wrapper\">
-<span class=\"timestamp\">&lt;%C&gt;</span></span></p>\n
+<p class=\"date\">Created: <span class=\"timestamp-wrapper\"><span class=\"timestamp\">&lt;%d&gt;</span></span></p>\n
+<p class=\"date\">Last updated: <span class=\"timestamp-wrapper\"><span class=\"timestamp\">&lt;%C&gt;</span></span></p>\n
 <p class=\"creator\">Creator: %c</p>\n
 <p class=\"validation\">%v</p>")))
 
@@ -178,10 +177,12 @@
 (add-to-list 'org-latex-classes
              '("my-org-article-zh"
                "\\documentclass{article}
+\\setcounter{secnumdepth}{4}   % 设置对4级目录进行编号（默认只对三级目录进行编号）
+
 \\usepackage{geometry}
 \\geometry{left=3.0cm,right=2.5cm,top=2.5cm,bottom=2.5cm}   % 调整页边距
 
-\\usepackage[slantfont, boldfont]{xeCJK}
+\\usepackage[slantfont, boldfont]{xeCJK} % 允许斜体和粗体
 [NO-DEFAULT-PACKAGES]
 [PACKAGES]
 
@@ -196,88 +197,15 @@
 % \\usepackage{indentfirst} % 首段缩进
 \\usepackage{parskip}  % 不要段缩进
 
-\\defaultfontfeatures{Mapping=tex-text} %如果没有它，会有一些 tex 特殊字符无法正常使用，比如连字符。
-
-% 中文断行
-\\XeTeXlinebreaklocale \"zh\"
-\\XeTeXlinebreakskip = 0pt plus 1pt minus 0.1pt
-
-\\usepackage{amsmath}       % 这个宏包提供了很多扩展数学公式的环境，如cases
-\\usepackage{amssymb}       % 引入这个宏包后，可以使用 \mathbb{R} 等
-
-\\usepackage{listings}      % listings能方便处理程序源码
-\\usepackage{caption}
-\\usepackage[colorlinks,    % 将超链接以颜色来标识，而并非使用默认的方框来标识
-            linkcolor=black,
-            anchorcolor=black,
-            citecolor=black,
-            urlcolor=black
-            ]{hyperref}
-
-\\usepackage{graphicx}
-
-\\usepackage{svg}
-%% org-mode中插入svg图片时，需要上面的包。
-%% 不过由于\pdffilemoddate没有在XeTex中实现等原因，无法正常用xelatex导出svg图片。
-%% 参考：http://tex.stackexchange.com/questions/84837/svg-from-inkscape-doesnt-work-in-xelatex）
-
-\\usepackage{tabularx}       % 定制表格时可能会用到，如 #+ATTR_LaTeX: :environment tabularx :width \textwidth :align l|l|X
-
-\\usepackage{booktabs}    % 定制org-latex-tables-booktabs时，需要这个包。
-
-% 代码设置
-\\lstset{
-%language=C,
-basicstyle=\\ttfamily,
-%columns=fixed,
-numbers=left,          % where to put the line-numbers
-numberstyle=\\tiny,
-breaklines=true,       % sets automatic line breaking
-frame=tb               % adds a frame around the code
-}
-
-[EXTRA]
-"
-             ("\\section{%s}" . "\\section*{%s}")
-             ("\\subsection{%s}" . "\\subsection*{%s}")
-             ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
-             ("\\paragraph{%s}" . "\\paragraph*{%s}")
-             ("\\subparagraph{%s}" . "\\subparagraph*{%s}")))
-
-;; Add a template for book
-;; 和my-org-article-zh的设置差不多，增加了chapter相关内容。
-(add-to-list 'org-latex-classes
-             '("my-org-book-zh"
-               "\\documentclass{book}
-\\usepackage{geometry}
-\\geometry{left=3.0cm,right=2.5cm,top=2.5cm,bottom=2.5cm}   % 调整页边距
-
-\\usepackage[slantfont, boldfont]{xeCJK} % 允许斜体和粗体
-% chapter set
-\\usepackage[Lenny]{fncychap}
-[NO-DEFAULT-PACKAGES]
-[PACKAGES]
-
-\\setmainfont{SimSun}
-
-% \\setmainfont{DejaVu Sans} % 英文衬线字体
-% \\setsansfont{DejaVu Serif} % 英文无衬线字体
-% \\setmonofont{DejaVu Sans Mono} % 英文等宽字体
-
-% \\parindent 2em
-% \\usepackage{indentfirst} % 首段缩进
-\\usepackage{parskip}  % 不要段缩进
-
 \\defaultfontfeatures{Mapping=tex-text} % 如果没有它，会有一些 tex 特殊字符无法正常使用，比如连字符。
 
 % 中文断行
-\\XeTeXlinebreaklocale \"zh\"
+\\XeTeXlinebreaklocale \"zh\"   % allow linebreaks
 \\XeTeXlinebreakskip = 0pt plus 1pt minus 0.1pt
 
 \\usepackage{amsmath}       % 这个宏包提供了很多扩展数学公式的环境，如cases
 \\usepackage{amssymb}       % 引入这个宏包后，可以使用 \mathbb{R} 等
 
-\\usepackage{listings}      % listings能方便处理程序源码
 \\usepackage{caption}
 \\usepackage[colorlinks,    % 将超链接以颜色来标识，而并非使用默认的方框来标识
             linkcolor=black,
@@ -297,31 +225,41 @@ frame=tb               % adds a frame around the code
 
 \\usepackage{booktabs}    % 定制org-latex-tables-booktabs时，需要这个包。
 
+\\usepackage{listings}      % listings能方便处理程序源码
+\\newcommand*{\\mycommentstyle}[1]{%
+  \\begingroup
+    \\fontseries{lc}%
+    \\fontshape{it}%
+    \\selectfont
+    \\lstset{columns=fullflexible}%
+    #1%
+  \\endgroup
+}
+
 % 代码设置
 \\lstset{
 %language=C,
 basicstyle=\\ttfamily,
+commentstyle=\\mycommentstyle,   % 这个格式使得代码中的注释部分显得更加紧凑
 %columns=fixed,
 numbers=left,          % where to put the line-numbers
 numberstyle=\\tiny,
+showstringspaces=false,
 breaklines=true,       % sets automatic line breaking
 frame=tb               % adds a frame around the code
 }
 
 [EXTRA]
 "
-             ("\\chapter{%s}" . "\\chapter*{%s}")
              ("\\section{%s}" . "\\section*{%s}")
              ("\\subsection{%s}" . "\\subsection*{%s}")
              ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
              ("\\paragraph{%s}" . "\\paragraph*{%s}")
              ("\\subparagraph{%s}" . "\\subparagraph*{%s}")))
 
-
-;; 默认使用自定义的LaTex导出模板my-org-article-zh
-;; 在org文件中单独设置LATEX_CLASS可使用指定的模板
+;; 设置默认的LaTex导出模板
+;; 如果在org文件中单独设置LATEX_CLASS，可以覆盖这个设置
 (setq org-latex-default-class "my-org-article-zh")
-
 
 ;; 定制在org-mode中，拖拽图片文件到emacs时的处理方式
 ;; 参考：http://kitchingroup.cheme.cmu.edu/blog/2015/07/10/Drag-images-and-files-onto-org-mode-and-insert-a-link-to-them/
