@@ -622,6 +622,49 @@ reformat current entire buffer."
      (define-key term-raw-map (kbd "M-9") nil)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(require 'autoinsert)
+(auto-insert-mode +1)        ;; enable auto-insert-mode
+(setq auto-insert-query nil) ;; No prompt before insertion
+
+(eval-after-load 'autoinsert
+  '(define-auto-insert '("\\.pl\\'" . "Perl skeleton")
+     '(nil
+       "#!/usr/bin/env perl" \n
+       \n
+       "use strict;" \n
+       "use warnings;" \n \n
+       _ \n)))
+
+(eval-after-load 'autoinsert
+  '(define-auto-insert
+     '("\\.\\(CC?\\|cc\\|cxx\\|cpp\\|c++\\)\\'" . "C++ skeleton")
+     '(nil
+       "#include <iostream>" \n \n
+       "using namespace std;" \n \n
+       "int main() {" \n
+       "  " _ \n
+       "  return 0;" \n
+       "}" > \n)))
+
+(eval-after-load 'autoinsert
+  '(define-auto-insert
+     '("\\.c\\'" . "C skeleton")
+     '(nil
+       "#include <stdio.h>" \n \n
+       "int main() {" \n
+       "  " _ \n
+       "  return 0;" \n
+       "}" > \n)))
+
+(eval-after-load 'autoinsert
+  '(define-auto-insert '("\\.org\\'" . "Org skeleton")
+     '(nil
+       "#+TITLE: " (file-name-nondirectory (file-name-base (buffer-file-name))) \n
+       "#+DATE: " \n
+       "#+SETUPFILE: setup.inc" \n \n
+       _ \n)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; http://stackoverflow.com/questions/17755665/how-to-call-describe-function-for-current-word-in-emacs
 (defun describe-function-or-variable ()
