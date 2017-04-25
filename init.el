@@ -660,7 +660,7 @@ reformat current entire buffer."
   '(define-auto-insert '("\\.org\\'" . "Org skeleton")
      '(nil
        "#+TITLE: " (file-name-nondirectory (file-name-base (buffer-file-name))) \n
-       "#+DATE: " \n
+       "#+DATE: " (format-time-string "<%Y-%m-%d %a>")\n
        "#+SETUPFILE: setup.inc" \n \n
        _ \n)))
 
