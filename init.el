@@ -375,7 +375,7 @@
 (setenv "CFLAGS" "-ggdb3 -Wall")
 (setenv "CXXFLAGS" "-ggdb3 -Wall")
 
-(setq-default c-basic-offset 2  ;调整缩进时，默认2个空格
+(setq-default c-basic-offset 4  ;设置缩进为4个空格
               tab-width 4)      ;显示tab为4个空格
 
 ;; 格式化C/C++程序代码
