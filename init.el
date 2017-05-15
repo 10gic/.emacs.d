@@ -488,6 +488,11 @@ reformat current entire buffer."
        '(("\\.cmake\\'" . cmake-mode))
        auto-mode-alist))
 
+;; For log4j (major mode for viewing log files)
+(autoload 'log4j-mode "log4j-mode" "Major mode for viewing log files." t)
+(add-to-list 'auto-mode-alist '("catalina.out" . log4j-mode)) ;; catalina.out is tomcat log file
+(add-to-list 'auto-mode-alist '("\\.log\\'" . log4j-mode))
+
 (load-file "~/.emacs.d/customize-lisp.el")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
