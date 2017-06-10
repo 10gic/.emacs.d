@@ -669,6 +669,14 @@ reformat current entire buffer."
        "#+SETUPFILE: setup.inc" \n \n
        _ \n)))
 
+(eval-after-load 'autoinsert
+  '(define-auto-insert
+     '("\\.py\\'" . "Python skeleton")
+     '(nil
+       "#!/usr/bin/env python" \n
+       "# -*- coding: utf-8 -*-" \n \n
+       _ \n)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; http://stackoverflow.com/questions/17755665/how-to-call-describe-function-for-current-word-in-emacs
