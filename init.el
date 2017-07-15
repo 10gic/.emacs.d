@@ -498,6 +498,8 @@ reformat current entire buffer."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (add-to-list 'load-path "~/.emacs.d/languages/")
 
+(require 'go-mode-autoloads)  ; https://github.com/dominikh/go-mode.el
+
 (autoload 'yaml-mode "yaml-mode" "yaml mode" t)
 (add-to-list 'auto-mode-alist '("\\.ya?ml$" . yaml-mode))
 
