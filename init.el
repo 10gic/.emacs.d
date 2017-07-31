@@ -205,9 +205,10 @@
 ;; From http://emacswiki.org/emacs/ShowWhiteSpace
 (add-hook 'prog-mode-hook
           (lambda ()
-            (font-lock-add-keywords
-             nil
-             '(("\t" 0 'trailing-whitespace prepend)))))
+            (unless (derived-mode-p 'go-mode)    ;; prog-mode（除go-mode外）中特别显示"\t"
+              (font-lock-add-keywords
+               nil
+               '(("\t" 0 'trailing-whitespace prepend))))))
 
 ;; (global-whitespace-mode t) ; 全局打开whitespace-mode
 
