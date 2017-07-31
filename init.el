@@ -434,6 +434,11 @@ reformat current entire buffer."
 (add-hook 'c-mode-hook 'imenu-add-menubar-index) ;打开c-mode的index菜单
 (add-hook 'c++-mode-hook 'imenu-add-menubar-index) ;打开c++-mode的index菜单
 
+;;;; For go
+(add-hook 'go-mode-hook
+          (lambda ()
+            (add-hook 'before-save-hook 'gofmt-before-save)))
+
 ;;;; For perl
 (defalias 'perl-mode 'cperl-mode) ;设置默认使用cperl-mode代替perl-mode
 
