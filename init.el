@@ -474,6 +474,7 @@ reformat current entire buffer."
 (add-to-list 'auto-mode-alist '("\\.mustache\\'" . web-mode))
 (add-to-list 'auto-mode-alist '("\\.djhtml\\'" . web-mode))
 (add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode))
+(add-to-list 'auto-mode-alist '("\\.xml?\\'" . web-mode))
 
 ;; Highlight current HTML element (highlight matched tags).
 (setq web-mode-enable-current-element-highlight t)
