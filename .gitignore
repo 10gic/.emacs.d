@@ -1,10 +1,12 @@
-saved-places.dat
-ac-comphist.dat
-.mc-lists.el
-recentf
-personal-conf.el
-SessionDesktop.el
-srecode-map.el
+.DS_Store
+
+/saved-places.dat
+/ac-comphist.dat
+/.mc-lists.el
+/recentf
+/personal-conf.el
+/SessionDesktop.el
+/srecode-map.el
 
 /auto-save-list/
 /packages/extract/
