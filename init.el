@@ -284,8 +284,8 @@
       (message (shell-command-to-string "sh ~/.emacs.d/packages/extract.sh"))
     (message "Warn: Tool unzip or tar is NOT found, you need decompress files manually.")))
 
-(setq my-org-path1 (concat my-pkg-path "org-9.0.7/lisp"))
-(setq my-org-path2 (concat my-pkg-path "org-9.0.7/contrib/lisp"))
+(setq my-org-path1 (concat my-pkg-path "org-9.1.2/lisp"))
+(setq my-org-path2 (concat my-pkg-path "org-9.1.2/contrib/lisp"))
 (setq my-tabbar-path (concat my-pkg-path "tabbar-master"))
 (setq my-multiple-cursors-path (concat my-pkg-path "multiple-cursors.el-master"))
 (setq my-jdee-path (concat my-pkg-path "jdee-2.4.1/lisp"))
