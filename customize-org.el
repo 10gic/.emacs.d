@@ -15,7 +15,7 @@
 ;; 设置图片宽度不一定为实际大小
 (setq org-image-actual-width nil)
 
-;; 设置导出latex时，默认的图片宽度。默认为.9\textwidth，这时设置得更窄一些。
+;; 设置导出latex时，默认的图片宽度。默认为.9\textwidth，这里设置得更窄一些。
 (setq org-latex-image-default-width ".7\\textwidth")
 
 ;; 忽略应用于文本页的审美条件，试图用最严格的标准来放置浮动图形，这样图片会尽量出现在它放置的位置附近。
@@ -182,7 +182,7 @@
 \\usepackage{geometry}
 \\geometry{left=3.0cm,right=2.5cm,top=2.5cm,bottom=2.5cm}   % 调整页边距
 
-\\usepackage[slantfont, boldfont]{xeCJK} % 允许斜体和粗体
+\\usepackage[PunctStyle=kaiming]{xeCJK}      % 设置标点为“开明”格式（即句末点号用全角，其他半角）
 [NO-DEFAULT-PACKAGES]
 [PACKAGES]
 
@@ -191,7 +191,6 @@
 % \\setmainfont{DejaVu Sans} % 英文衬线字体
 % \\setsansfont{DejaVu Serif} % 英文无衬线字体
 % \\setmonofont{DejaVu Sans Mono} % 英文等宽字体
-% \\punctstyle{DejaVu Sans} % 开明式标点格式
 
 % \\parindent 2em
 % \\usepackage{indentfirst} % 首段缩进
