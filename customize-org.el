@@ -192,6 +192,10 @@
 % \\setsansfont{DejaVu Serif} % 英文无衬线字体
 % \\setmonofont{DejaVu Sans Mono} % 英文等宽字体
 
+\\xeCJKsetup{
+  CJKecglue  = \\hskip 0.2em plus 0.08\\baselineskip,   % 设置自动增加的中英文之间的间隔的宽度（默认值太宽）
+  xCJKecglue = true}                                    % 让上面的设置对人为输入的中英文之间的空格也有效
+
 % \\parindent 2em
 % \\usepackage{indentfirst} % 首段缩进
 \\usepackage{parskip}  % 不要段缩进
