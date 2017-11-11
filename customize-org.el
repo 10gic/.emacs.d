@@ -109,7 +109,7 @@
          :recursive t
          :publishing-function org-html-publish-to-html
          :headline-levels 4
-         :auto-sitemap t
+         :auto-sitemap nil         ;; NOTE: set :auto-sitemap to t would lead to publish very slow if there are many org files
          :sitemap-filename "sitemap0-auto.org"
          :sitemap-title "Archives"
          :sitemap-file-entry-format "%t (%d)"     ;; %t: title, %d: date
