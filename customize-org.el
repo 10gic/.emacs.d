@@ -224,6 +224,8 @@
 %% 不过由于\pdffilemoddate没有在XeTex中实现等原因，无法正常用xelatex导出svg图片。
 %% 参考：http://tex.stackexchange.com/questions/84837/svg-from-inkscape-doesnt-work-in-xelatex）
 
+\\usepackage{animate}        % 可以用它“支持”gif动画
+
 \\usepackage{tabularx}       % 定制表格时可能会用到，如 #+ATTR_LaTeX: :environment tabularx :width \textwidth :align l|l|X
 
 \\usepackage{booktabs}    % 定制org-latex-tables-booktabs时，需要这个包。
