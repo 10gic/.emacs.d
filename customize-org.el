@@ -166,7 +166,7 @@
 (defun my-export-html-fast (&optional force)
   (progn
     (org-publish-project "html-static" force)
-    (message-no-newline (shell-command-to-string "rsync -a --delete --out-format='updating %f' ~/www/blog/images/ ~/public_html/blog/images/"))
+    (message-no-newline (shell-command-to-string "rsync -a --delete --exclude '*.pdf' --exclude '*.tex' --exclude '*.sh' --out-format='updating %f' ~/www/blog/images/ ~/public_html/blog/images/"))
     (message-no-newline (shell-command-to-string "rsync -a --delete --out-format='updating %f' ~/www/attachments/ ~/public_html/attachments/"))
     ))
 
