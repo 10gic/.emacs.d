@@ -124,6 +124,15 @@
          :base-extension "html\\|css\\|js\\|png\\|jpg\\|gif\\|ico\\|svg"
          :publishing-directory "~/public_html/"
          :recursive t
+         :exclude "blog/images/.*\\|attachments/.*"
+         :publishing-function org-publish-attachment
+         )
+
+        ("org-static-blog-img"         ;; Used to publish static files
+         :base-directory "~/www/blog/images/"
+         :base-extension "png\\|jpg\\|gif\\|ico\\|svg"
+         :publishing-directory "~/public_html/blog/images/"
+         :recursive t
          :publishing-function org-publish-attachment
          )
 
@@ -144,18 +153,31 @@
          :publishing-function org-latex-publish-to-pdf
          )
 
-        ;; combine "org-static-html" and "org-static-html" into one function call
-        ("html" :components ("org-notes-html" "org-static-html" "org-static-others"))))
+        ;; combine multiple projects into one project
+        ("html" :components ("org-notes-html" "org-static-html" "org-static-blog-img" "org-static-others"))
+        ("html-static" :components ("org-notes-html" "org-static-html"))
+        ))
 
-;; These helper functions can be used in batch mode of emacs.
+;; export all html related files
 (defun my-export-html (&optional force)
   (org-publish-project "html" force))
 
-(defun my-force-export-html ()
-  (my-export-html t))
+;; same as my-export-html, but more faster
+(defun my-export-html-fast (&optional force)
+  (progn
+    (org-publish-project "html-static" force)
+    (message-no-newline (shell-command-to-string "rsync -a --delete --out-format='updating %f' ~/www/blog/images/ ~/public_html/blog/images/"))
+    (message-no-newline (shell-command-to-string "rsync -a --delete --out-format='updating %f' ~/www/attachments/ ~/public_html/attachments/"))
+    ))
 
 (defun my-export-pdf (&optional force)
   (org-publish-project "pdf" force))
+
+;; original function `message' would append newline
+;; this function would not append newline
+(defun message-no-newline (msg)
+  (if (not (string= msg ""))    ; if msg is empty, do nothing
+      (message (replace-regexp-in-string "\n$" "" msg))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 下面为导出latex/pdf相关设置
