@@ -55,7 +55,7 @@
 
 (add-hook 'org-mode-hook
           (lambda ()
-            ;; 在org-mode中设置当一行太行时自动换行，而不是隐藏。
+            ;; 在org-mode中设置当一行太长时自动换行，而不是隐藏。
             (setq truncate-lines nil)
 
             ;; http://superuser.com/questions/299886/linewrap-in-org-mode-of-emacs
@@ -81,22 +81,17 @@
 ;; Disable link about "Validate" in html
 (setq org-html-validation-link nil)
 
-(setq org-html-postamble t) ;; t means use string from org-html-postamble-format
-(setq org-html-postamble-format  ;; change this to your style
-      '(("en"
-         "<p class=\"author\">Author: <a href=\"http://www.aandds.com\"> %a</a></p>\n
-<p class=\"date\">Created: <span class=\"timestamp-wrapper\"><span class=\"timestamp\">&lt;%d&gt;</span></span></p>\n
-<p class=\"date\">Last updated: <span class=\"timestamp-wrapper\"><span class=\"timestamp\">&lt;%C&gt;</span></span></p>\n
-<p class=\"creator\">Creator: %c</p>\n
-<p class=\"validation\">%v</p>")))
-
 (defun get-string-from-file (file-path)
   "Return file-path's file content."
   (with-temp-buffer
     (insert-file-contents file-path)
     (buffer-string)))
 
-(setq my-html-preamble (get-string-from-file "~/.emacs.d/html-preamble.tmpl"))
+(setq my-header-file "~/www/header.tpl")
+(setq my-footer-file "~/www/footer.tpl")
+
+(setq org-html-preamble (get-string-from-file my-header-file))
+(setq org-html-postamble (get-string-from-file my-footer-file))
 
 ;; Refer to: http://orgmode.org/manual/Publishing.html
 (require 'ox-publish)
@@ -115,7 +110,6 @@
          :sitemap-file-entry-format "%t (%d)"     ;; %t: title, %d: date
          :sitemap-sort-files anti-chronologically ;; newer date first
          :table-of-contents t
-         :html-preamble ,my-html-preamble         ;; change this to your style
          :style-include-default nil  ;; Disable the default css style
          )
 
@@ -173,9 +167,8 @@
 (defun my-export-pdf (&optional force)
   (org-publish-project "pdf" force))
 
-;; original function `message' would append newline
-;; this function would not append newline
 (defun message-no-newline (msg)
+  "This function is similar to function `message', but without append newline."
   (if (not (string= msg ""))    ; if msg is empty, do nothing
       (message (replace-regexp-in-string "\n$" "" msg))))
 
@@ -300,7 +293,7 @@ frame=tb               % adds a frame around the code
          (fname (cadr payload))
          (img-regexp "\\(png\\|gif\\|svg\\|jp[e]?g\\)\\>"))
     (cond
-     ;; In case of C-drag-n-drop, insert "#+ATTR_HTML: :width 500px\n" addtionally
+     ;; In case of C-drag-n-drop
      ((and  (eq 'C-drag-n-drop (car event))
             (eq 'file type)
             (string-match img-regexp fname))
@@ -312,9 +305,11 @@ frame=tb               % adds a frame around the code
         (if (file-exists-p target-dir)
             (copy-file fname target-dir)
           (message "%s does not exist, cannot copy image into it." target-dir))))
+     ;; In case of drag-n-drop
      ((and  (eq 'drag-n-drop (car event))
             (eq 'file type)
             (string-match img-regexp fname))
+      (insert "#+ATTR_HTML: :width 300px\n")
       (insert (concat  "#+CAPTION: " (file-name-base fname) "\n"))
       (insert (concat  "#+NAME: fig:" (file-name-base fname) "\n"))
       (insert (format "[[%s]]\n" (concat "./images/" (file-name-nondirectory fname))))
@@ -345,7 +340,7 @@ frame=tb               % adds a frame around the code
            (img-regexp "\\(png\\|gif\\|svg\\|jp[e]?g\\)\\>")
            (target-dir (concat (file-name-directory (buffer-file-name)) "./images/")))
       (cond
-       ;; In case of C-drag-n-drop, insert "#+ATTR_HTML: :width 500px\n" addtionally
+       ;; In case of C-drag-n-drop
        ((and  (eq 'C-drag-n-drop (car event))
               (string-match img-regexp fname))
         (insert "#+ATTR_HTML: :width 500px\n")
@@ -355,8 +350,10 @@ frame=tb               % adds a frame around the code
         (if (file-exists-p target-dir)
             (copy-file fname-unix target-dir)
           (message "%s does not exist, cannot copy image into it." target-dir)))
+       ;; In case of drag-n-drop
        ((and  (eq 'drag-n-drop (car event))
               (string-match img-regexp fname))
+        (insert "#+ATTR_HTML: :width 300px\n")
         (insert (concat  "#+CAPTION: " (file-name-base fname-unix) "\n"))
         (insert (concat  "#+NAME: fig:" (file-name-base fname-unix) "\n"))
         (insert (format "[[%s]]\n" (concat "./images/" (file-name-nondirectory fname-unix))))
