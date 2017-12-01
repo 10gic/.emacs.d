@@ -6,7 +6,7 @@
 
 ;; 导出html时，abc_def中的def变会为abc的下标形式。10^24中的24会变为10的上标形式。
 ;; 下面配置将禁止这种转换：
-;; (setq-default org-use-sub-superscripts nil) ;; deprecated configuration
+;; (setq-default org-use-sub-superscripts nil) ; deprecated configuration
 (setq org-export-with-sub-superscripts nil)
 
 ;; 设置导出时保留换行，也可以在文件中设置 #+OPTIONS: \n:t
@@ -97,23 +97,23 @@
 (require 'ox-publish)
 (setq org-publish-project-alist
       `(
-        ("org-notes-html"          ;; Used to export .org file
-         :base-directory "~/www/"  ;; directory holds .org files
-         :base-extension "org"     ;; process .org file only
+        ("org-notes-html"          ; Used to export .org file
+         :base-directory "~/www/"  ; directory holds .org files
+         :base-extension "org"     ; process .org file only
          :publishing-directory "~/public_html/"
          :recursive t
          :publishing-function org-html-publish-to-html
          :headline-levels 4
-         :auto-sitemap nil         ;; NOTE: set :auto-sitemap to t would lead to publish very slow if there are many org files
+         :auto-sitemap nil         ; NOTE: set :auto-sitemap to t would lead to publish very slow if there are many org files
          :sitemap-filename "sitemap0-auto.org"
          :sitemap-title "Archives"
-         :sitemap-file-entry-format "%t (%d)"     ;; %t: title, %d: date
-         :sitemap-sort-files anti-chronologically ;; newer date first
+         :sitemap-file-entry-format "%t (%d)"     ; %t: title, %d: date
+         :sitemap-sort-files anti-chronologically ; newer date first
          :table-of-contents t
-         :style-include-default nil  ;; Disable the default css style
+         :style-include-default nil ; Disable the default css style
          )
 
-        ("org-static-html"            ;; Used to publish static files
+        ("org-static-html"          ; Used to publish static files
          :base-directory "~/www/"
          :base-extension "html\\|css\\|js\\|png\\|jpg\\|gif\\|ico\\|svg"
          :publishing-directory "~/public_html/"
@@ -122,7 +122,7 @@
          :publishing-function org-publish-attachment
          )
 
-        ("org-static-blog-img"         ;; Used to publish static files
+        ("org-static-blog-img"      ; Used to publish static files
          :base-directory "~/www/blog/images/"
          :base-extension "png\\|jpg\\|gif\\|ico\\|svg"
          :publishing-directory "~/public_html/blog/images/"
@@ -130,7 +130,7 @@
          :publishing-function org-publish-attachment
          )
 
-        ("org-static-others"            ;; Used to publish static files
+        ("org-static-others"        ; Used to publish static files
          :base-directory "~/www/attachments/"
          :base-extension "png\\|pdf\\|tex\\|c"
          :publishing-directory "~/public_html/attachments/"
@@ -149,8 +149,7 @@
 
         ;; combine multiple projects into one project
         ("html" :components ("org-notes-html" "org-static-html" "org-static-blog-img" "org-static-others"))
-        ("html-static" :components ("org-notes-html" "org-static-html"))
-        ))
+        ("html-static" :components ("org-notes-html" "org-static-html"))))
 
 ;; export all html related files
 (defun my-export-html (&optional force)
@@ -160,9 +159,10 @@
 (defun my-export-html-fast (&optional force)
   (progn
     (org-publish-project "html-static" force)
-    (message-no-newline (shell-command-to-string "rsync -a --delete --exclude '*.pdf' --exclude '*.tex' --exclude '*.sh' --out-format='updating %f' ~/www/blog/images/ ~/public_html/blog/images/"))
-    (message-no-newline (shell-command-to-string "rsync -a --delete --out-format='updating %f' ~/www/attachments/ ~/public_html/attachments/"))
-    ))
+    (message-no-newline
+     (shell-command-to-string "rsync -a --delete --exclude '*.pdf' --exclude '*.tex' --exclude '*.sh' --out-format='updating %f' ~/www/blog/images/ ~/public_html/blog/images/"))
+    (message-no-newline
+     (shell-command-to-string "rsync -a --delete --out-format='updating %f' ~/www/attachments/ ~/public_html/attachments/"))))
 
 (defun my-export-pdf (&optional force)
   (org-publish-project "pdf" force))
@@ -362,8 +362,7 @@ frame=tb               % adds a frame around the code
           (message "%s does not exist, cannot copy image into it." target-dir)))
        ;; regular drag and drop on file
        (t
-        (insert (format "[[%s]]\n" fname))))))
-  )
+        (insert (format "[[%s]]\n" fname)))))))
 
 (define-key org-mode-map (kbd "<drag-n-drop>") 'my-dnd-func)
 (define-key org-mode-map (kbd "<C-drag-n-drop>") 'my-dnd-func)
