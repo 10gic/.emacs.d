@@ -1,5 +1,5 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(setq inhibit-startup-message t) ; 启动emacs时不显示GNU Emacs窗口。
+(setq inhibit-startup-message t)  ; 启动emacs时不显示GNU Emacs窗口。
 (setq initial-scratch-message "") ; scratch信息中显示为空。
 
 ;; Disable tool bar unless it's Mac OS
@@ -205,7 +205,7 @@
 ;; From http://emacswiki.org/emacs/ShowWhiteSpace
 (add-hook 'prog-mode-hook
           (lambda ()
-            (unless (derived-mode-p 'go-mode)    ;; prog-mode（除go-mode外）中特别显示"\t"
+            (unless (derived-mode-p 'go-mode)    ; prog-mode（除go-mode外）中特别显示"\t"
               (font-lock-add-keywords
                nil
                '(("\t" 0 'trailing-whitespace prepend))))))
@@ -284,14 +284,14 @@
       (message (shell-command-to-string "sh ~/.emacs.d/packages/extract.sh"))
     (message "Warn: Tool unzip or tar is NOT found, you need decompress files manually.")))
 
-(setq my-org-path1 (concat my-pkg-path "org-9.1.2/lisp"))
-(setq my-org-path2 (concat my-pkg-path "org-9.1.2/contrib/lisp"))
+(setq my-org-path1 (car (file-expand-wildcards (concat my-pkg-path "org-*/lisp"))))
+(setq my-org-path2 (car (file-expand-wildcards (concat my-pkg-path "org-*/contrib/lisp"))))
 (setq my-tabbar-path (concat my-pkg-path "tabbar-master"))
 (setq my-multiple-cursors-path (concat my-pkg-path "multiple-cursors.el-master"))
-(setq my-jdee-path (concat my-pkg-path "jdee-2.4.1/lisp"))
+(setq my-jdee-path (car (file-expand-wildcards (concat my-pkg-path "jdee-*/lisp"))))
 (setq my-flycheck-path (concat my-pkg-path "flycheck-master"))
-(setq my-auto-complete-path (concat my-pkg-path "auto-complete-1.3.1"))
-(setq my-auto-complete-dict-path (concat my-pkg-path "auto-complete-1.3.1/dict"))
+(setq my-auto-complete-path (car (file-expand-wildcards (concat my-pkg-path "auto-complete-*"))))
+(setq my-auto-complete-dict-path (car (file-expand-wildcards (concat my-pkg-path "auto-complete-*/dict"))))
 
 
 ;; Use newer org-mode, the builtin version is too old.
@@ -376,8 +376,8 @@
 (setenv "CFLAGS" "-ggdb3 -Wall")
 (setenv "CXXFLAGS" "-ggdb3 -Wall")
 
-(setq-default c-basic-offset 4  ;设置缩进为4个空格
-              tab-width 4)      ;显示tab为4个空格
+(setq-default c-basic-offset 4  ; 设置缩进为4个空格
+              tab-width 4)      ; 显示tab为4个空格
 
 ;; 格式化C/C++程序代码
 ;; 参考：
@@ -423,7 +423,7 @@ reformat current entire buffer."
 (eval-after-load 'cc-mode
   '(progn
      (require 'srefactor)
-     (semantic-mode 1) ;; this is needed by srefactor
+     (semantic-mode 1) ; this is needed by srefactor
      (define-key c-mode-map (kbd "M-RET") 'srefactor-refactor-at-point)
      (define-key c++-mode-map (kbd "M-RET") 'srefactor-refactor-at-point)
 
@@ -431,8 +431,8 @@ reformat current entire buffer."
      (define-key c++-mode-map [f7] 'c-reformat-current-buffer)
      ))
 
-(add-hook 'c-mode-hook 'imenu-add-menubar-index) ;打开c-mode的index菜单
-(add-hook 'c++-mode-hook 'imenu-add-menubar-index) ;打开c++-mode的index菜单
+(add-hook 'c-mode-hook 'imenu-add-menubar-index) ; 打开c-mode的index菜单
+(add-hook 'c++-mode-hook 'imenu-add-menubar-index) ; 打开c++-mode的index菜单
 
 ;;;; For go
 (add-hook 'go-mode-hook
@@ -440,9 +440,9 @@ reformat current entire buffer."
             (add-hook 'before-save-hook 'gofmt-before-save)))
 
 ;;;; For perl
-(defalias 'perl-mode 'cperl-mode) ;设置默认使用cperl-mode代替perl-mode
+(defalias 'perl-mode 'cperl-mode) ; 设置默认使用cperl-mode代替perl-mode
 
-(add-hook 'cperl-mode-hook 'imenu-add-menubar-index) ;打开cperl-mode的index菜单
+(add-hook 'cperl-mode-hook 'imenu-add-menubar-index) ; 打开cperl-mode的index菜单
 (add-hook 'cperl-mode-hook
           (function (lambda ()  ;only work in GUI.
                       (local-set-key [f1] 'cperl-perldoc-at-point))))
@@ -451,14 +451,14 @@ reformat current entire buffer."
 (add-to-list 'auto-mode-alist '("\\.ddl\\'" . sql-mode))
 
 ;;;; For java
-(add-to-list 'auto-mode-alist '("\\.jj\\'" . java-mode))  ;javacc grammar file
-(add-to-list 'auto-mode-alist '("\\.jjt\\'" . java-mode)) ;javacc jjtree file
+(add-to-list 'auto-mode-alist '("\\.jj\\'" . java-mode))  ; javacc grammar file
+(add-to-list 'auto-mode-alist '("\\.jjt\\'" . java-mode)) ; javacc jjtree file
 
 (add-hook 'java-mode-hook (lambda () (setq c-basic-offset 2
                                            tab-width 2)))
 
 ;;;; For shell
-(add-to-list 'auto-mode-alist '("setenv" . sh-mode)) ;; 以setenv开头的文件使用sh-mode
+(add-to-list 'auto-mode-alist '("setenv" . sh-mode)) ; 以setenv开头的文件使用sh-mode
 (add-hook 'sh-mode-hook (function (lambda () (setq tab-width 4))))
 (add-hook 'sh-mode-hook 'imenu-add-menubar-index)
 
@@ -485,7 +485,7 @@ reformat current entire buffer."
 (setq web-mode-code-indent-offset 2)
 
 ;;;; For makefile
-(add-to-list 'auto-mode-alist '("[Mm]akefile" . makefile-mode)) ;; 以makefile开头的文件使用makefile mode
+(add-to-list 'auto-mode-alist '("[Mm]akefile" . makefile-mode)) ; 以makefile开头的文件使用makefile mode
 
 ;; For CMake
 (autoload 'cmake-mode "cmake-mode" "cmake mode" t)
@@ -497,8 +497,12 @@ reformat current entire buffer."
 
 ;; For log4j (major mode for viewing log files)
 (autoload 'log4j-mode "log4j-mode" "Major mode for viewing log files." t)
-(add-to-list 'auto-mode-alist '("catalina.out" . log4j-mode)) ;; catalina.out is tomcat log file
+(add-to-list 'auto-mode-alist '("catalina.out" . log4j-mode)) ; catalina.out is tomcat log file
 (add-to-list 'auto-mode-alist '("\\.log\\'" . log4j-mode))
+
+;; For nginx (major mode for editing nginx.conf)
+(autoload 'nginx-mode "nginx-mode" nil t)
+(add-to-list 'auto-mode-alist '("nginx.conf\\'" . nginx-mode))
 
 (load-file "~/.emacs.d/customize-lisp.el")
 
@@ -524,8 +528,8 @@ reformat current entire buffer."
          ("\\.cpy\\'" . cobol-mode)
          ("\\.cbl\\'" . cobol-mode)
          ("\\.cob\\'" . cobol-mode)
-         ("\\.pco\\'" . cobol-mode)  ;; File name ends in '.pco', Oracle Pro*COBOL files.
-         ("\\.sqb\\'" . cobol-mode)) ;; File name ends in '.sqb', Db2 files.
+         ("\\.pco\\'" . cobol-mode)  ; File name ends in '.pco', Oracle Pro*COBOL files.
+         ("\\.sqb\\'" . cobol-mode)) ; File name ends in '.sqb', Db2 files.
        auto-mode-alist))
 ;; 当关键字IDENTIFICATION前面的空格为0-6(不到7)个时，设置为cobol-free-mode
 (add-to-list 'magic-mode-alist '("\\(^.*\n\\)*[ ]\\{0,6\\}IDENTIFICATION" . cobol-free-mode))
@@ -927,12 +931,12 @@ reformat current entire buffer."
                                         special-display-regexps))
   (setq frame-title-format "%f" )
   (custom-set-variables
-   '(ns-tool-bar-size-mode (quote small) t) ;; Aquamacs工具栏使用小图标
-   '(custom-enabled-themes nil))  ;; 不设置主题，因为Aquamacs中使用其它主题太难看
+   '(ns-tool-bar-size-mode (quote small) t) ; Aquamacs工具栏使用小图标
+   '(custom-enabled-themes nil))  ; 不设置主题，因为Aquamacs中使用其它主题太难看
   (if (find-font (font-spec :name "Source Code Pro"))
-      (custom-set-faces      ;; 为Aquamacs设置字体
+      (custom-set-faces      ; 为Aquamacs设置字体
        '(default ((t (:height 140 :width normal :family "Source Code Pro"))))))
-  (server-start)   ;; auto enable server-mode
+  (server-start)   ; auto enable server-mode
   )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
