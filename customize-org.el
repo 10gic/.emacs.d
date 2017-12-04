@@ -224,7 +224,17 @@
 \\usepackage{amsmath}       % 这个宏包提供了很多扩展数学公式的环境，如cases
 \\usepackage{amssymb}       % 引入这个宏包后，可以使用 \mathbb{R} 等
 
+% 使用 titlesec 包来设置第4级标题（\paragraph）的格式，默认\paragraph之后没有换行（不好看），这里增加换行
+% 参考 https://tex.stackexchange.com/questions/60209/how-to-add-an-extra-level-of-sections-with-headings-below-subsubsection/60212
+\\usepackage{titlesec}
+\\titleformat{\\paragraph}{\\normalfont\\normalsize\\bfseries}{\\theparagraph}{1em}{}
+\\titlespacing*{\\paragraph}{0pt}{3.25ex plus 1ex minus .2ex}{1.5ex plus .2ex}
+
 \\usepackage{caption}
+
+\\usepackage[hyphens]{url}  % 设置长url中的断行可以发生在“-”符号处
+                            % 参考 https://tex.stackexchange.com/questions/49788/hyperref-url-long-url-with-dashes-wont-break
+
 \\usepackage[colorlinks,    % 将超链接以颜色来标识，而并非使用默认的方框来标识
             linkcolor=black,
             anchorcolor=black,
@@ -243,9 +253,9 @@
 
 \\usepackage{tabularx}       % 定制表格时可能会用到，如 #+ATTR_LaTeX: :environment tabularx :width \textwidth :align l|l|X
 
-\\usepackage{booktabs}    % 定制org-latex-tables-booktabs时，需要这个包。
+\\usepackage{booktabs}       % 定制org-latex-tables-booktabs时，需要这个包。
 
-\\usepackage{listings}      % listings能方便处理程序源码
+\\usepackage{listings}       % listings能方便处理程序源码
 \\newcommand*{\\mycommentstyle}[1]{%
   \\begingroup
     \\fontseries{lc}%
@@ -259,8 +269,9 @@
 % 代码设置
 \\lstset{
 %language=C,
-basicstyle=\\ttfamily,
-commentstyle=\\mycommentstyle,   % 这个格式使得代码中的注释部分显得更加紧凑
+%basicstyle=\\ttfamily,
+basicstyle=\\ttfamily\\footnotesize,   % 把字体设置得更小
+%commentstyle=\\mycommentstyle,        % 让代码中的注释部分显得更加紧凑
 %columns=fixed,
 numbers=left,          % where to put the line-numbers
 numberstyle=\\tiny,
