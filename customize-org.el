@@ -186,6 +186,64 @@
 (add-to-list 'org-latex-listings '("" "listings"))
 (add-to-list 'org-latex-listings '("" "color"))
 
+;; Replace verbatim env by lstlisting env for example block
+;; 导出latex时，默认 #+BEGIN_EXAMPLE...#+END_EXAMPLE 会导出为 \begin{verbatim}...\end{verbatim}
+;; 这里把它导出为 \begin{lstlisting}...\end{lstlisting}
+;; 如果 #+BEGIN_EXAMPLE...#+END_EXAMPLE 中是emacs table，则对其进行居中显示，且当表格很宽时使用较小的字体
+;; 下面是emacs table的例子：
+;; #+BEGIN_EXAMPLE
+;; +-----------+------------+---------------------------+
+;; | XPath     | Results    | Note                      |
+;; +-----------+------------+---------------------------+
+;; | //@id     | id="b1"    | Select all attributes id  |
+;; |           | id="b2"    |                           |
+;; +-----------+------------+---------------------------+
+;; #+END_EXAMPLE
+(defun my-latex-export-example-blocks (text backend info)
+  "Export example blocks as lstlisting env."
+  (when (org-export-derived-backend-p backend 'latex)
+    (with-temp-buffer
+      (insert text)
+      ;; (princ text)      ; just for debugging
+      (goto-char (point-min))
+      (let* ((second-line (nth 1 (split-string text "[\n\r]+")))
+             (third-line (nth 2 (split-string text "[\n\r]+")))
+             ;; first line is \\begin{verbatim}, treat it emacs table if
+             ;; second line is "+--------- ...... ---------+"
+             ;;  third line is "|          ......          |"
+             (is-emacs-tbl
+              (and (and (string-prefix-p "+--" second-line) (string-suffix-p "--+" second-line))
+                   (and (string-prefix-p "|" third-line) (string-suffix-p "|" third-line))))
+             (tbl-width (length second-line))
+             (full-line-size 90)                      ; 假设一行占90个字符（多于90个字符就不用居中）
+             (tbl-leftmargin (max 0 (- 0.5 (/ tbl-width (* full-line-size 2.0)))))  ; (1 - width/90.0)/2
+             (tbl-font-scriptsize-threshold 100)      ; 表格宽度大于 100 时使用字体 \\scriptsize
+             (tbl-font-tiny-threshold 120)            ; 表格宽度大于 120 时使用字体 \\tiny
+             (tbl-fontsize "\\footnotesize"))         ; 默认字体 \\footnotesize
+        (if is-emacs-tbl
+            (progn
+              (cond ((> tbl-width tbl-font-tiny-threshold) (setq tbl-fontsize "\\tiny"))
+                    ((> tbl-width tbl-font-scriptsize-threshold) (setq tbl-fontsize "\\scriptsize")))
+              ;; (princ (format "tbl-fontsize=%s\n" tbl-fontsize))   ; just for debugging
+              ;; 有一些使表格居中的办法（如“\begin{center} \begin{tabular}{c} \begin{lstlisting}”），但当表格很多行时，无法跨页
+              ;; 这里使用设置 xleftmargin 的方式让表格“居中”显示
+              (replace-string "\\begin{verbatim}"
+                              ;; numbers=none 不显示行号
+                              ;; frame=none 不显示边框
+                              ;; breaklines=false 不换行
+                              (format "\\begin{lstlisting}[style=myverbatimstyle,basicstyle=\\ttfamily%s,numbers=none,frame=none,breaklines=false,xleftmargin=%f\\textwidth]"
+                                      tbl-fontsize
+                                      tbl-leftmargin))
+              (replace-string "\\end{verbatim}"
+                              "\\end{lstlisting}"))
+          (progn
+            (replace-string "\\begin{verbatim}" "\\begin{lstlisting}[style=myverbatimstyle]")
+            (replace-string "\\end{verbatim}" "\\end{lstlisting}"))))
+      (buffer-substring-no-properties (point-min) (point-max)))))
+
+(add-to-list 'org-export-filter-example-block-functions
+         'my-latex-export-example-blocks)
+
 ;; 自定义新的LaTex导出模板
 ;; https://github.com/w0mTea/An.Emacs.Tutorial.for.Vim.User/blob/master/An.Emacs.Tutorial.for.Vim.User.zh-CN.org
 ;; Add a template for article
@@ -202,9 +260,8 @@
 [PACKAGES]
 
 \\setmainfont{SimSun}
-
-% \\setmainfont{DejaVu Sans} % 英文衬线字体
-% \\setsansfont{DejaVu Serif} % 英文无衬线字体
+% \\setmainfont{DejaVu Sans}      % 英文衬线字体
+% \\setsansfont{DejaVu Serif}     % 英文无衬线字体
 % \\setmonofont{DejaVu Sans Mono} % 英文等宽字体
 
 \\xeCJKsetup{
@@ -252,32 +309,38 @@
 \\usepackage{animate}        % 可以用它“支持”gif动画
 
 \\usepackage{tabularx}       % 定制表格时可能会用到，如 #+ATTR_LaTeX: :environment tabularx :width \textwidth :align l|l|X
+\\usepackage{longtable}      % 能跨页显示的表格。如果表格有很多行，一页放在下，可以使用它。
 
 \\usepackage{booktabs}       % 定制org-latex-tables-booktabs时，需要这个包。
 
 \\usepackage{listings}       % listings能方便处理程序源码
-\\newcommand*{\\mycommentstyle}[1]{%
-  \\begingroup
-    \\fontseries{lc}%
-    \\fontshape{it}%
-    \\selectfont
-    \\lstset{columns=fullflexible}%
-    #1%
-  \\endgroup
-}
 
-% 代码设置
+% listings包相关设置
 \\lstset{
 %language=C,
 %basicstyle=\\ttfamily,
 basicstyle=\\ttfamily\\footnotesize,   % 把字体设置得更小
-%commentstyle=\\mycommentstyle,        % 让代码中的注释部分显得更加紧凑
 %columns=fixed,
-numbers=left,          % where to put the line-numbers
-numberstyle=\\tiny,
+%numbers=left,          % where to put the line-numbers
+%numberstyle=\\tiny,
 showstringspaces=false,
-breaklines=true,       % sets automatic line breaking
-frame=tb               % adds a frame around the code
+breaklines=true,        % sets automatic line breaking
+frame=tb                % 在top/bottom位置显示边框（横线）
+}
+
+\\lstdefinelanguage{myverbatim}{       % 定义新语言，什么都不设置。作为模拟verbatim环境的语言
+  identifierstyle=                     % plain identifiers for verbatim
+}
+
+\\lstdefinestyle{myverbatimstyle} {
+language=myverbatim,
+basicstyle=\\ttfamily\\footnotesize,   % 把字体设置得更小
+keepspaces=true,
+showspaces=false,
+showstringspaces=false,
+breaklines=true,
+numbers=none,
+frame=tb                               % 在top/bottom位置显示边框（横线）
 }
 
 [EXTRA]
