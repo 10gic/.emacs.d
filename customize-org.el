@@ -69,9 +69,11 @@
 
             (auto-fill-mode -1) ;; disable auto-fill-mode
 
-            ;; 设置org-table中使用字体集fontset-myfixed，这样org-table中的中英文就能对齐显示了。
-            (if (display-graphic-p)
-                (set-face-attribute 'org-table nil :fontset "fontset-myfixed"))
+            ;; 设置org-table/org-block中使用字体集fontset-myfixed
+            ;; 这样org-table/org-block中的中英文能对齐显示了
+            (when (display-graphic-p)
+              (set-face-attribute 'org-table nil :fontset "fontset-myfixed")
+              (set-face-attribute 'org-block nil :fontset "fontset-myfixed"))
 
             ;; 让不同级别的标题采用不同大小的字体
             (set-face-attribute 'org-level-1 nil :height 1.3 :bold t)
