@@ -24,6 +24,9 @@
 ;; 设置latex表格为“三线表”。
 (setq org-latex-tables-booktabs t)
 
+;; 'abc' --> `abc', "abc" --> ``abc''
+(setq org-export-with-smart-quotes t)
+
 ;; Configure languages which can be evaluated in Org-mode buffers.
 ;; By default only Emacs Lisp can be evaluated.
 (org-babel-do-load-languages
