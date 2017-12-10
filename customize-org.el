@@ -24,9 +24,6 @@
 ;; 设置latex表格为“三线表”。
 (setq org-latex-tables-booktabs t)
 
-;; 'abc' --> `abc', "abc" --> ``abc''
-(setq org-export-with-smart-quotes t)
-
 ;; Configure languages which can be evaluated in Org-mode buffers.
 ;; By default only Emacs Lisp can be evaluated.
 (org-babel-do-load-languages
@@ -191,6 +188,17 @@
 (add-to-list 'org-latex-listings '("" "listings"))
 (add-to-list 'org-latex-listings '("" "color"))
 
+;; 使用org-export-smart-quotes-alist中的设置对英文双引号和英文单引号进行转换
+(setq org-export-with-smart-quotes t)
+;; 原样地输出英文双引号和英文单引号
+(add-to-list 'org-export-smart-quotes-alist
+             '("en"
+               (primary-opening   :latex "{\\ttfamily\"}")   ; {\ttfamily"}
+               (primary-closing   :latex "{\\ttfamily\"}")
+               (secondary-opening :latex "{\\ttfamily'}")
+               (secondary-closing :latex "{\\ttfamily'}")
+               (apostrophe        :latex "{\\ttfamily'}")))
+
 ;; Replace verbatim env by lstlisting env for example block
 ;; 导出latex时，默认 #+BEGIN_EXAMPLE...#+END_EXAMPLE 会导出为 \begin{verbatim}...\end{verbatim}
 ;; 这里把它导出为 \begin{lstlisting}...\end{lstlisting}
@@ -274,10 +282,15 @@
   xCJKecglue = true}                                    % 让上面的设置对人为输入的中英文之间的空格也有效
 
 % \\parindent 2em
-% \\usepackage{indentfirst} % 首段缩进
-\\usepackage{parskip}  % 不要段缩进
+% \\usepackage{indentfirst}     % 首段缩进
+\\usepackage{parskip}           % 不要段缩进
 
-\\defaultfontfeatures{Mapping=tex-text} % 如果没有它，会有一些 tex 特殊字符无法正常使用，比如连字符。
+
+% https://tex.stackexchange.com/questions/7735/how-to-get-straight-quotation-marks
+% 引入下面包后，英文双引号会原样地直接输出。不过它不会让英文单引号原样输出。但它有副作用，代码中的单引号、反引号不会原样输出
+% \\usepackage[T1]{fontenc}
+
+% \\defaultfontfeatures{Mapping=tex-text} % 如果没有它，会有一些 tex 特殊字符无法正常使用，比如连字符。
 
 % 中文断行
 \\XeTeXlinebreaklocale \"zh\"   % allow linebreaks
