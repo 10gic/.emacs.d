@@ -201,8 +201,10 @@
 
 ;; Replace verbatim env by lstlisting env for example block
 ;; 导出latex时，默认 #+BEGIN_EXAMPLE...#+END_EXAMPLE 会导出为 \begin{verbatim}...\end{verbatim}
-;; 这里把它导出为 \begin{lstlisting}...\end{lstlisting}
-;; 如果 #+BEGIN_EXAMPLE...#+END_EXAMPLE 中是emacs table，则对其进行居中显示，且当表格很宽时使用较小的字体
+;; 这里把它换为 \begin{lstlisting}...\end{lstlisting}
+;; 此外，还做下面处理：
+;; 1、如果 #+BEGIN_EXAMPLE...#+END_EXAMPLE 中是emacs table，则对其进行居中显示，
+;; 2、当表格很宽时使用较小的字体。
 ;; 下面是emacs table的例子：
 ;; #+BEGIN_EXAMPLE
 ;; +-----------+------------+---------------------------+
@@ -268,7 +270,9 @@
 \\usepackage{geometry}
 \\geometry{left=3.0cm,right=2.5cm,top=2.5cm,bottom=2.5cm}   % 调整页边距
 
-\\usepackage[PunctStyle=kaiming]{xeCJK}      % 设置标点为“开明”格式（即句末点号用全角，其他半角）
+\\usepackage{xeCJK}
+% \\usepackage[PunctStyle=kaiming]{xeCJK}      % 设置标点为“开明”格式（即句末点号用全角，其他半角）
+
 [NO-DEFAULT-PACKAGES]
 [PACKAGES]
 
@@ -311,11 +315,17 @@
                             % 参考 https://tex.stackexchange.com/questions/49788/hyperref-url-long-url-with-dashes-wont-break
 
 \\usepackage[colorlinks,    % 将超链接以颜色来标识，而并非使用默认的方框来标识
-            linkcolor=black,
-            anchorcolor=black,
-            citecolor=black,
-            urlcolor=black
-            ]{hyperref}
+             linkcolor=black,
+             anchorcolor=black,
+             citecolor=black,
+             urlcolor=black
+             ]{hyperref}
+
+% 参考 https://tex.stackexchange.com/questions/117267/strange-bug-with-hyperref-percent-symbol-and-cyrillic-character
+\\usepackage{bookmark}      % 包hyperref可以生成toc，不过包bookmark功能更强。它可以处理标题中含有“%”的情况
+
+%% org中的 _underlined_ （下划线）和 +strike-through+ （删除线）会导出为 \\uline{underlined} 和 \\sout{strike-through}
+\\usepackage[normalem]{ulem} % 包ulem中有 \\uline{} 和 \\sout{}
 
 \\usepackage{graphicx}
 
@@ -343,6 +353,7 @@ basicstyle=\\ttfamily\\footnotesize,   % 把字体设置得更小
 %numberstyle=\\tiny,
 showstringspaces=false,
 breaklines=true,        % sets automatic line breaking
+postbreak=\\mbox{$\\hookrightarrow$\\space},      % 在break的下一行显示一个箭头
 frame=tb                % 在top/bottom位置显示边框（横线）
 }
 
@@ -357,6 +368,17 @@ keepspaces=true,
 showspaces=false,
 showstringspaces=false,
 breaklines=true,
+postbreak=\\mbox{$\\hookrightarrow$\\space},     % 在break的下一行显示一个箭头
+% 设置literate，让换行可以发生在“数字”、“字母”、“-”位置，这样很长的数字或字母或dash也可以换行了
+% https://tex.stackexchange.com/questions/153104/automatic-line-breaks-of-long-numbers-in-listings
+literate={0}{0}{1}{1}{1}{1}{2}{2}{1}{3}{3}{1}{4}{4}{1}{5}{5}{1}{6}{6}{1}{7}{7}{1}{8}{8}{1}{9}{9}{1}%
+{a}{a}{1}{b}{b}{1}{c}{c}{1}{d}{d}{1}{e}{e}{1}{f}{f}{1}{g}{g}{1}{h}{h}{1}{i}{i}{1}{j}{j}{1}{k}{k}{1}%
+{l}{l}{1}{m}{m}{1}{n}{n}{1}{o}{o}{1}{p}{p}{1}{q}{q}{1}{r}{r}{1}{s}{s}{1}{t}{t}{1}{u}{u}{1}{v}{v}{1}%
+{w}{w}{1}{x}{x}{1}{y}{y}{1}{z}{z}{1}%
+{A}{A}{1}{B}{B}{1}{C}{C}{1}{D}{D}{1}{E}{E}{1}{F}{F}{1}{G}{G}{1}{H}{H}{1}{I}{I}{1}{J}{J}{1}{K}{K}{1}%
+{L}{L}{1}{M}{M}{1}{N}{N}{1}{O}{O}{1}{P}{P}{1}{Q}{Q}{1}{R}{R}{1}{S}{S}{1}{T}{T}{1}{U}{U}{1}{V}{V}{1}%
+{W}{W}{1}{X}{X}{1}{Y}{Y}{1}{Z}{Z}{1}%
+{-}{-}{1},
 numbers=none,
 frame=tb                               % 在top/bottom位置显示边框（横线）
 }
