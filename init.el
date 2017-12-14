@@ -173,6 +173,28 @@
                   (set-my-frame))))
   (set-my-frame))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Settings for Aquamacs
+;;
+;; ~/Library/Preferences/Aquamacs Emacs/
+;;
+;; Useful links for Aquamacs
+;; http://www.emacswiki.org/emacs/AquamacsFAQ
+;; http://www.emacswiki.org/emacs/CustomizeAquamacs
+
+(when (boundp 'aquamacs-version)
+  ;; open *help* in current frame
+  (setq special-display-regexps (remove "[ ]?\\*[hH]elp.*"
+                                        special-display-regexps))
+  (setq frame-title-format "%f" )
+  (custom-set-variables
+   '(ns-tool-bar-size-mode (quote small) t) ; Aquamacs工具栏使用小图标
+   '(custom-enabled-themes nil))  ; 不设置主题，因为Aquamacs中使用其它主题太难看
+  (if (find-font (font-spec :name "Source Code Pro"))
+      (custom-set-faces      ; 为Aquamacs设置字体
+       '(default ((t (:height 140 :width normal :family "Source Code Pro"))))))
+  (server-start)   ; auto enable server-mode
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 设置自动备份
@@ -184,6 +206,10 @@
  kept-new-versions 3 ; 保留最近的3个备份。
  kept-old-versions 2) ; 保留最早的2个备份，即第1次编辑前的文件和第2次编辑前的文件。
 
+;; add "~/bin" to PATH and exec-path
+(when (file-exists-p "~/bin")
+  (setenv "PATH" (concat (getenv "PATH") ":~/bin"))
+  (setq exec-path (append exec-path '("~/bin"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; buffer-local相关变量，用setq-default设置
@@ -434,11 +460,6 @@ reformat current entire buffer."
 (add-hook 'c-mode-hook 'imenu-add-menubar-index) ; 打开c-mode的index菜单
 (add-hook 'c++-mode-hook 'imenu-add-menubar-index) ; 打开c++-mode的index菜单
 
-;;;; For go
-(add-hook 'go-mode-hook
-          (lambda ()
-            (add-hook 'before-save-hook 'gofmt-before-save)))
-
 ;;;; For perl
 (defalias 'perl-mode 'cperl-mode) ; 设置默认使用cperl-mode代替perl-mode
 
@@ -509,7 +530,28 @@ reformat current entire buffer."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (add-to-list 'load-path "~/.emacs.d/languages/")
 
+;;;; For go
 (require 'go-mode-autoloads)  ; https://github.com/dominikh/go-mode.el
+
+;; 保存go文件前先格式化代码
+(add-hook 'go-mode-hook
+          (lambda ()
+
+            ;; (setq gofmt-command "goimports")  ; use goimports, rather than gofmt
+            ;; (add-hook 'before-save-hook 'gofmt-before-save)
+
+            (if (not (string-match "go" compile-command))
+                (set (make-local-variable 'compile-command)
+                     "go build -v && go test -v && go vet"))
+
+            ;; Key bindings specific to go-mode
+            (local-set-key (kbd "M-.") 'godef-jump)         ; Go to definition
+            (local-set-key (kbd "M-*") 'pop-tag-mark)       ; Return from whence you came
+            (local-set-key (kbd "M-p") 'compile)            ; Invoke compiler
+            (local-set-key (kbd "M-P") 'recompile)          ; Redo most recent compile cmd
+            (local-set-key (kbd "M-]") 'next-error)         ; Go to next error (or msg)
+            (local-set-key (kbd "M-[") 'previous-error)))   ; Go to previous error or msg
+
 
 (autoload 'yaml-mode "yaml-mode" "yaml mode" t)
 (add-to-list 'auto-mode-alist '("\\.ya?ml$" . yaml-mode))
@@ -641,8 +683,8 @@ reformat current entire buffer."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (require 'autoinsert)
-(auto-insert-mode +1)        ;; enable auto-insert-mode
-(setq auto-insert-query nil) ;; No prompt before insertion
+(auto-insert-mode +1)          ; Enable auto-insert-mode
+(setq auto-insert-query nil)   ; No prompt before insertion
 
 (eval-after-load 'autoinsert
   '(define-auto-insert '("\\.pl\\'" . "Perl skeleton")
@@ -915,29 +957,6 @@ reformat current entire buffer."
   (interactive)
   (let (kill-emacs-hook) ; set kill-emacs-hook to nil before calling kill-emacs
     (kill-emacs)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Other settings for Aquamacs
-;;
-;; ~/Library/Preferences/Aquamacs Emacs/
-;;
-;; Useful links for Aquamacs
-;; http://www.emacswiki.org/emacs/AquamacsFAQ
-;; http://www.emacswiki.org/emacs/CustomizeAquamacs
-
-(when (boundp 'aquamacs-version)
-  ;; open *help* in current frame
-  (setq special-display-regexps (remove "[ ]?\\*[hH]elp.*"
-                                        special-display-regexps))
-  (setq frame-title-format "%f" )
-  (custom-set-variables
-   '(ns-tool-bar-size-mode (quote small) t) ; Aquamacs工具栏使用小图标
-   '(custom-enabled-themes nil))  ; 不设置主题，因为Aquamacs中使用其它主题太难看
-  (if (find-font (font-spec :name "Source Code Pro"))
-      (custom-set-faces      ; 为Aquamacs设置字体
-       '(default ((t (:height 140 :width normal :family "Source Code Pro"))))))
-  (server-start)   ; auto enable server-mode
-  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
