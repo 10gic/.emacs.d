@@ -532,6 +532,8 @@ reformat current entire buffer."
 
 ;;;; For go
 (require 'go-mode-autoloads)  ; https://github.com/dominikh/go-mode.el
+(eval-after-load "go-mode"
+  '(require 'go-guru))        ; 提示输入scope时，发现输入包名（如main）无效，输入点号.即可。
 
 ;; 保存go文件前先格式化代码
 (add-hook 'go-mode-hook
