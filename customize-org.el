@@ -67,6 +67,10 @@
             (define-key org-mode-map
               (kbd "C-c C-f") 'recentf-open-files)
 
+            ;; 使用M-g跳转到指定行时，展开整个文档
+            (define-key org-mode-map
+              "\M-g" (lambda (n) (interactive "nGoto line: ") (outline-show-all) (goto-line n)))
+
             (auto-fill-mode -1) ;; disable auto-fill-mode
 
             ;; 设置org-table/org-block中使用字体集fontset-myfixed
@@ -276,10 +280,12 @@
 [NO-DEFAULT-PACKAGES]
 [PACKAGES]
 
-\\setmainfont{SimSun}
-% \\setmainfont{DejaVu Sans}      % 英文衬线字体
-% \\setsansfont{DejaVu Serif}     % 英文无衬线字体
-% \\setmonofont{DejaVu Sans Mono} % 英文等宽字体
+\\setmainfont{Times New Roman}    % 注，SimSun字体没有粗体和斜体，不要使用它。
+\\setsansfont{Arial}
+\\setmonofont{Source Code Pro}
+% \\setmainfont{DejaVu Sans}      % 英文衬线字体，\\rmfamily或者\\textrm{}所使用字体（rm表示romain）
+% \\setsansfont{DejaVu Serif}     % 英文无衬线字体，\\sffamily或者\\textsf{}所使用字体
+% \\setmonofont{DejaVu Sans Mono} % 英文等宽字体，\\ttfamily或者\\texttt{}所使用字体（tt表示typewriter）
 
 \\xeCJKsetup{
   CJKecglue  = \\hskip 0.2em plus 0.08\\baselineskip,   % 设置自动增加的中英文之间的间隔的宽度（默认值太宽）
@@ -320,6 +326,8 @@
              citecolor=black,
              urlcolor=black
              ]{hyperref}
+
+\\urlstyle{rm}              % 对url使用\\rmfamily字体
 
 % 参考 https://tex.stackexchange.com/questions/117267/strange-bug-with-hyperref-percent-symbol-and-cyrillic-character
 \\usepackage{bookmark}      % 包hyperref可以生成toc，不过包bookmark功能更强。它可以处理标题中含有“%”的情况
