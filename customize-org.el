@@ -280,9 +280,17 @@
 [NO-DEFAULT-PACKAGES]
 [PACKAGES]
 
-\\setmainfont{Times New Roman}    % 注，SimSun字体没有粗体和斜体，不要使用它。
+\\setmainfont[Ligatures=TeX]{Times New Roman}    % 注，SimSun字体没有粗体和斜体，不要使用它。
+% Ligatures=TeX的作用是对字符做转换，比如：
+%  ``  -->  “
+%  ''  -->  ”
+%  --  -->  en-dash
+%  --- -->  em-dash
+% 注1：在TeX Live 2014及以后版本中，Ligatures=TeX是默认设置，所以也可以省略
+% 注2：使用设置\\defaultfontfeatures{Mapping=tex-text}也可实现Ligatures=TeX的功能，但不建议使用它，因为它还会改变“等宽字体”的设置
 \\setsansfont{Arial}
 \\setmonofont{Source Code Pro}
+% 上面三种字体设置的说明如下：
 % \\setmainfont{DejaVu Sans}      % 英文衬线字体，\\rmfamily或者\\textrm{}所使用字体（rm表示romain）
 % \\setsansfont{DejaVu Serif}     % 英文无衬线字体，\\sffamily或者\\textsf{}所使用字体
 % \\setmonofont{DejaVu Sans Mono} % 英文等宽字体，\\ttfamily或者\\texttt{}所使用字体（tt表示typewriter）
@@ -295,12 +303,9 @@
 % \\usepackage{indentfirst}     % 首段缩进
 \\usepackage{parskip}           % 不要段缩进
 
-
 % https://tex.stackexchange.com/questions/7735/how-to-get-straight-quotation-marks
 % 引入下面包后，英文双引号会原样地直接输出。不过它不会让英文单引号原样输出。但它有副作用，代码中的单引号、反引号不会原样输出
 % \\usepackage[T1]{fontenc}
-
-% \\defaultfontfeatures{Mapping=tex-text} % 如果没有它，会有一些 tex 特殊字符无法正常使用，比如连字符。
 
 % 中文断行
 \\XeTeXlinebreaklocale \"zh\"   % allow linebreaks
