@@ -296,8 +296,12 @@
 % \\setmonofont{DejaVu Sans Mono} % 英文等宽字体，\\ttfamily或者\\texttt{}所使用字体（tt表示typewriter）
 
 \\xeCJKsetup{
-  CJKecglue  = \\hskip 0.2em plus 0.08\\baselineskip,   % 设置自动增加的中英文之间的间隔的宽度（默认值太宽）
+% 下面设置CJKecglue后，发现一个奇怪的问题：汉字中如果有单词MINUS会报错，如文件中含“DB2可以使用EXCEPT或MINUS关键字”时无法正确生成pdf。
+% 所以暂时注释掉对CJKecglue的设置。
+%  CJKecglue  = \\hskip 0.2em plus 0.08\\baselineskip,   % 设置自动增加的中英文之间的间隔的宽度（默认值太宽）
   xCJKecglue = true}                                    % 让上面的设置对人为输入的中英文之间的空格也有效
+
+\\normalspacedchars{•‘’-—–/`ˇ}  % 这里出现的字符两端不自动添加空格。这样，It’s中的’后面就不会有过宽的空格了。
 
 % \\parindent 2em
 % \\usepackage{indentfirst}     % 首段缩进
