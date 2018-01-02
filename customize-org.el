@@ -274,13 +274,13 @@
 \\usepackage{geometry}
 \\geometry{left=3.0cm,right=2.5cm,top=2.5cm,bottom=2.5cm}   % 调整页边距
 
-\\usepackage{xeCJK}
+\\usepackage[AutoFallBack]{xeCJK}            % 设置AutoFallBack后，可通过\\setCJKfallbackfamilyfont设置中文备用字体
 % \\usepackage[PunctStyle=kaiming]{xeCJK}      % 设置标点为“开明”格式（即句末点号用全角，其他半角）
 
 [NO-DEFAULT-PACKAGES]
 [PACKAGES]
 
-\\setmainfont[Ligatures=TeX]{Times New Roman}    % 注，SimSun字体没有粗体和斜体，不要使用它。
+\\setmainfont[Ligatures=TeX]{Times New Roman}
 % Ligatures=TeX的作用是对字符做转换，比如：
 %  ``  -->  “
 %  ''  -->  ”
@@ -289,11 +289,14 @@
 % 注1：在TeX Live 2014及以后版本中，Ligatures=TeX是默认设置，所以也可以省略
 % 注2：使用设置\\defaultfontfeatures{Mapping=tex-text}也可实现Ligatures=TeX的功能，但不建议使用它，因为它还会改变“等宽字体”的设置
 \\setsansfont{Arial}
-\\setmonofont{Source Code Pro}
+\\setmonofont[Scale=0.9]{Source Code Pro}
 % 上面三种字体设置的说明如下：
-% \\setmainfont{DejaVu Sans}      % 英文衬线字体，\\rmfamily或者\\textrm{}所使用字体（rm表示romain）
-% \\setsansfont{DejaVu Serif}     % 英文无衬线字体，\\sffamily或者\\textsf{}所使用字体
+% \\setmainfont{DejaVu Serif}     % 英文衬线字体，\\rmfamily或者\\textrm{}所使用字体（rm表示romain）
+% \\setsansfont{DejaVu Sans}      % 英文无衬线字体，\\sffamily或者\\textsf{}所使用字体
 % \\setmonofont{DejaVu Sans Mono} % 英文等宽字体，\\ttfamily或者\\texttt{}所使用字体（tt表示typewriter）
+
+\\setCJKmainfont{Source Han Serif SC}  % 思源宋体，可从 https://github.com/adobe-fonts/source-han-serif 下载
+% 尝试了其它字体，都不完美。如“SimSun”没有粗体和斜体，“FandolSong”（TeXLive自带）缺了很多字形（如“啰嗦”中的“啰”字就没有字形）。
 
 \\xeCJKsetup{
 % 下面设置CJKecglue后，发现一个奇怪的问题：汉字中如果有单词MINUS会报错，如文件中含“DB2可以使用EXCEPT或MINUS关键字”时无法正确生成pdf。
@@ -301,7 +304,42 @@
 %  CJKecglue  = \\hskip 0.2em plus 0.08\\baselineskip,   % 设置自动增加的中英文之间的间隔的宽度（默认值太宽）
   xCJKecglue = true}                                    % 让上面的设置对人为输入的中英文之间的空格也有效
 
-\\normalspacedchars{•‘’-—–/`ˇ}  % 这里出现的字符两端不自动添加空格。这样，It’s中的’后面就不会有过宽的空格了。
+\\normalspacedchars{•‘’-—–/`ˇ}  % 这里出现的字符两端不会自动添加空格。比如，It’s中的’后面就不会有过宽的空格了。
+
+% 为了避免找不到字体（pdf中会以“豆腐块”形状字符代替），把备用字体\\myfallbackfont设置为“Arial Unicode MS”，
+% 它支持的字符很全，且在Mac和Windows平台都内置。
+% 如果你认为“Arial Unicode MS”支持的字体还不够，可以使用Code2000字体，或者Google的Noto字体，不过它们都要单独安装。
+% 参考：https://en.wikipedia.org/wiki/Unicode_font
+% https://tex.stackexchange.com/questions/224584/define-fallback-font-for-specific-unicode-characters-in-lualatex
+\\usepackage{fontspec, newunicodechar}
+\\newfontfamily{\\myfallbackfont}{Arial Unicode MS}
+\\DeclareTextFontCommand{\\textfallback}{\\myfallbackfont}
+% 目前没有自动化，需要先找到无法显示的字符，再通过\\newunicodechar重新换一个字体。如下所示：
+\\newunicodechar{☆}{\\textfallback{☆}}
+\\newunicodechar{❑}{\\textfallback{❑}}
+\\newunicodechar{⇔}{\\textfallback{⇔}}
+\\newunicodechar{⇒}{\\textfallback{⇒}}
+\\newunicodechar{↖}{\\textfallback{↖}}
+\\newunicodechar{↗}{\\textfallback{↗}}
+\\newunicodechar{↘}{\\textfallback{↘}}
+\\newunicodechar{↙}{\\textfallback{↙}}
+\\newunicodechar{①}{\\textfallback{①}}
+\\newunicodechar{②}{\\textfallback{②}}
+\\newunicodechar{③}{\\textfallback{③}}
+\\newunicodechar{④}{\\textfallback{④}}
+\\newunicodechar{⑤}{\\textfallback{⑤}}
+\\newunicodechar{Ⅰ}{\\textfallback{Ⅰ}}   % ROMAN NUMERAL ONE
+\\newunicodechar{Ⅱ}{\\textfallback{Ⅱ}}   % ROMAN NUMERAL TWO
+\\newunicodechar{Ⅲ}{\\textfallback{Ⅲ}}   % ROMAN NUMERAL THREE
+\\newunicodechar{Ⅳ}{\\textfallback{Ⅳ}}   % ROMAN NUMERAL FOUR
+\\newunicodechar{Ⅴ}{\\textfallback{Ⅴ}}   % ROMAN NUMERAL FIV
+\\newunicodechar{⌘}{\\textfallback{⌘}}   % Mac Command key
+\\newunicodechar{⇧}{\\textfallback{⇧}}   % Mac Shift key
+\\newunicodechar{⌥}{\\textfallback{⌥}}   % Mac Option key
+\\newunicodechar{⌃}{\\textfallback{⌃}}   % Mac Control key
+\\newunicodechar{⇪}{\\textfallback{⇪}}   % Mac Caps Lock key
+% 如果还有其它字符显示为“豆腐块”，你可以在这里增加相应条目，设置它使用“Arial Unicode MS”字体。
+% 注：尝试过ucharclasses包中的\\setTransitionsForXXXX方法来避免“豆腐块”，但这种方法当无法显示的字符左右没有空格，直接夹中文之间时还是会无法显示。
 
 % \\parindent 2em
 % \\usepackage{indentfirst}     % 首段缩进
