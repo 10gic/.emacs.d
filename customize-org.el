@@ -345,6 +345,9 @@
 % 思源宋体，可从 https://github.com/adobe-fonts/source-han-serif 下载
 % 尝试了其它字体，都不完美。如“SimSun”没有粗体和斜体，“FandolSong”（TeXLive自带，xeCJK默认使用它）缺了很多字形（如“啰嗦”中的“啰”字就没有字形）。
 
+% \\setCJKsansfont{XXX}                % 一般不会用到
+\\setCJKmonofont{Source Han Serif SC}
+
 \\xeCJKsetup{
 % 下面设置CJKecglue后，发现一个奇怪的问题：汉字中如果有单词MINUS会报错，如文件中含“DB2可以使用EXCEPT或MINUS关键字”时无法正确生成pdf。
 % 所以暂时注释掉对CJKecglue的设置。
