@@ -192,16 +192,17 @@
 (add-to-list 'org-latex-listings '("" "listings"))
 (add-to-list 'org-latex-listings '("" "color"))
 
-;; 使用org-export-smart-quotes-alist中的设置对英文双引号和英文单引号进行转换
-(setq org-export-with-smart-quotes t)
-;; 原样地输出英文双引号和英文单引号
-(add-to-list 'org-export-smart-quotes-alist
-             '("en"
-               (primary-opening   :latex "{\\ttfamily\"}")   ; {\ttfamily"}
-               (primary-closing   :latex "{\\ttfamily\"}")
-               (secondary-opening :latex "{\\ttfamily'}")
-               (secondary-closing :latex "{\\ttfamily'}")
-               (apostrophe        :latex "{\\ttfamily'}")))
+;;;; 通过设置\\setmainfont[Scale=1.04, Mapping=]{Times New Roman}可以禁止Ligatures，不再需要下面代码
+;; ;; 使用org-export-smart-quotes-alist中的设置对英文双引号和英文单引号进行转换
+;; (setq org-export-with-smart-quotes t)
+;; ;; 原样地输出英文双引号和英文单引号
+;; (add-to-list 'org-export-smart-quotes-alist
+;;              '("en"
+;;                (primary-opening   :latex "{\\ttfamily\"}")   ; {\ttfamily"}
+;;                (primary-closing   :latex "{\\ttfamily\"}")
+;;                (secondary-opening :latex "{\\ttfamily'}")
+;;                (secondary-closing :latex "{\\ttfamily'}")
+;;                (apostrophe        :latex "{\\ttfamily'}")))
 
 ;; Replace verbatim env by lstlisting env for example block
 ;; 导出latex时，默认 #+BEGIN_EXAMPLE...#+END_EXAMPLE 会导出为 \begin{verbatim}...\end{verbatim}
@@ -263,6 +264,49 @@
 (add-to-list 'org-export-filter-example-block-functions
          'my-latex-export-example-blocks)
 
+;; 导出pdf时，避免中文标点符号出现在“行首”。
+;; xeCJK能避免中文标点符号出现在“行首”的情况，不过，如果“中文标点前面有空格”时它无法避免标点符号出现在行首。
+;; 情况一：
+;; org文件中的：$a^2 + b^2 = c^2$ 。   <-- 句号前有个空格！句号前的空格是必须的，否则无法正确导出数学公式。
+;; 会导出为tex：\(a^2 + b^2 = c^2\) 。   <-- 句号前有个空格！这时，xeCJK不能保证句号不出现在行首。
+;; 情况二：
+;; org文件中的：~code~ 。   <-- 句号前有个空格！句号前的空格是必须的，否则无法正确导出“代码”。
+;; 会导出为tex：\texttt{code} 。   <-- 句号前有个空格！这时，xeCJK不能保证句号不出现在行首。
+;; 下面函数把上面两种情况中标点之前的空格去掉，xetex不会报错。
+;; 如（句号前有个空格）：\(a^2 + b^2 = c^2\) 。
+;; 会变为（删除了句号前的空格）：\(a^2 + b^2 = c^2\)。
+(defun my-latex-export-avoid-punctuation-in-beginning (text backend info)
+  "Avoid punctuation displayed in beginning of line."
+  (when (org-export-derived-backend-p backend 'latex)
+    (with-temp-buffer
+      (insert text)
+      ;; (princ text)      ; just for debugging
+      (progn
+        (goto-char (point-min))
+        (replace-string "\) ，" "\)，")  ; 去掉了中文标点前面的空格，下同
+        (goto-char (point-min))
+        (replace-string "\) 。" "\)。")
+        (goto-char (point-min))
+        (replace-string "\) 、" "\)、")
+        (goto-char (point-min))
+        (replace-string "\) ？" "\)？")
+        (goto-char (point-min))
+        (replace-string "\) ”" "\)”")
+        (goto-char (point-min))
+        (replace-string "} ，" "}，")
+        (goto-char (point-min))
+        (replace-string "} 。" "}。")
+        (goto-char (point-min))
+        (replace-string "} 、" "}、")
+        (goto-char (point-min))
+        (replace-string "} ？" "}？")
+        (goto-char (point-min))
+        (replace-string "} ”" "}”"))
+      (buffer-substring-no-properties (point-min) (point-max)))))
+
+(add-to-list 'org-export-filter-body-functions
+             'my-latex-export-avoid-punctuation-in-beginning)
+
 ;; 自定义新的LaTex导出模板
 ;; https://github.com/w0mTea/An.Emacs.Tutorial.for.Vim.User/blob/master/An.Emacs.Tutorial.for.Vim.User.zh-CN.org
 ;; Add a template for article
@@ -275,28 +319,31 @@
 \\geometry{left=3.0cm,right=2.5cm,top=2.5cm,bottom=2.5cm}   % 调整页边距
 
 \\usepackage[AutoFallBack]{xeCJK}            % 设置AutoFallBack后，可通过\\setCJKfallbackfamilyfont设置中文备用字体
-% \\usepackage[PunctStyle=kaiming]{xeCJK}      % 设置标点为“开明”格式（即句末点号用全角，其他半角）
+% \\usepackage[AutoFallBack, PunctStyle=kaiming]{xeCJK}      % 设置标点为“开明”格式（即句末点号用全角，其他半角）
 
 [NO-DEFAULT-PACKAGES]
 [PACKAGES]
 
-\\setmainfont[Ligatures=TeX]{Times New Roman}
-% Ligatures=TeX的作用是对字符做转换，比如：
+\\setmainfont[Scale=1.04, Mapping=]{Times New Roman}
+% Times New Roman比Source Han Serif SC字形小很多，中英文混合时难看，这里把Times New Roman放大些（Scale=1.04）。
+% “Mapping=”的作用是把Mapping设置为空，这样就可以禁止Ligatures了。
+% Ligatures=TeX（或Mapping=tex-text）的作用是对字符做转换，比如：
 %  ``  -->  “
 %  ''  -->  ”
 %  --  -->  en-dash
 %  --- -->  em-dash
-% 注1：在TeX Live 2014及以后版本中，Ligatures=TeX是默认设置，所以也可以省略
+% 注1：在TeX Live 2014及以后版本中，Ligatures=TeX是默认设置，不想使用它就需要明确禁止。
 % 注2：使用设置\\defaultfontfeatures{Mapping=tex-text}也可实现Ligatures=TeX的功能，但不建议使用它，因为它还会改变“等宽字体”的设置
-\\setsansfont{Arial}
-\\setmonofont[Scale=0.9]{Source Code Pro}
+\\setsansfont[Mapping=]{Arial}
+\\setmonofont{Source Code Pro}
 % 上面三种字体设置的说明如下：
-% \\setmainfont{DejaVu Serif}     % 英文衬线字体，\\rmfamily或者\\textrm{}所使用字体（rm表示romain）
-% \\setsansfont{DejaVu Sans}      % 英文无衬线字体，\\sffamily或者\\textsf{}所使用字体
-% \\setmonofont{DejaVu Sans Mono} % 英文等宽字体，\\ttfamily或者\\texttt{}所使用字体（tt表示typewriter）
+% \\setmainfont{XXX}    % 英文衬线字体，\\rmfamily或者\\textrm{}所使用字体（rm表示romain）
+% \\setsansfont{XXX}    % 英文无衬线字体，\\sffamily或者\\textsf{}所使用字体
+% \\setmonofont{XXX}    % 英文等宽字体，\\ttfamily或者\\texttt{}所使用字体（tt表示typewriter）
 
-\\setCJKmainfont{Source Han Serif SC}  % 思源宋体，可从 https://github.com/adobe-fonts/source-han-serif 下载
-% 尝试了其它字体，都不完美。如“SimSun”没有粗体和斜体，“FandolSong”（TeXLive自带）缺了很多字形（如“啰嗦”中的“啰”字就没有字形）。
+\\setCJKmainfont{Source Han Serif SC}
+% 思源宋体，可从 https://github.com/adobe-fonts/source-han-serif 下载
+% 尝试了其它字体，都不完美。如“SimSun”没有粗体和斜体，“FandolSong”（TeXLive自带，xeCJK默认使用它）缺了很多字形（如“啰嗦”中的“啰”字就没有字形）。
 
 \\xeCJKsetup{
 % 下面设置CJKecglue后，发现一个奇怪的问题：汉字中如果有单词MINUS会报错，如文件中含“DB2可以使用EXCEPT或MINUS关键字”时无法正确生成pdf。
@@ -304,7 +351,8 @@
 %  CJKecglue  = \\hskip 0.2em plus 0.08\\baselineskip,   % 设置自动增加的中英文之间的间隔的宽度（默认值太宽）
   xCJKecglue = true}                                    % 让上面的设置对人为输入的中英文之间的空格也有效
 
-\\normalspacedchars{•‘’-—–/`ˇ}  % 这里出现的字符两端不会自动添加空格。比如，It’s中的’后面就不会有过宽的空格了。
+\\normalspacedchars{•‘’-—–/`ˇ}    % 这里出现的字符两端不会自动添加空格。比如，It’s中的’后面就不会有过宽的空格了。
+\\xeCJKsetwidth{“”（）}{0.7em}    % 把这些标点的宽度设置得窄些（默认占一个中文宽度）。
 
 % 为了避免找不到字体（pdf中会以“豆腐块”形状字符代替），把备用字体\\myfallbackfont设置为“Arial Unicode MS”，
 % 它支持的字符很全，且在Mac和Windows平台都内置。
