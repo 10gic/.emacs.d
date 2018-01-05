@@ -26,6 +26,10 @@
 
 (add-to-list 'load-path "~/.emacs.d/lisp/")
 
+(require 'back-button)
+(back-button-mode 1)
+(setq back-button-no-wrap t)  ; 定位到最后一个mark后，不会跳到第一个mark。
+
 (require 'ido)
 (ido-mode t) ; 启动ido-mode。如：键入C-x b时，可用ido快速地切换buffer
 
@@ -78,12 +82,18 @@
 ;; 在不同系统下调整中文字体大小，以保证两个英文和一个中文等宽
 (cond
  ((eq system-type 'darwin)
-  ;; Mac下测试时，英文字体的大小为12，这里设置中文大小为14，
-  ;; 这时，两个英文恰好和一个中文等宽。
-  (dolist (charset '(kana han symbol cjk-misc bopomofo))
+  (progn
+    ;; Mac下测试时，英文字体的大小为12，这里设置中文大小为14，
+    ;; 这时，两个英文恰好和一个中文等宽。
+    (dolist (charset '(kana han symbol cjk-misc bopomofo))
+      (set-fontset-font "fontset-myfixed"
+                        charset
+                        (font-spec :family "STHeiti" :size 14)))
+    ;; 把英文（属于'latin）显式地设置为大小12，这样就不依赖于默认大小了，
+    ;; 从而，总能实现“两个英文和一个中文等宽”。
     (set-fontset-font "fontset-myfixed"
-                      charset
-                      (font-spec :family "STHeiti" :size 14))))
+                      'latin
+                      (font-spec :family "Monaco" :size 12))))
  ((memq system-type '(windows-nt cygwin))
   ;; Windows下测试时，英文字体的大小为19，这里设置中文大小为21，
   ;; 这时，两个英文恰好和一个中文等宽。
@@ -327,12 +337,11 @@
 ;; aquamacs-tabbar比原始的tabbar更友好
 ;; Using aquamacs-tabbar (from https://github.com/dholm/tabbar)
 ;; Mac中Auqamacs内置tabbar，且默认配置很好，无需再配置。
-(if (not (eq system-type 'darwin))
-    (progn
-      (add-to-list 'load-path my-tabbar-path)
+(when (not (boundp 'aquamacs-version))     ; 仅在非Auqamacs中加载aquamacs-tabbar
+  (add-to-list 'load-path my-tabbar-path)
       (require 'aquamacs-tabbar)
       (tabbar-mode 1)
-      (load-file "~/.emacs.d/customize-aquamacs-tabbar.el")))
+      (load-file "~/.emacs.d/customize-aquamacs-tabbar.el"))
 
 ;; Multiple cursors for Emacs. https://github.com/magnars/multiple-cursors.el
 (add-to-list 'load-path my-multiple-cursors-path)
