@@ -249,6 +249,14 @@
 ;; (global-whitespace-mode t) ; 全局打开whitespace-mode
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(require 'column-marker)
+
+(add-hook 'prog-mode-hook (lambda ()
+                            (column-marker-1 80)
+                            (column-marker-2 90)
+                            (column-marker-3 100)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 常规键绑定设置
 ;; 格式化当前行后缩进下行
 (global-set-key "\C-m" 'reindent-then-newline-and-indent)
