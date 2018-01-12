@@ -117,6 +117,7 @@
  '(custom-enabled-themes (quote (tango-dark)))
  '(display-time-24hr-format t)
  '(display-time-mode t)
+ '(git-gutter:update-interval 2) ; https://github.com/syohex/emacs-git-gutter
  '(mouse-wheel-mode t)
  '(show-paren-mode t)
  '(size-indication-mode t)
@@ -316,6 +317,22 @@
 (setq-default save-place t)
 (setq save-place-file "~/.emacs.d/saved-places.dat")
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; https://github.com/syohex/emacs-git-gutter
+(require 'git-gutter)
+
+;; Enable global minor mode
+(global-git-gutter-mode t)
+
+;; Use git-gutter.el and linum-mode
+(git-gutter:linum-setup)
+
+;; 设置“跳到上一个（或下一个）修改位置”的快捷键
+(global-set-key (kbd "C-M-<up>") 'git-gutter:previous-hunk)  ; Ctrl + Alt + ↑
+(global-set-key (kbd "C-M-<down>") 'git-gutter:next-hunk)    ; Ctrl + Alt + ↓
+
+;; 设置“取消（Revert）当前位置的修改”的快捷键
+(global-set-key (kbd "C-x v r") 'git-gutter:revert-hunk)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
