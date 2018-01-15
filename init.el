@@ -114,14 +114,15 @@
  ;; If there is more than one, they won't work right.
  '(blink-cursor-mode t)
  '(column-number-mode t)
- '(custom-enabled-themes (quote (tango-dark)))
+ '(custom-enabled-themes (quote (adwaita)))
  '(display-time-24hr-format t)
  '(display-time-mode t)
  '(git-gutter:update-interval 2) ; https://github.com/syohex/emacs-git-gutter
  '(mouse-wheel-mode t)
+ '(ns-tool-bar-size-mode (quote small) t) ; 设置Aquamacs工具栏使用小图标
+ '(scroll-bar-mode (quote nil))
  '(show-paren-mode t)
  '(size-indication-mode t)
- '(scroll-bar-mode (quote nil))
  '(xterm-mouse-mode t))
 
 ;; 说明:
@@ -162,6 +163,7 @@
     (set-frame-font "DejaVu Sans Mono-14" nil))
    ((find-font (font-spec :name "Consolas"))  ; 微软等宽字体
     (set-frame-font "Consolas-14" nil)))
+  ;; 下面设置中文字体
   (when (or (string-equal system-type "cygwin")
             (string-equal system-type "windows-nt"))
     ;; cygwin或Windows中设置中文字体(nsimsun是新宋体的名称)。若不设置会有一些中
@@ -172,6 +174,14 @@
           (set-fontset-font (frame-parameter nil 'font)
                             charset
                             (font-spec :family "nsimsun")))))
+  (when (eq system-type 'darwin)
+    (dolist (charset '(kana han symbol cjk-misc bopomofo))
+      (if (display-graphic-p)
+          (set-fontset-font (frame-parameter nil 'font)
+                            charset
+                            ;; 前面英文字体size为14，中文设置size设置为16
+                            ;; 这样，可实现两个英文为一个中文等宽
+                            (font-spec :family "STSong" :size 16)))))
   ;; (setq frame-title-format "%b") ; %b让标题栏显示buffer的名字。
   (setq frame-title-format `(,(user-login-name) "@" ,(system-name) " %f" )))
 
@@ -197,14 +207,12 @@
   ;; open *help* in current frame
   (setq special-display-regexps (remove "[ ]?\\*[hH]elp.*"
                                         special-display-regexps))
+
+  ;; Aquamacs中定制主题需要增加(color-theme-initialize)和(color-theme-charcoal-black)
+  ;; 参考 https://stackoverflow.com/questions/21988671/how-to-make-aquamacs-color-theme-stick
+  ;(color-theme-initialize)
+
   (setq frame-title-format "%f" )
-  (custom-set-variables
-   '(ns-tool-bar-size-mode (quote small) t) ; Aquamacs工具栏使用小图标
-   '(custom-enabled-themes nil))  ; 不设置主题，因为Aquamacs中使用其它主题太难看
-  (if (find-font (font-spec :name "Source Code Pro"))
-      (custom-set-faces      ; 为Aquamacs设置字体
-       '(default ((t (:height 140 :width normal :family "Source Code Pro"))))))
-  (server-start)   ; auto enable server-mode
   )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -364,9 +372,9 @@
 ;; Mac中Auqamacs内置tabbar，且默认配置很好，无需再配置。
 (when (not (boundp 'aquamacs-version))     ; 仅在非Auqamacs中加载aquamacs-tabbar
   (add-to-list 'load-path my-tabbar-path)
-      (require 'aquamacs-tabbar)
-      (tabbar-mode 1)
-      (load-file "~/.emacs.d/customize-aquamacs-tabbar.el"))
+  (require 'aquamacs-tabbar)
+  (tabbar-mode 1)
+  (load-file "~/.emacs.d/customize-aquamacs-tabbar.el"))
 
 ;; Multiple cursors for Emacs. https://github.com/magnars/multiple-cursors.el
 (add-to-list 'load-path my-multiple-cursors-path)
@@ -620,8 +628,8 @@ reformat current entire buffer."
 
 (eval-after-load "tex-mode"
   '(if (require 'tex-buf nil 'noerror)
-         (load-file "~/.emacs.d/customize-latex.el")
-       (message "Warn: tex-buf is not available, skip its configuring")))
+       (load-file "~/.emacs.d/customize-latex.el")
+     (message "Warn: tex-buf is not available, skip its configuring")))
 
 ;; 可通过安装emacs-goodies-el来安装folding
 ;; http://www.emacswiki.org/emacs/FoldingMode
