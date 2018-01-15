@@ -85,6 +85,8 @@
 ;; 
 ;;; Change log:
 ;;
+;; 2018/01/15 cig01
+;;     column-marker-find: Support chinese.
 ;; 2009/12/10 dadams
 ;;     column-marker-internal: Quote the face.  Thx to Johan Bockgård.
 ;; 2009/12/09 dadams
@@ -218,7 +220,7 @@ Returns the function symbol, named `column-marker-move-to-COL'."
                ;; If at target column, not past end, and not prior to start,
                ;; then set match data and return t.  Otherwise go to start
                ;; and return nil.
-               (if (and (= ,col (current-column)) (<= (point) end) (> (point) start))
+               (if (and (<= ,col (current-column)) (<= (point) end) (> (point) start))
                    (progn (set-match-data (list (1- (point)) (point)))
                           t)            ; Return t.
                  (goto-char start)
