@@ -208,10 +208,6 @@
   (setq special-display-regexps (remove "[ ]?\\*[hH]elp.*"
                                         special-display-regexps))
 
-  ;; Aquamacs中定制主题需要增加(color-theme-initialize)和(color-theme-charcoal-black)
-  ;; 参考 https://stackoverflow.com/questions/21988671/how-to-make-aquamacs-color-theme-stick
-  ;(color-theme-initialize)
-
   (setq frame-title-format "%f" )
   )
 
