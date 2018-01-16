@@ -747,8 +747,8 @@ reformat current entire buffer."
        "#include <iostream>" \n \n
        "using namespace std;" \n \n
        "int main() {" \n
-       "  " _ \n
-       "  return 0;" \n
+       _ \n
+       "return 0;" \n
        "}" > \n)))
 
 (eval-after-load 'autoinsert
@@ -757,8 +757,8 @@ reformat current entire buffer."
      '(nil
        "#include <stdio.h>" \n \n
        "int main() {" \n
-       "  " _ \n
-       "  return 0;" \n
+       _ \n
+       "return 0;" \n
        "}" > \n)))
 
 (eval-after-load 'autoinsert
