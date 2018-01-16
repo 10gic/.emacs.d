@@ -2,12 +2,10 @@
 (setq inhibit-startup-message t)  ; 启动emacs时不显示GNU Emacs窗口。
 (setq initial-scratch-message "") ; scratch信息中显示为空。
 
-;; Disable tool bar unless it's Mac OS
-(if (and (boundp 'tool-bar-mode) (not (eq system-type 'darwin)))
-    (tool-bar-mode -1)) ; Note: (tool-bar-mode nil) cannot work in Ubuntu 14.04
-;; Disable menu bar unless it's Mac OS
-(if (and (boundp 'menu-bar-mode) (not (eq system-type 'darwin)))
-    (menu-bar-mode -1)) ; Note: (memu-bar-mode nil) cannot work in Ubuntu 14.04
+;; Disable tool bar
+;; (tool-bar-mode -1) ; Note: (tool-bar-mode nil) cannot work in Ubuntu 14.04
+;; Disable menu bar
+;; (menu-bar-mode -1) ; Note: (memu-bar-mode nil) cannot work in Ubuntu 14.04
 
 ;; (setq make-backup-files nil) ; 不要生成备份文件（以波浪线结尾）。
 
@@ -25,10 +23,6 @@
 (setq which-func-unknown "n/a")
 
 (add-to-list 'load-path "~/.emacs.d/lisp/")
-
-(require 'back-button)
-(back-button-mode 1)
-(setq back-button-no-wrap t)  ; 定位到最后一个mark后，不会跳到第一个mark。
 
 (require 'ido)
 (ido-mode t) ; 启动ido-mode。如：键入C-x b时，可用ido快速地切换buffer
@@ -181,7 +175,13 @@
                             charset
                             ;; 前面英文字体size为14，中文设置size设置为16
                             ;; 这样，可实现两个英文为一个中文等宽
-                            (font-spec :family "STSong" :size 16)))))
+                            (font-spec :family "STHeiti" :size 16))))) ; STSong宋体
+  (when (eq system-type 'gnu/linux)
+    (dolist (charset '(kana han symbol cjk-misc bopomofo))
+      (if (display-graphic-p)
+          (set-fontset-font (frame-parameter nil 'font)
+                            charset
+                            (font-spec :family "AR PL UMing CN")))))
   ;; (setq frame-title-format "%b") ; %b让标题栏显示buffer的名字。
   (setq frame-title-format `(,(user-login-name) "@" ,(system-name) " %f" )))
 
@@ -207,9 +207,7 @@
   ;; open *help* in current frame
   (setq special-display-regexps (remove "[ ]?\\*[hH]elp.*"
                                         special-display-regexps))
-
-  (setq frame-title-format "%f" )
-  )
+  (setq frame-title-format "%f" ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 设置自动备份
@@ -252,14 +250,6 @@
                '(("\t" 0 'trailing-whitespace prepend))))))
 
 ;; (global-whitespace-mode t) ; 全局打开whitespace-mode
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(require 'column-marker)
-
-(add-hook 'prog-mode-hook (lambda ()
-                            (column-marker-1 80)
-                            (column-marker-2 90)
-                            (column-marker-3 100)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 常规键绑定设置
@@ -322,6 +312,19 @@
 (setq save-place-file "~/.emacs.d/saved-places.dat")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(require 'back-button)
+(back-button-mode 1)
+(setq back-button-no-wrap t)  ; 定位到最后一个mark后，不会跳到第一个mark。
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(require 'column-marker)
+
+(add-hook 'prog-mode-hook (lambda ()
+                            (column-marker-1 80)
+                            (column-marker-2 90)
+                            (column-marker-3 100)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; https://github.com/syohex/emacs-git-gutter
 (require 'git-gutter)
 
@@ -363,10 +366,12 @@
 (setq load-path (cons my-org-path1 load-path))
 (setq load-path (cons my-org-path2 load-path))
 
-;; aquamacs-tabbar比原始的tabbar更友好
-;; Using aquamacs-tabbar (from https://github.com/dholm/tabbar)
-;; Mac中Auqamacs内置tabbar，且默认配置很好，无需再配置。
-(when (not (boundp 'aquamacs-version))     ; 仅在非Auqamacs中加载aquamacs-tabbar
+;; aquamacs-tabbar(from https://github.com/dholm/tabbar)比原始的tabbar更友好
+;; Mac中Auqamacs内置有tabbar，且默认配置很好，无需再配置。
+;; aquamacs-tabbar在Mac原生Emacs中显示不好看
+;; aquamacs-tabbar在Windows中显示不正常。
+;; 下面仅在Linux中加载aquamacs-tabbar
+(when (eq system-type 'gnu/linux)
   (add-to-list 'load-path my-tabbar-path)
   (require 'aquamacs-tabbar)
   (tabbar-mode 1)
