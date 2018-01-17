@@ -207,6 +207,10 @@
   ;; open *help* in current frame
   (setq special-display-regexps (remove "[ ]?\\*[hH]elp.*"
                                         special-display-regexps))
+
+  ;; Aquamacs中，文本模式下默认使用的face为text-mode-default，参考Aquamacs-Autoface mode
+  ;; 这里把其fontset设置为fontset-myfixed（可中英文对齐）
+  (set-face-attribute 'text-mode-default nil :fontset "fontset-myfixed")
   (setq frame-title-format "%f" ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
