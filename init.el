@@ -351,10 +351,7 @@
 ;; Extract packages into ~/.emacs.d/packages/extract/
 (setq my-pkg-path "~/.emacs.d/packages/extract/")
 
-(when (not (file-exists-p my-pkg-path))
-  (if (and (executable-find "unzip") (executable-find "tar"))
-      (message (shell-command-to-string "sh ~/.emacs.d/packages/extract.sh"))
-    (message "Warn: Tool unzip or tar is NOT found, you need decompress files manually.")))
+(message (shell-command-to-string "sh ~/.emacs.d/packages/extract.sh"))
 
 (setq my-org-path1 (car (file-expand-wildcards (concat my-pkg-path "org-*/lisp"))))
 (setq my-org-path2 (car (file-expand-wildcards (concat my-pkg-path "org-*/contrib/lisp"))))

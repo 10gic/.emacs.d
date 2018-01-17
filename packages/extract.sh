@@ -1,29 +1,46 @@
-#!/usr/bin/env sh
+#!/bin/bash
 
 current_dir="$(dirname "$0")"
 extract_dir="$current_dir/extract"
 
-# check unzip is avaiable
-command -v unzip >/dev/null 2>&1
-if [ $? -ne 0 ]; then
-   echo "WARN: unzip is NOT found in PATH."
+if [[ -f "${current_dir}/extract.done" ]]; then
+    # File "${current_dir}/extract.done" is for saving time.
+    echo "File ${current_dir}/extract.done exist, extract nothing."
+    exit 0;
 fi
 
-if [ ! -d "$extract_dir" ]; then
-    mkdir -p "$extract_dir";
+# check unzip is avaiable
+if ! command -v unzip >/dev/null 2>&1; then
+    echo "WARN: unzip is NOT found in PATH."
+fi
 
-    for zip_file in "$current_dir"/*.zip; do
+if [[ ! -d "$extract_dir" ]]; then
+    mkdir -p "$extract_dir";
+fi
+
+for zip_file in "$current_dir"/*.zip; do
+    # DIR is the root dir in zip file
+    DIR=$(unzip -Z -1 "$zip_file" | head -1)
+    if [[ ! -d "$extract_dir/$DIR" ]]; then
         echo "Extracting $zip_file"
         unzip "$zip_file" -d "$extract_dir" >/dev/null;
-    done
+    fi
+done
 
-    for gz_file in "$current_dir"/*.gz; do
+for gz_file in "$current_dir"/*.gz; do
+    DIR=$(tar -tzf "$gz_file" | sed -e 's@/.*@@' | uniq)
+    if [[ ! -d "$extract_dir/$DIR" ]]; then
         echo "Extracting $gz_file"
         tar -xzf "$gz_file" -C "$extract_dir" >/dev/null;
-    done
+    fi
+done
 
-    for bz2_file in "$current_dir"/*.bz2; do
+for bz2_file in "$current_dir"/*.bz2; do
+    DIR=$(tar -tjf "$bz2_file" | sed -e 's@/.*@@' | uniq)
+    if [[ ! -d "$extract_dir/$DIR" ]]; then
         echo "Extracting $bz2_file"
         tar -xjf "$bz2_file" -C "$extract_dir" >/dev/null;
-    done
-fi
+    fi
+done
+
+echo "Please remove this file if your add new compress file." >> "${current_dir}/extract.done"
