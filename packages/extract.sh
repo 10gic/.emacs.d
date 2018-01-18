@@ -43,4 +43,4 @@ for bz2_file in "$current_dir"/*.bz2; do
     fi
 done
 
-echo "Please remove this file if your add new compress file." >> "${current_dir}/extract.done"
+echo "Please remove this file if you add new compress package." >> "${current_dir}/extract.done"
