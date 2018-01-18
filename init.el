@@ -142,7 +142,6 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(font-lock-comment-face ((t (:foreground "dim gray"))))
  '(org-level-4 ((t (:inherit outline-4 :foreground "pink1")))))
 
 ;; 说明：
@@ -272,8 +271,6 @@
 
 ;; (global-set-key (kbd "<f5>") 'global-linum-mode)
 (global-set-key (kbd "<f5>") 'linum-mode)    ; toggle line number
-(add-hook 'prog-mode-hook (lambda ()
-                            (linum-mode 1))) ; show line number for prog-mode
 
 (global-set-key (kbd "<f8>") 'xterm-mouse-mode)
 ;; (global-set-key (kbd "<f9>") 'view-mode)
@@ -511,6 +508,11 @@ or the current buffer directory."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(add-hook 'prog-mode-hook (lambda ()
+                            (imenu-add-menubar-index) ; 为prog-mode显示index菜单
+                            (linum-mode 1))) ; 为prog-mode显示行号
+
+
 ;;;; For C
 ;; 默认M-x compiler时，make命令会提取下面环境变量。
 (setenv "CFLAGS" "-ggdb3 -Wall")
@@ -571,13 +573,9 @@ reformat current entire buffer."
      (define-key c++-mode-map [f7] 'c-reformat-current-buffer)
      ))
 
-(add-hook 'c-mode-hook 'imenu-add-menubar-index) ; 打开c-mode的index菜单
-(add-hook 'c++-mode-hook 'imenu-add-menubar-index) ; 打开c++-mode的index菜单
-
 ;;;; For perl
 (defalias 'perl-mode 'cperl-mode) ; 设置默认使用cperl-mode代替perl-mode
 
-(add-hook 'cperl-mode-hook 'imenu-add-menubar-index) ; 打开cperl-mode的index菜单
 (add-hook 'cperl-mode-hook
           (function (lambda ()  ;only work in GUI.
                       (local-set-key [f1] 'cperl-perldoc-at-point))))
@@ -595,7 +593,7 @@ reformat current entire buffer."
 ;;;; For shell
 (add-to-list 'auto-mode-alist '("setenv" . sh-mode)) ; 以setenv开头的文件使用sh-mode
 (add-hook 'sh-mode-hook (function (lambda () (setq tab-width 4))))
-(add-hook 'sh-mode-hook 'imenu-add-menubar-index)
+
 
 ;;;; For html
 ;; web-mode.el is an autonomous emacs major-mode for editing web templates.
