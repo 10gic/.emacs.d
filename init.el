@@ -108,7 +108,7 @@
  ;; If there is more than one, they won't work right.
  '(blink-cursor-mode t)
  '(column-number-mode t)
- '(custom-enabled-themes (quote (adwaita)))
+ '(custom-enabled-themes (quote (misterioso))) ; adwaita/misterioso, etc
  '(display-time-24hr-format t)
  '(display-time-mode t)
  '(git-gutter:update-interval 2) ; https://github.com/syohex/emacs-git-gutter
@@ -118,6 +118,13 @@
  '(show-paren-mode t)
  '(size-indication-mode t)
  '(xterm-mouse-mode t))
+
+;; 在Aquamcs使用“深色”主题会有问题，下面是一个workaround
+;; 参考：;; https://emacs.stackexchange.com/questions/26957/how-can-i-load-the-solarized-dark-theme-correctly-in-aquamacs-from-emacs
+(when window-system
+  (when (featurep 'aquamacs)
+    (setq default-frame-alist nil))
+  (load-theme 'misterioso t))
 
 ;; 说明:
 ;; ;; 下面设置让光标闪烁。若不设置，但在deamon方式下，以图形方式启动时光标不闪烁。
