@@ -150,13 +150,13 @@
 (defun set-my-frame()
   (cond ; 设置字体，优先使用排在前面的
    ((find-font (font-spec :name "Source Code Pro"))
-    (set-frame-font "Source Code Pro-14" nil)) ; 这里的nil表示不维持窗口大小
+    (set-frame-font "Source Code Pro-14" nil t)) ; 第2个参数nil表示不维持窗口大小
    ((find-font (font-spec :name "Ubuntu Mono"))
-    (set-frame-font "Ubuntu Mono-14" nil))
+    (set-frame-font "Ubuntu Mono-14" nil t))
    ((find-font (font-spec :name "DejaVu Sans Mono"))
-    (set-frame-font "DejaVu Sans Mono-14" nil))
+    (set-frame-font "DejaVu Sans Mono-14" nil t))
    ((find-font (font-spec :name "Consolas"))  ; 微软等宽字体
-    (set-frame-font "Consolas-14" nil)))
+    (set-frame-font "Consolas-14" nil t)))
   ;; 下面设置中文字体
   (when (or (string-equal system-type "cygwin")
             (string-equal system-type "windows-nt"))
@@ -264,7 +264,10 @@
 (global-set-key [C-f4] 'kill-this-buffer)
 
 ;; (global-set-key (kbd "<f5>") 'global-linum-mode)
-(global-set-key (kbd "<f5>") 'linum-mode)  ; show line number
+(global-set-key (kbd "<f5>") 'linum-mode)    ; toggle line number
+(add-hook 'prog-mode-hook (lambda ()
+                            (linum-mode 1))) ; show line number for prog-mode
+
 (global-set-key (kbd "<f8>") 'xterm-mouse-mode)
 ;; (global-set-key (kbd "<f9>") 'view-mode)
 (global-set-key [C-f10] 'menu-bar-mode)
@@ -361,12 +364,14 @@
 (setq my-flycheck-path (concat my-pkg-path "flycheck-master"))
 (setq my-auto-complete-path (car (file-expand-wildcards (concat my-pkg-path "auto-complete-*"))))
 (setq my-auto-complete-dict-path (car (file-expand-wildcards (concat my-pkg-path "auto-complete-*/dict"))))
+(setq my-neotree-path (car (file-expand-wildcards (concat my-pkg-path "emacs-neotree-*"))))
 
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Use newer org-mode, the builtin version is too old.
 (setq load-path (cons my-org-path1 load-path))
 (setq load-path (cons my-org-path2 load-path))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; aquamacs-tabbar(from https://github.com/dholm/tabbar)比原始的tabbar更友好
 ;; Mac中Auqamacs内置有tabbar，且默认配置很好，无需再配置。
 ;; aquamacs-tabbar在Mac原生Emacs中显示不好看
@@ -378,6 +383,7 @@
   (tabbar-mode 1)
   (load-file "~/.emacs.d/customize-aquamacs-tabbar.el"))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Multiple cursors for Emacs. https://github.com/magnars/multiple-cursors.el
 (add-to-list 'load-path my-multiple-cursors-path)
 (require 'multiple-cursors)
@@ -385,6 +391,7 @@
 (global-set-key (kbd "M-p") 'mc/mark-previous-like-this)
 (global-set-key (kbd "M-n") 'mc/mark-next-like-this)
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; jdee (Java Development Environment for Emacs)
 ;; jdee require wget
 (if (>= emacs-major-version 24) ; It has error in emacs 23, just skip it.
@@ -397,6 +404,7 @@
       (message "Warn: Cannot find wget, skip loading jdee"))
   (message "Warn: Emacs is too old(<24) , skip loading jdee"))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Load flycheck.
 ;; It requires:
 ;; gcc 4.8 or newer.
@@ -409,6 +417,7 @@
       (eval-after-load 'cc-mode '(load "flycheck")))
   (message "Warn: Emacs is too old(<24) , skip loading flycheck"))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 配置auto-complete
 ;; http://cx4a.org/software/auto-complete/
 ;; http://blog.csdn.net/winterttr/article/details/7524336
@@ -420,6 +429,60 @@
 ;; http://stackoverflow.com/questions/11715296/emacs-auto-complete-dont-work-with-jde
 (push 'jde-mode ac-modes)
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; projectile: “工程管理”插件，可快速访问项目里任何文件，快速在项目中搜索关键字
+;; 所谓“工程”就是一些文件的集合，默认projectile支持git，mercurial，bazaar等工程；
+;; 手动创建一个工程的方法：在工程根目录中创建一个名为.projectile的空文件即可。
+;; See https://github.com/bbatsov/projectile
+(require 'projectile)
+(projectile-mode)
+
+;; projectile中默认快捷键前缀为`C-c p`
+;; projectile最常用的两个快捷键：
+;; `C-c p f`   ：在工程中查找文件
+;; `C-c p s g` ：在工程中查找关键字
+;;
+;; 还有很多其它快捷键绑定，如果记不住，你可以通过下面命令查看这些绑定：
+;; `C-c p C-h` ：查看projectile的快捷键绑定
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(add-to-list 'load-path my-neotree-path)
+(require 'neotree)
+
+;; 禁止自动刷新，自动刷新会改变显示的根目录
+;; 当禁止自动刷新后，切换到不同工程文件的buffer后，也不会刷新了
+;; 如果想要刷新显示的根目录，执行两次下面的neotree-project-dir-toggle即可
+(setq neo-autorefresh nil)
+
+(defun neotree-project-dir-toggle ()
+  "Open NeoTree using the project root, using find-file-in-project,
+or the current buffer directory."
+  (interactive)
+  (let ((project-dir
+         (ignore-errors
+           ;;; Pick one: projectile or find-file-in-project
+           (projectile-project-root)
+           ;; (ffip-project-root)
+           ))
+        (file-name (buffer-file-name))
+        (neo-smart-open t))
+    (if (and (fboundp 'neo-global--window-exists-p)
+             (neo-global--window-exists-p))
+        (neotree-hide)
+      (progn
+        (neotree-show)
+        (if project-dir
+            (neotree-dir project-dir))
+        (if file-name
+            (neotree-find file-name))))))
+
+(global-set-key (kbd "<f9>") 'neotree-project-dir-toggle)
+
+(add-hook 'neotree-mode-hook
+          (lambda()
+            (if (boundp 'tabbar-local-mode)  ; 检测tabbar-local-mode是否存在
+                (tabbar-local-mode 1))       ; 在neotree-mode中关闭tabbar
+            ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
