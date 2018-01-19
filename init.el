@@ -68,40 +68,6 @@
            (equal window-system 'w32))
   (defun server-ensure-safe-dir (dir) "Noop" t))
 
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; 创建一个“中英文对齐（两个英文和一个中文等宽）”的fontset，命名为fontset-myfixed
-(when (fboundp 'create-fontset-from-fontset-spec)
-  (create-fontset-from-fontset-spec
-   "-*-*-medium-r-normal-*-*-*-*-*-*-*-fontset-myfixed")
-  ;; 在不同系统下调整中文字体大小，以保证两个英文和一个中文等宽
-  (cond
-   ((eq system-type 'darwin)
-    (progn
-      ;; Mac下测试时，英文字体的大小为12，这里设置中文大小为14，
-      ;; 这时，两个英文恰好和一个中文等宽。
-      (dolist (charset '(kana han symbol cjk-misc bopomofo))
-        (set-fontset-font "fontset-myfixed"
-                          charset
-                          (font-spec :family "STHeiti" :size 14)))
-      ;; 把英文（属于'latin）显式地设置为大小12，这样就不依赖于默认大小了，
-      ;; 从而，总能实现“两个英文和一个中文等宽”。
-      (set-fontset-font "fontset-myfixed"
-                        'latin
-                        (font-spec :family "Monaco" :size 12))))
-   ((memq system-type '(windows-nt cygwin))
-    ;; Windows下测试时，英文字体的大小为19，这里设置中文大小为21，
-    ;; 这时，两个英文恰好和一个中文等宽。
-    (dolist (charset '(kana han symbol cjk-misc bopomofo))
-      (set-fontset-font "fontset-myfixed"
-                        charset
-                        (font-spec :family "nsimsun" :size 21))))
-   ((eq system-type 'gnu/linux)
-    (dolist (charset '(kana han symbol cjk-misc bopomofo))
-      (set-fontset-font "fontset-myfixed"
-                        charset
-                        (font-spec :family "AR PL UMing CN" :size 22))))))
-
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -122,10 +88,8 @@
 
 ;; 在Aquamcs使用“深色”主题会有问题，下面是一个workaround
 ;; 参考：;; https://emacs.stackexchange.com/questions/26957/how-can-i-load-the-solarized-dark-theme-correctly-in-aquamacs-from-emacs
-(when window-system
-  (when (featurep 'aquamacs)
+(if (and window-system (featurep 'aquamacs))
     (setq default-frame-alist nil))
-  (load-theme 'misterioso t))
 
 ;; 说明:
 ;; ;; 下面设置让光标闪烁。若不设置，但在deamon方式下，以图形方式启动时光标不闪烁。
@@ -155,17 +119,28 @@
 ;; 字体的设置必须在after-make-frame-functions的hook中进行，否则其设置对用
 ;; emacsclient启动的窗口无效。
 (defun set-my-frame()
+  ;; 经验表明，下面组合可实现一个中文和两个英文等宽：
+  ;; 英文为12，中文为14
+  ;; 英文为14，中文为16
+  ;; 英文为19，中文为21
   (if (display-graphic-p)
-      (cond ; 设置字体，优先使用排在前面的
+      (cond
+       ;; 设置默认字体，优先使用排在前面的
        ((find-font (font-spec :name "Source Code Pro"))
-        (set-frame-font "Source Code Pro-14" nil t)) ; 第2个参数nil表示不维持窗口大小
+        ;; set-frame-font第2个参数为nil表示不维持窗口大小
+        ;; set-frame-font第3个参数为t表示在新frame中也有效
+        ;; 写法"Source Code Pro-14"，在RedHat上有问题
+        ;; 应该写为"Source Code Pro:pixelsize=14"
+        (set-frame-font "Source Code Pro:pixelsize=14" nil t))
        ((find-font (font-spec :name "Ubuntu Mono"))
-        (set-frame-font "Ubuntu Mono-14" nil t))
+        (set-frame-font "Ubuntu Mono:pixelsize=14" nil t))
        ((find-font (font-spec :name "DejaVu Sans Mono"))
-        (set-frame-font "DejaVu Sans Mono-14" nil t))
+        (set-frame-font "DejaVu Sans Mono:pixelsize=14" nil t))
        ((find-font (font-spec :name "Consolas"))  ; 微软等宽字体
-        (set-frame-font "Consolas-14" nil t))))
+        (set-frame-font "Consolas:pixelsize=14" nil t))))
   ;; 下面设置中文字体
+  ;; 前面英文字体size为14，中文设置size设置为16
+  ;; 这样，可实现两个英文为一个中文等宽
   (when (or (string-equal system-type "cygwin")
             (string-equal system-type "windows-nt"))
     ;; cygwin或Windows中设置中文字体(nsimsun是新宋体的名称)。若不设置会有一些中
@@ -175,21 +150,19 @@
       (if (display-graphic-p)
           (set-fontset-font (frame-parameter nil 'font)
                             charset
-                            (font-spec :family "nsimsun")))))
+                            (font-spec :family "nsimsun" :size 16)))))
   (when (eq system-type 'darwin)
     (dolist (charset '(kana han symbol cjk-misc bopomofo))
       (if (display-graphic-p)
           (set-fontset-font (frame-parameter nil 'font)
                             charset
-                            ;; 前面英文字体size为14，中文设置size设置为16
-                            ;; 这样，可实现两个英文为一个中文等宽
                             (font-spec :family "STHeiti" :size 16))))) ; STSong宋体
   (when (eq system-type 'gnu/linux)
     (dolist (charset '(kana han symbol cjk-misc bopomofo))
       (if (display-graphic-p)
           (set-fontset-font (frame-parameter nil 'font)
                             charset
-                            (font-spec :family "AR PL UMing CN")))))
+                            (font-spec :family "AR PL UMing CN" :size 16)))))
   ;; (setq frame-title-format "%b") ; %b让标题栏显示buffer的名字。
   (set-cursor-color "red") ; 定制光标颜色，这样在“深色”主题下更醒目
   (setq frame-title-format `(,(user-login-name) "@" ,(system-name) " %f" )))
@@ -217,9 +190,9 @@
   (setq special-display-regexps (remove "[ ]?\\*[hH]elp.*"
                                         special-display-regexps))
 
-  ;; Aquamacs中，文本模式下默认使用的face为text-mode-default，参考Aquamacs-Autoface mode
-  ;; 这里把其fontset设置为fontset-myfixed（可中英文对齐）
-  (set-face-attribute 'text-mode-default nil :fontset "fontset-myfixed")
+  ;; 打开aquamacs-autoface-mode时，Aquamacs默认使用Monaco字体，但Monaco没有粗体
+  ;; 这里禁止aquamacs-autoface-mode
+  (if (fboundp 'aquamacs-autoface-mode) (aquamacs-autoface-mode -1))
   (setq frame-title-format "%f" ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
