@@ -71,35 +71,36 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 创建一个“中英文对齐（两个英文和一个中文等宽）”的fontset，命名为fontset-myfixed
-(create-fontset-from-fontset-spec
- "-*-*-medium-r-normal-*-*-*-*-*-*-*-fontset-myfixed")
-;; 在不同系统下调整中文字体大小，以保证两个英文和一个中文等宽
-(cond
- ((eq system-type 'darwin)
-  (progn
-    ;; Mac下测试时，英文字体的大小为12，这里设置中文大小为14，
+(when (fboundp 'create-fontset-from-fontset-spec)
+  (create-fontset-from-fontset-spec
+   "-*-*-medium-r-normal-*-*-*-*-*-*-*-fontset-myfixed")
+  ;; 在不同系统下调整中文字体大小，以保证两个英文和一个中文等宽
+  (cond
+   ((eq system-type 'darwin)
+    (progn
+      ;; Mac下测试时，英文字体的大小为12，这里设置中文大小为14，
+      ;; 这时，两个英文恰好和一个中文等宽。
+      (dolist (charset '(kana han symbol cjk-misc bopomofo))
+        (set-fontset-font "fontset-myfixed"
+                          charset
+                          (font-spec :family "STHeiti" :size 14)))
+      ;; 把英文（属于'latin）显式地设置为大小12，这样就不依赖于默认大小了，
+      ;; 从而，总能实现“两个英文和一个中文等宽”。
+      (set-fontset-font "fontset-myfixed"
+                        'latin
+                        (font-spec :family "Monaco" :size 12))))
+   ((memq system-type '(windows-nt cygwin))
+    ;; Windows下测试时，英文字体的大小为19，这里设置中文大小为21，
     ;; 这时，两个英文恰好和一个中文等宽。
     (dolist (charset '(kana han symbol cjk-misc bopomofo))
       (set-fontset-font "fontset-myfixed"
                         charset
-                        (font-spec :family "STHeiti" :size 14)))
-    ;; 把英文（属于'latin）显式地设置为大小12，这样就不依赖于默认大小了，
-    ;; 从而，总能实现“两个英文和一个中文等宽”。
-    (set-fontset-font "fontset-myfixed"
-                      'latin
-                      (font-spec :family "Monaco" :size 12))))
- ((memq system-type '(windows-nt cygwin))
-  ;; Windows下测试时，英文字体的大小为19，这里设置中文大小为21，
-  ;; 这时，两个英文恰好和一个中文等宽。
-  (dolist (charset '(kana han symbol cjk-misc bopomofo))
-    (set-fontset-font "fontset-myfixed"
-                      charset
-                      (font-spec :family "nsimsun" :size 21))))
- ((eq system-type 'gnu/linux)
-  (dolist (charset '(kana han symbol cjk-misc bopomofo))
-    (set-fontset-font "fontset-myfixed"
-                      charset
-                      (font-spec :family "AR PL UMing CN" :size 22)))))
+                        (font-spec :family "nsimsun" :size 21))))
+   ((eq system-type 'gnu/linux)
+    (dolist (charset '(kana han symbol cjk-misc bopomofo))
+      (set-fontset-font "fontset-myfixed"
+                        charset
+                        (font-spec :family "AR PL UMing CN" :size 22))))))
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -154,15 +155,16 @@
 ;; 字体的设置必须在after-make-frame-functions的hook中进行，否则其设置对用
 ;; emacsclient启动的窗口无效。
 (defun set-my-frame()
-  (cond ; 设置字体，优先使用排在前面的
-   ((find-font (font-spec :name "Source Code Pro"))
-    (set-frame-font "Source Code Pro-14" nil t)) ; 第2个参数nil表示不维持窗口大小
-   ((find-font (font-spec :name "Ubuntu Mono"))
-    (set-frame-font "Ubuntu Mono-14" nil t))
-   ((find-font (font-spec :name "DejaVu Sans Mono"))
-    (set-frame-font "DejaVu Sans Mono-14" nil t))
-   ((find-font (font-spec :name "Consolas"))  ; 微软等宽字体
-    (set-frame-font "Consolas-14" nil t)))
+  (if (display-graphic-p)
+      (cond ; 设置字体，优先使用排在前面的
+       ((find-font (font-spec :name "Source Code Pro"))
+        (set-frame-font "Source Code Pro-14" nil t)) ; 第2个参数nil表示不维持窗口大小
+       ((find-font (font-spec :name "Ubuntu Mono"))
+        (set-frame-font "Ubuntu Mono-14" nil t))
+       ((find-font (font-spec :name "DejaVu Sans Mono"))
+        (set-frame-font "DejaVu Sans Mono-14" nil t))
+       ((find-font (font-spec :name "Consolas"))  ; 微软等宽字体
+        (set-frame-font "Consolas-14" nil t))))
   ;; 下面设置中文字体
   (when (or (string-equal system-type "cygwin")
             (string-equal system-type "windows-nt"))
@@ -324,9 +326,10 @@
 (setq save-place-file "~/.emacs.d/saved-places.dat")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(require 'back-button)
-(back-button-mode 1)
-(setq back-button-no-wrap t)  ; 定位到最后一个mark后，不会跳到第一个mark。
+(when (>= emacs-major-version 24)
+  (require 'back-button)
+  (back-button-mode 1)
+  (setq back-button-no-wrap t))  ; 定位到最后一个mark后，不会跳到第一个mark
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (require 'column-marker)
@@ -338,20 +341,21 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; https://github.com/syohex/emacs-git-gutter
-(require 'git-gutter)
+(when (>= emacs-major-version 24)
+  (require 'git-gutter)
 
-;; Enable global minor mode
-(global-git-gutter-mode t)
+  ;; Enable global minor mode
+  (global-git-gutter-mode t)
 
-;; Use git-gutter.el and linum-mode
-(git-gutter:linum-setup)
+  ;; Use git-gutter.el and linum-mode
+  (git-gutter:linum-setup)
 
-;; 设置“跳到上一个（或下一个）修改位置”的快捷键
-(global-set-key (kbd "C-M-<up>") 'git-gutter:previous-hunk)  ; Ctrl + Alt + ↑
-(global-set-key (kbd "C-M-<down>") 'git-gutter:next-hunk)    ; Ctrl + Alt + ↓
+  ;; 设置“跳到上一个（或下一个）修改位置”的快捷键
+  (global-set-key (kbd "C-M-<up>") 'git-gutter:previous-hunk)  ; Ctrl + Alt + ↑
+  (global-set-key (kbd "C-M-<down>") 'git-gutter:next-hunk)    ; Ctrl + Alt + ↓
 
-;; 设置“取消（Revert）当前位置的修改”的快捷键
-(global-set-key (kbd "C-x v r") 'git-gutter:revert-hunk)
+  ;; 设置“取消（Revert）当前位置的修改”的快捷键
+  (global-set-key (kbd "C-x v r") 'git-gutter:revert-hunk))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -426,21 +430,23 @@
 ;; 配置auto-complete
 ;; http://cx4a.org/software/auto-complete/
 ;; http://blog.csdn.net/winterttr/article/details/7524336
-(add-to-list 'load-path my-auto-complete-path)
-(require 'auto-complete-config)
-(ac-config-default)
-(add-to-list 'ac-dictionary-directories my-auto-complete-dict-path)
-;; Auto start auto-complete-mode with jde-mode.
-;; http://stackoverflow.com/questions/11715296/emacs-auto-complete-dont-work-with-jde
-(push 'jde-mode ac-modes)
+(when (>= emacs-major-version 24)
+  (add-to-list 'load-path my-auto-complete-path)
+  (require 'auto-complete-config)
+  (ac-config-default)
+  (add-to-list 'ac-dictionary-directories my-auto-complete-dict-path)
+  ;; Auto start auto-complete-mode with jde-mode.
+  ;; http://stackoverflow.com/questions/11715296/emacs-auto-complete-dont-work-with-jde
+  (push 'jde-mode ac-modes))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; projectile: “工程管理”插件，可快速访问项目里任何文件，快速在项目中搜索关键字
 ;; 所谓“工程”就是一些文件的集合，默认projectile支持git，mercurial，bazaar等工程；
 ;; 手动创建一个工程的方法：在工程根目录中创建一个名为.projectile的空文件即可。
 ;; See https://github.com/bbatsov/projectile
-(require 'projectile)
-(projectile-mode)
+(when (>= emacs-major-version 24)
+  (require 'projectile)
+  (projectile-mode))
 
 ;; projectile中默认快捷键前缀为`C-c p`
 ;; projectile最常用的两个快捷键：
@@ -451,43 +457,44 @@
 ;; `C-c p C-h` ：查看projectile的快捷键绑定
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(add-to-list 'load-path my-neotree-path)
-(require 'neotree)
+(when (>= emacs-major-version 24)
+  (add-to-list 'load-path my-neotree-path)
+  (require 'neotree)
 
-;; 禁止自动刷新，自动刷新会改变显示的根目录
-;; 当禁止自动刷新后，切换到不同工程文件的buffer后，也不会刷新了
-;; 如果想要刷新显示的根目录，执行两次下面的neotree-project-dir-toggle即可
-(setq neo-autorefresh nil)
+  ;; 禁止自动刷新，自动刷新会改变显示的根目录
+  ;; 当禁止自动刷新后，切换到不同工程文件的buffer后，也不会刷新了
+  ;; 如果想要刷新显示的根目录，执行两次下面的neotree-project-dir-toggle即可
+  (setq neo-autorefresh nil)
 
-(defun neotree-project-dir-toggle ()
-  "Open NeoTree using the project root, using find-file-in-project,
+  (defun neotree-project-dir-toggle ()
+    "Open NeoTree using the project root, using find-file-in-project,
 or the current buffer directory."
-  (interactive)
-  (let ((project-dir
-         (ignore-errors
+    (interactive)
+    (let ((project-dir
+           (ignore-errors
            ;;; Pick one: projectile or find-file-in-project
-           (projectile-project-root)
-           ;; (ffip-project-root)
-           ))
-        (file-name (buffer-file-name))
-        (neo-smart-open t))
-    (if (and (fboundp 'neo-global--window-exists-p)
-             (neo-global--window-exists-p))
-        (neotree-hide)
-      (progn
-        (neotree-show)
-        (if project-dir
-            (neotree-dir project-dir))
-        (if file-name
-            (neotree-find file-name))))))
+             (projectile-project-root)
+             ;; (ffip-project-root)
+             ))
+          (file-name (buffer-file-name))
+          (neo-smart-open t))
+      (if (and (fboundp 'neo-global--window-exists-p)
+               (neo-global--window-exists-p))
+          (neotree-hide)
+        (progn
+          (neotree-show)
+          (if project-dir
+              (neotree-dir project-dir))
+          (if file-name
+              (neotree-find file-name))))))
 
-(global-set-key (kbd "<f9>") 'neotree-project-dir-toggle)
+  (global-set-key (kbd "<f9>") 'neotree-project-dir-toggle)
 
-(add-hook 'neotree-mode-hook
-          (lambda()
-            (if (boundp 'tabbar-local-mode)  ; 检测tabbar-local-mode是否存在
-                (tabbar-local-mode 1))       ; 在neotree-mode中关闭tabbar
-            ))
+  (add-hook 'neotree-mode-hook
+            (lambda()
+              (if (boundp 'tabbar-local-mode)  ; 检测tabbar-local-mode是否存在
+                  (tabbar-local-mode 1))       ; 在neotree-mode中关闭tabbar
+              )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -571,8 +578,7 @@ reformat current entire buffer."
      (define-key c++-mode-map (kbd "M-RET") 'srefactor-refactor-at-point)
 
      (define-key c-mode-map [f7] 'c-reformat-current-buffer)
-     (define-key c++-mode-map [f7] 'c-reformat-current-buffer)
-     ))
+     (define-key c++-mode-map [f7] 'c-reformat-current-buffer)))
 
 ;;;; For perl
 (defalias 'perl-mode 'cperl-mode) ; 设置默认使用cperl-mode代替perl-mode
@@ -897,15 +903,16 @@ reformat current entire buffer."
 (global-set-key [remap kill-ring-save] 'my-kill-ring-save)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun my-save-buffers-kill-terminal ()
-  (interactive)
-  ;; 对于GUI窗口，为防止误操作，不小心关掉所有tab，让C-x C-c无法退出emacs。
-  (if (window-system)
-      (progn
-        (message "%s" "Please type 'C-x 5 0' or use mouse to close frame!"))
-    (save-buffers-kill-terminal)))
+(when (>= emacs-major-version 24)
+  (defun my-save-buffers-kill-terminal ()
+    (interactive)
+    ;; 对于GUI窗口，为防止误操作，不小心关掉所有tab，让C-x C-c无法退出emacs。
+    (if window-system
+        (progn
+          (message "%s" "Please type 'C-x 5 0' or use mouse to close frame!"))
+      (save-buffers-kill-terminal)))
 
-(global-set-key (kbd "C-x C-c") 'my-save-buffers-kill-terminal)
+  (global-set-key (kbd "C-x C-c") 'my-save-buffers-kill-terminal))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; F11全屏窗口，在Emacs 24.4中已经默认支持。
