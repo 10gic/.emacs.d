@@ -137,7 +137,9 @@
        ((find-font (font-spec :name "DejaVu Sans Mono"))
         (set-frame-font "DejaVu Sans Mono:pixelsize=14" nil t))
        ((find-font (font-spec :name "Consolas"))  ; 微软等宽字体
-        (set-frame-font "Consolas:pixelsize=14" nil t))))
+        (set-frame-font "Consolas:pixelsize=14" nil t))
+       ((find-font (font-spec :name "Courier New"))  ; Courier New存在于Mac和Windows中
+        (set-frame-font "Courier New:pixelsize=14" nil t))))
   ;; 下面设置中文字体
   ;; 前面英文字体size为14，中文设置size设置为16
   ;; 这样，可实现两个英文为一个中文等宽
