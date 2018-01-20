@@ -324,8 +324,8 @@
   (git-gutter:linum-setup)
 
   ;; 设置“跳到上一个（或下一个）修改位置”的快捷键
-  (global-set-key (kbd "C-M-<up>") 'git-gutter:previous-hunk)  ; Ctrl + Alt + ↑
-  (global-set-key (kbd "C-M-<down>") 'git-gutter:next-hunk)    ; Ctrl + Alt + ↓
+  (global-set-key (kbd "C-M-S-<up>") 'git-gutter:previous-hunk) ; Ctrl + Alt + Shift + ↑
+  (global-set-key (kbd "C-M-S-<down>") 'git-gutter:next-hunk)   ; Ctrl + Alt + Shift + ↓
 
   ;; 设置“取消（Revert）当前位置的修改”的快捷键
   (global-set-key (kbd "C-x v r") 'git-gutter:revert-hunk))
