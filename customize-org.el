@@ -87,11 +87,13 @@
     (insert-file-contents file-path)
     (buffer-string)))
 
-(setq my-header-file "~/www/header.tpl")
-(setq my-footer-file "~/www/footer.tpl")
+(when (file-exists-p "~/www/header.tpl")
+  (setq my-header-file "~/www/header.tpl")
+  (setq org-html-preamble (get-string-from-file my-header-file)))
 
-(setq org-html-preamble (get-string-from-file my-header-file))
-(setq org-html-postamble (get-string-from-file my-footer-file))
+(when (file-exists-p "~/www/footer.tpl")
+  (setq my-footer-file "~/www/footer.tpl")
+  (setq org-html-postamble (get-string-from-file my-footer-file)))
 
 ;; Refer to: http://orgmode.org/manual/Publishing.html
 (require 'ox-publish)
