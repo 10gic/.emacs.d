@@ -374,9 +374,13 @@
 (defun my-recursive-grep ()
   "Recursively grep file contents."
   (interactive)
-  (let* ((search-term (read-string
-                       (format "regex (%s): " (thing-at-point 'word))
-                       nil nil (thing-at-point 'word)))
+  (let* ((current-word (thing-at-point 'word))
+         (search-term (read-string
+                       (format "regex %s: "
+                               (if current-word
+                                   (concat "(" current-word ")")
+                                 ""))
+                       nil nil current-word))
          (search-path
           (directory-file-name (expand-file-name
                                 (read-directory-name "directory:  "))))
@@ -391,10 +395,12 @@
            " "
            "-inIEr --color=always --exclude-dir='.*'"
            " "
-           search-term
+           (shell-quote-argument search-term)
            " "
-           search-path)))
-    (compilation-start grep-cmd 'grep-mode (lambda (mode) "*grep*") nil)))
+           (shell-quote-argument search-path))))
+    (if (string= "" search-term)
+        (message "Your regex is empty, do nothing.")
+      (compilation-start grep-cmd 'grep-mode (lambda (mode) "*grep*") nil))))
 
 (defun my-find-symbol-at-point-in-project ()
   "Find keyword in project, or in directory if no project found."
