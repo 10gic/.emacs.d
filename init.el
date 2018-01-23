@@ -62,10 +62,10 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(blink-cursor-mode t)
+ '(blink-cursor-mode t) ; 让光标闪烁。若不设置，在deamon方式下，以图形方式启动时光标不闪烁
  '(column-number-mode t)
  '(custom-enabled-themes (quote (misterioso))) ; adwaita/misterioso, etc
- '(display-time-24hr-format t)
+ '(display-time-24hr-format t) ; 可避免因显示中文“上午”或“下午”而导致mode line跨行显示
  '(display-time-mode t)
  '(git-gutter:update-interval 2) ; https://github.com/syohex/emacs-git-gutter
  '(git-gutter:lighter "") ; mode-line中不显示GitGutter字样
@@ -73,24 +73,13 @@
  '(ns-tool-bar-size-mode (quote small) t) ; 设置Aquamacs工具栏使用小图标
  '(scroll-bar-mode (quote nil))
  '(show-paren-mode t)
- '(size-indication-mode t)
+ '(size-indication-mode t) ; 在Mode line中显示当前Buffer的大小
  '(xterm-mouse-mode t))
 
-;; 在Aquamcs使用“深色”主题会有问题，下面是一个workaround
+;; 在Aquamcs使用“深色”主题（如misterioso）会有问题，下面是一个workaround
 ;; 参考：;; https://emacs.stackexchange.com/questions/26957/how-can-i-load-the-solarized-dark-theme-correctly-in-aquamacs-from-emacs
 (if (and window-system (featurep 'aquamacs))
     (setq default-frame-alist nil))
-
-;; 说明:
-;; ;; 下面设置让光标闪烁。若不设置，但在deamon方式下，以图形方式启动时光标不闪烁。
-;; '(blink-cursor-mode t)
-;; ;; 下面设置可避免因显示中文“上午”或“下午”而导致mode line跨行显示。
-;; '(display-time-24hr-format t)
-;; '(display-time-day-and-date t) ; 在Mode line中显示日期。
-;; '(size-indication-mode t) ; 在Mode line中显示当前Buffer的大小。
-;; ;; 下面设置终端下启动鼠标滚轮的支持。一般默认已启动，但有些系统下默认没有启动。
-;; '(mouse-wheel-mode t)
-;; '(scroll-bar-mode (quote nil))
 
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
@@ -607,6 +596,12 @@ or the current buffer directory."
 (global-set-key (kbd "<f6>") 'idle-highlight-mode)
 
 (require 'unicad) ; 该插件能自动识别文件编码
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; 禁止grep mode中的line wrap，使用M-x toggle-truncate-lines可以再打开line wrap
+;; https://www.reddit.com/r/emacs/comments/6zvw4d/grep_buffer_hide_find_command/
+(add-hook 'grep-mode-hook (lambda ()
+                            (setq truncate-lines t)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
