@@ -3,7 +3,6 @@
 ;; Filename: srefactor-ui.el
 ;; Description: A refactoring tool based on Semantic parser framework
 ;; Author: Tu, Do Hoang <tuhdo1710@gmail.com
-;; URL      : https://github.com/tuhdo/semantic-refactor
 ;; Maintainer: Tu, Do Hoang
 ;; Created: Wed Feb 11 21:25:51 2015 (+0700)
 ;; Version: 0.1
@@ -330,6 +329,8 @@ when the corresponding MENU-ITEM is selected."
         (defalias cmd
           `(lambda ()
              (interactive)
+             (unless (search-forward (number-to-string ,k) nil t)
+                 (search-backward (number-to-string ,k)) nil t)
              (srefactor-ui--refactor-action (get-char-property (point) 'button))))
         ;; Bind it to a digit key.
         (define-key km (vector (+ k ?0)) cmd)))

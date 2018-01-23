@@ -1,5 +1,29 @@
+;;; refine-mode.el --- Major mode for editing REFINE files
 
-(setq my-refine-keywords
+;; Copyright (C) 2012-2016 cig01
+
+;; Author: cig01
+;; Keywords: refine
+;; Version: 0.0.1
+
+;; This file is not part of Emacs
+
+;; This file is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2, or (at your option)
+;; any later version.
+
+;; This file is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with GNU Emacs; see the file COPYING.  If not, write to
+;; the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
+
+(setq refine-keywords
       `(
         ( ,(regexp-opt '("symbol" "integer" "tuple" "string" "real" "char" "boolean" "any-type" "map" "set" "seq"
                          ;;pseudoterminal name
@@ -251,16 +275,13 @@
                          ) 'words) . font-lock-keyword-face)
         ))
 
-
-
-(setq my-refine-syntax-table
+(setq refine-syntax-table
       (let ((synTable (make-syntax-table)))
         ;;设置注释
-        (modify-syntax-entry ?% "< b" synTable)
+        (modify-syntax-entry ?% "< b" synTable)   ; % 开始直到遇到换行
         (modify-syntax-entry ?\n "> b" synTable)
-        (modify-syntax-entry ?\# ". 14" synTable)
+        (modify-syntax-entry ?\# ". 14" synTable) ; #| 开始直到遇到 |#
         (modify-syntax-entry ?\| ". 23" synTable)
-
 
         ;;由于*和-常作为变量的一部分，应该把它们设置为w。
         ;;不设置的话，关键字会误匹配，如*integer*中的interger会误匹配上。
@@ -271,11 +292,11 @@
         synTable))
 
 
-(define-derived-mode my-refine-mode fundamental-mode "DSL-REFINE" ;;DSL-REFINE为mode的名称
-  "my-refine-mode is a major mode for refine";;mode的说明
-  :syntax-table my-refine-syntax-table
+(define-derived-mode refine-mode fundamental-mode "DSL-REFINE" ;;DSL-REFINE为mode的名称
+  "refine-mode is a major mode for refine";;mode的说明
+  :syntax-table refine-syntax-table
 
-  (setq font-lock-defaults '(my-refine-keywords nil t nil nil))
+  (setq font-lock-defaults '(refine-keywords nil t nil nil))
   ;;font-lock-defaults的格式为(KEYWORDS [KEYWORDS-ONLY [CASE-FOLD [SYNTAX-ALIST [SYNTAX-BEGIN ...]]]])
   ;;;其中仅KEYWORDS是必须的，CASE-FOLD指示是否大小写敏感（这里设为了t,表示大小写不敏感）。
 
@@ -296,15 +317,11 @@
 (setq auto-mode-alist
       (append
        '(
-         ("\\.re\\'" . my-refine-mode)   ;; File name ends in '.re'.
+         ("\\.re\\'" . refine-mode)   ;; File name ends in '.re'.
          )
        auto-mode-alist))
-
-;;使用自动检测编码的插件unicad后，下面的配置没有效果了（也没必要了）。
-;;设置打开.re文件时为法文编码。
-;;(modify-coding-system-alist 'file "\\.re\\'" 'iso-8859-15)
 
 ;;设置speedbar自动识别.re文件。
 ;;(speedbar-add-supported-extension ".re")
 
-(provide 'my-refine-mode)
+(provide 'refine-mode)

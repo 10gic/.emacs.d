@@ -2,9 +2,7 @@
 (setq inhibit-startup-message t)  ; 启动emacs时不显示GNU Emacs窗口。
 (setq initial-scratch-message "") ; scratch信息中显示为空。
 
-;; Disable tool bar
 ;; (tool-bar-mode -1) ; Note: (tool-bar-mode nil) cannot work in Ubuntu 14.04
-;; Disable menu bar
 ;; (menu-bar-mode -1) ; Note: (memu-bar-mode nil) cannot work in Ubuntu 14.04
 
 (setq kill-whole-line t) ; 在行首C-k时，同时删除换行符。
@@ -13,14 +11,10 @@
 
 (ffap-bindings) ; 默认为光标下单词，如C-x C-f，默认打开光标下的文件名对应文件。
 
-;; WhichFuncMode (also known as WhichFunctionMode) is a minor mode, that when
-;; activated displays the current function name in the mode line.
-(which-function-mode 1)
-;; Change ??? to n/a. By default ??? will be displayed when which-function-mode
-;; cannot determine the function name.
-(setq which-func-unknown "n/a")
+(which-function-mode 1) ; displays the current function name in the mode line
+(setq which-func-unknown "n/a") ; Change ??? to n/a
 
-(add-to-list 'load-path "~/.emacs.d/lisp/")
+(add-to-list 'load-path "~/.emacs.d/elisp/")
 
 (require 'ido)
 (ido-mode t) ; 启动ido-mode。如：键入C-x b时，可用ido快速地切换buffer
@@ -37,7 +31,6 @@
 (setq dired-listing-switches "-lhFG") ; ls options in dired
 
 ;; Recentf is a minor mode that builds a list of recently opened files.
-;; This mode is part of GNU Emacs 21.
 (require 'recentf)
 (recentf-mode 1)
 (setq recentf-max-menu-items 25)
@@ -299,20 +292,6 @@
           (my-set-font-size (nth 0 size-pair) (nth 1 size-pair)))
       (message "Already smallest font size, no smaller font size pair is found."))))
 
-(when (and (eq system-type 'darwin) (display-graphic-p))
-  (defun define-mac-hyper-key (key fun)
-    (cond
-     ((boundp 'aquamacs-version)
-      ;; Aquamacs中，Command键为A
-      (define-key osx-key-mode-map (kbd (concat "A-" key)) fun))
-     (t
-      ;; GNU Emacs，Command键为s
-      (global-set-key (kbd (concat "s-" key)) fun))))
-
-  ;; 设置Mac下增加/减小字体大小的快捷键
-  (define-mac-hyper-key "=" 'my-increase-font-size)  ; Command + =
-  (define-mac-hyper-key "-" 'my-decrease-font-size)) ; Command + -
-
 (defun my-set-font-size (english-font-size chinese-font-size)
   "Set English and Chinese font size"
   (interactive
@@ -383,6 +362,69 @@
                   (my-set-frame))))
   (my-set-frame))
 
+;; 当前文件中查找光标下单词
+(defun my-occur-symbol-at-point ()
+  (interactive)
+  (let ((sym (thing-at-point 'symbol)))
+    (if sym
+        (push (regexp-quote sym) regexp-history)) ; regexp-history defvared in replace.el
+    (call-interactively 'occur)))
+
+(defun my-recursive-grep ()
+  "Recursively grep file contents."
+  (interactive)
+  (let* ((search-term (read-string
+                       (format "regex (%s): " (thing-at-point 'word))
+                       nil nil (thing-at-point 'word)))
+         (search-path
+          (directory-file-name (expand-file-name (read-directory-name "directory:  "))))
+         (default-directory (file-name-as-directory search-path))
+         (grep-command
+          ;; `i` case insensitive, `n` print line number,
+          ;; `I` ignore binary files, `E` extended regular expressions,
+          ;; `r` recursive
+          (concat
+           grep-program
+           " "
+           "-inIEr --color=always"
+           " "
+           search-term
+           " "
+           search-path)))
+    (compilation-start grep-command 'grep-mode (lambda (mode) "*grep*") nil)))
+
+(defun my-find-in-project ()
+  "Find keyword in project, or in directory if no project found."
+  (interactive)
+  (let ((project-dir
+         (ignore-errors
+           (projectile-project-root))))
+    (if project-dir
+        (call-interactively 'projectile-grep)
+      (call-interactively 'my-recursive-grep))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(when (eq system-type 'darwin)
+  ;; Mac下的一些设置
+  (defun define-mac-hyper-key (key fun)
+    (cond
+     ((boundp 'aquamacs-version)
+      ;; Aquamacs中，Command键为A
+      (define-key osx-key-mode-map (kbd (concat "A-" key)) fun))
+     (t
+      ;; GNU Emacs，Command键为s
+      (global-set-key (kbd (concat "s-" key)) fun))))
+
+  ;; 设置Mac下增加/减小字体大小的快捷键
+  (when (display-graphic-p)
+    (define-mac-hyper-key "=" 'my-increase-font-size)  ; Command + =
+    (define-mac-hyper-key "-" 'my-decrease-font-size)) ; Command + -
+
+  ;; 在当前文件中查找光标下单词
+  (define-mac-hyper-key "f" 'my-occur-symbol-at-point)   ; Command + f
+  ;; 在当前工程中查找光标下单词，没找到工程就在文件所在目录中查找
+  (define-mac-hyper-key "F" 'my-find-in-project)) ; Command + Shift + f
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Settings for Aquamacs
 ;;
@@ -445,9 +487,10 @@
 ;; 设置“跳到上一个（或下一个）修改位置”的快捷键
 (global-set-key (kbd "C-M-S-<up>") 'git-gutter:previous-hunk) ; Ctrl + Alt + Shift + ↑
 (global-set-key (kbd "C-M-S-<down>") 'git-gutter:next-hunk)   ; Ctrl + Alt + Shift + ↓
-
 ;; 设置“取消（Revert）当前位置的修改”的快捷键
-(global-set-key (kbd "C-x v r") 'git-gutter:revert-hunk)
+(global-set-key (kbd "C-M-S-<left>") 'git-gutter:revert-hunk) ; Ctrl + Alt + Shift + <-
+;; 设置在新buffer中显示当前位置修改的快捷键
+(global-set-key (kbd "C-M-S-<right>") 'git-gutter:popup-hunk) ; Ctrl + Alt + Shift + ->
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -475,8 +518,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; aquamacs-tabbar(from https://github.com/dholm/tabbar)比原始的tabbar更友好
 ;; Mac中Auqamacs内置有tabbar，且默认配置很好，无需再配置。
-;; aquamacs-tabbar在Mac原生Emacs中显示不好看
-;; aquamacs-tabbar在Windows中显示不正常。
+;; aquamacs-tabbar在Mac原生Emacs中显示不好看；在Windows中显示不正常
 ;; 下面仅在Linux中加载aquamacs-tabbar
 (when (eq system-type 'gnu/linux)
   (add-to-list 'load-path my-tabbar-path)
@@ -547,10 +589,10 @@
 
 ;; 禁止自动刷新，自动刷新会改变显示的根目录
 ;; 当禁止自动刷新后，切换到不同工程文件的buffer后，也不会刷新了
-;; 如果想要刷新显示的根目录，执行两次下面的neotree-project-dir-toggle即可
+;; 如果想要刷新显示的根目录，执行两次下面的my-neotree-project-dir-toggle即可
 (setq neo-autorefresh nil)
 
-(defun neotree-project-dir-toggle ()
+(defun my-neotree-project-dir-toggle ()
   "Open NeoTree using the project root, using find-file-in-project,
 or the current buffer directory."
   (interactive)
@@ -572,7 +614,7 @@ or the current buffer directory."
         (if file-name
             (neotree-find file-name))))))
 
-(global-set-key (kbd "<f9>") 'neotree-project-dir-toggle)
+(global-set-key (kbd "<f9>") 'my-neotree-project-dir-toggle)
 
 (add-hook 'neotree-mode-hook
           (lambda()
@@ -623,7 +665,7 @@ or the current buffer directory."
 ;; https://en.wikipedia.org/wiki/Indent_style
 ;; http://algo13.net/clang/clang-format-style-oputions.html
 ;; http://clang.llvm.org/docs/ClangFormat.html
-(defun c-reformat-current-buffer()
+(defun my-c-reformat-current-buffer()
   "Use external tool `clang-format' (if not find, try to use `indent') to
 reformat current entire buffer."
   (interactive)
@@ -654,20 +696,37 @@ reformat current entire buffer."
      )
     (save-buffer)))
 
-;; Semantic Refactor is a C/C++ refactoring tool based on Semantic parser framework.
-;; https://github.com/tuhdo/semantic-refactor
-;; https://github.com/10gic/semantic-refactor
-;; 说明：(require 'srefactor)比较耗时。
-;; 为加快启动速度，把它放到eval-after-load中执行，这样，仅当第一次加载cc-mode时会比较慢。
 (eval-after-load 'cc-mode
   '(progn
+     ;; srefactor is a C/C++ refactoring tool based on Semantic parser framework.
+     ;; https://github.com/tuhdo/semantic-refactor
+     ;; https://github.com/10gic/semantic-refactor
+     ;; 说明：(require 'srefactor)比较耗时。
+     ;; 为加快启动，把它放到eval-after-load中，这样仅第一次加载cc-mode时会比较慢
      (require 'srefactor)
      (semantic-mode 1) ; this is needed by srefactor
      (define-key c-mode-map (kbd "M-RET") 'srefactor-refactor-at-point)
      (define-key c++-mode-map (kbd "M-RET") 'srefactor-refactor-at-point)
 
-     (define-key c-mode-map [f7] 'c-reformat-current-buffer)
-     (define-key c++-mode-map [f7] 'c-reformat-current-buffer)))
+     ;; c/c++ mode中的其它一些设置
+     ;; 加载xcscope(Cscope的emacs扩展，依赖于Cscope)
+     ;; debian下可以这样安装xcscope: apt-get install cscope-el
+     ;; Refer to: https://github.com/dkogan/xcscope.el
+     (if (require 'xcscope nil 'noerror)
+         (progn
+           ;; ubuntu下默认不需要cscope-setup，但redhat中需要。
+           (when (fboundp 'cscope-setup) (cscope-setup))
+           (setq cscope-display-cscope-buffer nil) ; 不显示*cscope* buffer
+           (define-key c-mode-base-map [(ctrl f3)]
+             'cscope-find-global-definition-no-prompting)
+           (define-key c-mode-base-map [(ctrl f9)]
+             'cscope-history-backward-line-current-result)
+           (define-key c-mode-base-map [(ctrl f11)]
+             'cscope-history-forward-line-current-result))
+       (message "Warn: Find error when loading xcscope, skip its configuring"))
+
+     (define-key c-mode-map [f7] 'my-c-reformat-current-buffer)
+     (define-key c++-mode-map [f7] 'my-c-reformat-current-buffer)))
 
 ;;;; For perl
 (defalias 'perl-mode 'cperl-mode) ; 设置默认使用cperl-mode代替perl-mode
@@ -736,7 +795,7 @@ reformat current entire buffer."
 (load-file "~/.emacs.d/customize-lisp.el")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(add-to-list 'load-path "~/.emacs.d/languages/")
+(add-to-list 'load-path "~/.emacs.d/progmodes/")
 
 ;;;; For go
 (require 'go-mode-autoloads)  ; https://github.com/dominikh/go-mode.el
@@ -769,8 +828,8 @@ reformat current entire buffer."
 (autoload 'jcl-mode "jcl-mode" "jcl mode" t)
 (add-to-list 'auto-mode-alist '("\\.jcl\\'" . jcl-mode))
 
-(autoload 'my-refine-mode "my-refine-mode" "refine mode" t)
-(add-to-list 'auto-mode-alist '("\\.re\\'" . my-refine-mode))
+(autoload 'refine-mode "refine-mode" "refine mode" t)
+(add-to-list 'auto-mode-alist '("\\.re\\'" . refine-mode))
 
 (autoload 'cobol-mode "cobol-mode" "cobol mode" t)
 (autoload 'cobol-free-mode "cobol-free-mode" "cobol mode for free format" t)
@@ -803,24 +862,7 @@ reformat current entire buffer."
 (autoload 'turn-off-folding-mode "folding" "Folding mode" t)
 (autoload 'turn-on-folding-mode  "folding" "Folding mode" t)
 
-;; 加载xcscope(Cscope的emacs扩展，依赖于Cscope)
-;; debian下可以这样安装xcscope: apt-get install cscope-el
-;; Refer to: https://github.com/dkogan/xcscope.el
-(if (require 'xcscope nil 'noerror)
-    (progn
-      ;; ubuntu下默认不需要cscope-setup，但redhat中需要。
-      (when (fboundp 'cscope-setup) (cscope-setup))
-      (setq cscope-display-cscope-buffer nil) ; 不显示*cscope* buffer
-      (define-key global-map [(ctrl f3)]
-        'cscope-find-global-definition-no-prompting)
-      (define-key global-map [(ctrl f9)]
-        'cscope-history-backward-line-current-result)
-      (define-key global-map [(ctrl f11)]
-        'cscope-history-forward-line-current-result))
-  (message "Warn: Find error when loading xcscope, skip its configuring"))
-
 ;; Load htmlize
-;; Patch it by changing running-xemacs to htmlize-running-xemacs
 (require 'htmlize)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -958,15 +1000,17 @@ reformat current entire buffer."
 
 ;; Idea from http://yakko.cs.wmich.edu/~rattles/development/misc/.emacs
 ;; Get help on current word
-(defun man-current-word () "Manual entry for the current word"
-       (interactive)
-       (if (member major-mode '(emacs-lisp-mode scheme-mode lisp-mode))
-           (describe-function-or-variable)
-         (manual-entry (current-word))))
+(defun man-current-word ()
+  "Manual entry for the current word"
+  (interactive)
+  (if (member major-mode '(emacs-lisp-mode scheme-mode lisp-mode))
+      (describe-function-or-variable)
+    (manual-entry (current-word))))
 
-(defun info-current-word () "Info page for the current word"
-       (interactive)
-       (info-lookup-symbol (current-word)))
+(defun info-current-word ()
+  "Info page for the current word"
+  (interactive)
+  (info-lookup-symbol (current-word)))
 
 (global-set-key [f1]   'man-current-word)  ; Show man page for current word
 (global-set-key [C-f1] 'info-current-word) ; Show info page for current word
@@ -976,7 +1020,7 @@ reformat current entire buffer."
 ;; 当没有选择文本时，改变M-w的行为为复制当前行。
 ;; Idea from http://www.emacswiki.org/emacs/WholeLineOrRegion
 ;; 在slime-repl-mode下可能有问题，如何修复参见上面的链接。
-(defun my-kill-ring-save (beg end flash)
+(defun kill-ring-save-alternatively (beg end flash)
   (interactive (if (use-region-p)
                    (list (region-beginning) (region-end) nil)
                  (list (line-beginning-position)
@@ -989,7 +1033,7 @@ reformat current entire buffer."
         (goto-char beg))
       (sit-for blink-matching-delay))))
 
-(global-set-key [remap kill-ring-save] 'my-kill-ring-save)
+(global-set-key [remap kill-ring-save] 'kill-ring-save-alternatively)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun my-save-buffers-kill-terminal ()
@@ -1003,16 +1047,6 @@ reformat current entire buffer."
 (global-set-key (kbd "C-x C-c") 'my-save-buffers-kill-terminal)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; F11全屏窗口，在Emacs 24.4中已经默认支持。
-(if (fboundp 'x-send-client-message)
-    (progn
-      (defun my-fullscreen ()
-        (interactive)
-        (x-send-client-message nil 0 nil "_NET_WM_STATE" 32
-                               '(2 "_NET_WM_STATE_FULLSCREEN" 0)))
-      (global-set-key [f11] 'my-fullscreen)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 其它实用函数及设置
 ;; Align with spaces only
 (defadvice align-regexp (around align-regexp-with-spaces)
@@ -1022,7 +1056,7 @@ reformat current entire buffer."
 (ad-activate 'align-regexp)
 
 ;; 重命名当前文件名
-(defun rename-this-buffer-and-file ()
+(defun my-rename-this-buffer-and-file ()
   "Renames current buffer and file it is visiting."
   (interactive)
   (let ((name (buffer-name))
@@ -1040,7 +1074,7 @@ reformat current entire buffer."
                (message "File '%s' successfully renamed to '%s'" name
                         (file-name-nondirectory new-name))))))))
 
-(global-set-key (kbd "C-c r") 'rename-this-buffer-and-file)
+(global-set-key (kbd "C-c r") 'my-rename-this-buffer-and-file)
 
 ;; 摘自Writing GNU Emacs Extensions
 (defun scroll-n-lines-ahead (&optional n)
@@ -1095,10 +1129,10 @@ reformat current entire buffer."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 放弃更改，加载文件内容到buffer
-(defun revert-buffer-no-confirm ()
+(defun my-revert-buffer-no-confirm ()
   "Revert buffer without confirmation."
   (interactive) (revert-buffer t t))
-(global-set-key [C-f5] 'revert-buffer-no-confirm)
+(global-set-key [C-f5] 'my-revert-buffer-no-confirm)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 把当前行向上／下移动一行
@@ -1134,7 +1168,7 @@ reformat current entire buffer."
 ;; If you are in dired mode already, you don't need it. w will copy the file
 ;; name, c-u w will copy the relative file name and c-u 0 w will copy the
 ;; absolute file name
-(defun copy-path (choice)
+(defun my-copy-path (choice)
   "Copy the buffer-file-name to the kill-ring"
   (interactive "cCopy Buffer Name (F) Full, (D) Directory, (N) Name")
   (let ((new-kill-string)
@@ -1154,7 +1188,7 @@ reformat current entire buffer."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; http://www.emacswiki.org/emacs/DosToUnix
-(defun dos2unix ()
+(defun my-dos2unix ()
   "Not exactly but it's easier to remember"
   (interactive)
   (set-buffer-file-coding-system 'unix 't) )
@@ -1162,7 +1196,7 @@ reformat current entire buffer."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Invalid emacs config may break the normal behavior of kill-emacs such that it
 ;; stops at an error. In this case, we need a reliable method to kill emacs.
-(defun kill-emacs-ignore-hooks ()
+(defun my-kill-emacs-ignore-hooks ()
   "Like `kill-emacs', but ignores `kill-emacs-hook'."
   (interactive)
   (let (kill-emacs-hook) ; set kill-emacs-hook to nil before calling kill-emacs
