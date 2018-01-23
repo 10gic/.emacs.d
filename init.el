@@ -7,8 +7,6 @@
 ;; Disable menu bar
 ;; (menu-bar-mode -1) ; Note: (memu-bar-mode nil) cannot work in Ubuntu 14.04
 
-;; (setq make-backup-files nil) ; 不要生成备份文件（以波浪线结尾）。
-
 (setq kill-whole-line t) ; 在行首C-k时，同时删除换行符。
 
 (defalias 'yes-or-no-p 'y-or-n-p) ; 设置y/n可代替yes/no
@@ -59,15 +57,6 @@
 ;; (add-hook 'text-mode-hook 'flyspell-mode)
 (setq ispell-personal-dictionary "~/.emacs.d/ispell-personal-dict.txt")
 
-;; Suppress error "directory ~/.emacs.d/server is unsafe" on emacs-w32 (issue
-;; found in windows 8.1).
-;; http://stackoverflow.com/questions/885793/emacs-error-when-calling-server-start
-;; http://www.emacswiki.org/emacs/EmacsW32
-(require 'server)
-(when (and (>= emacs-major-version 23)
-           (equal window-system 'w32))
-  (defun server-ensure-safe-dir (dir) "Noop" t))
-
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -79,6 +68,7 @@
  '(display-time-24hr-format t)
  '(display-time-mode t)
  '(git-gutter:update-interval 2) ; https://github.com/syohex/emacs-git-gutter
+ '(git-gutter:lighter "") ; mode-line中不显示GitGutter字样
  '(mouse-wheel-mode t)
  '(ns-tool-bar-size-mode (quote small) t) ; 设置Aquamacs工具栏使用小图标
  '(scroll-bar-mode (quote nil))
@@ -107,9 +97,12 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(which-func ((t (:foreground nil))))
  '(org-level-4 ((t (:inherit outline-4 :foreground "pink1")))))
 
 ;; 说明：
+;; ;; 在misterioso主题下，which-func前景色是蓝色，不好区分，下面设置取消其前景色
+;; '(which-func ((t (:foreground nil))))
 ;; ;; 下面设置让注释看起来颜色暗些。
 ;; '(font-lock-comment-face ((t (:foreground "dim gray"))))
 ;; ;; org-mode中level-4的face继承的是font-lock-comment-face，太暗，调亮一些
@@ -317,7 +310,7 @@
           (my-set-font-size (nth 0 size-pair) (nth 1 size-pair)))
       (message "Already smallest font size, no smaller font size pair is found."))))
 
-(when (eq system-type 'darwin)
+(when (and (eq system-type 'darwin) (display-graphic-p))
   (defun define-mac-hyper-key (key fun)
     (cond
      ((boundp 'aquamacs-version)
@@ -420,6 +413,15 @@
   (if (fboundp 'aquamacs-autoface-mode) (aquamacs-autoface-mode -1))
   (setq frame-title-format "%f" ))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Suppress error "directory ~/.emacs.d/server is unsafe" on emacs-w32 (issue
+;; found in windows 8.1).
+;; http://stackoverflow.com/questions/885793/emacs-error-when-calling-server-start
+;; http://www.emacswiki.org/emacs/EmacsW32
+(require 'server)
+(when (and (>= emacs-major-version 23)
+           (equal window-system 'w32))
+  (defun server-ensure-safe-dir (dir) "Noop" t))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 内置插件设置
@@ -428,10 +430,10 @@
 (setq save-place-file "~/.emacs.d/saved-places.dat")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(when (>= emacs-major-version 24)
-  (require 'back-button)
-  (back-button-mode 1)
-  (setq back-button-no-wrap t))  ; 定位到最后一个mark后，不会跳到第一个mark
+(require 'back-button)
+(back-button-mode 1)
+(setq back-button-no-wrap t)  ; 定位到最后一个mark后，不会跳到第一个mark
+(setq back-button-mode-lighter nil) ; mode-line中不显示它
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (require 'column-marker)
@@ -443,21 +445,20 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; https://github.com/syohex/emacs-git-gutter
-(when (>= emacs-major-version 24)
-  (require 'git-gutter)
+(require 'git-gutter)
 
-  ;; Enable global minor mode
-  (global-git-gutter-mode t)
+;; Enable global minor mode
+(global-git-gutter-mode t)
 
-  ;; Use git-gutter.el and linum-mode
-  (git-gutter:linum-setup)
+;; Use git-gutter.el and linum-mode
+(git-gutter:linum-setup)
 
-  ;; 设置“跳到上一个（或下一个）修改位置”的快捷键
-  (global-set-key (kbd "C-M-S-<up>") 'git-gutter:previous-hunk) ; Ctrl + Alt + Shift + ↑
-  (global-set-key (kbd "C-M-S-<down>") 'git-gutter:next-hunk)   ; Ctrl + Alt + Shift + ↓
+;; 设置“跳到上一个（或下一个）修改位置”的快捷键
+(global-set-key (kbd "C-M-S-<up>") 'git-gutter:previous-hunk) ; Ctrl + Alt + Shift + ↑
+(global-set-key (kbd "C-M-S-<down>") 'git-gutter:next-hunk)   ; Ctrl + Alt + Shift + ↓
 
-  ;; 设置“取消（Revert）当前位置的修改”的快捷键
-  (global-set-key (kbd "C-x v r") 'git-gutter:revert-hunk))
+;; 设置“取消（Revert）当前位置的修改”的快捷键
+(global-set-key (kbd "C-x v r") 'git-gutter:revert-hunk)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -505,15 +506,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; jdee (Java Development Environment for Emacs)
 ;; jdee require wget
-(if (>= emacs-major-version 24) ; It has error in emacs 23, just skip it.
-    (if (executable-find
-         (if (eq system-type 'windows-nt) "wget.exe" "wget"))
-        (progn
-          (add-to-list 'load-path my-jdee-path)
-          (autoload 'jde-mode "jde" "JDE mode." t)
-          (add-to-list 'auto-mode-alist '("\\.java\\'" . jde-mode)))
-      (message "Warn: Cannot find wget, skip loading jdee"))
-  (message "Warn: Emacs is too old(<24) , skip loading jdee"))
+(if (executable-find
+     (if (eq system-type 'windows-nt) "wget.exe" "wget"))
+    (progn
+      (add-to-list 'load-path my-jdee-path)
+      (autoload 'jde-mode "jde" "JDE mode." t)
+      (add-to-list 'auto-mode-alist '("\\.java\\'" . jde-mode)))
+  (message "Warn: Cannot find wget, skip loading jdee"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Load flycheck.
@@ -521,34 +520,29 @@
 ;; gcc 4.8 or newer.
 ;; let-alist (comes built-in with emacs 25.1).
 ;; dash (a modern list api for Emacs).
-(if (>= emacs-major-version 24)
-    (progn
-      (add-to-list 'load-path my-flycheck-path)
-      ;; 仅在第一次进入cc-mode时加载flycheck
-      (eval-after-load 'cc-mode '(load "flycheck")))
-  (message "Warn: Emacs is too old(<24) , skip loading flycheck"))
+(add-to-list 'load-path my-flycheck-path)
+;; 仅在第一次进入cc-mode时加载flycheck
+(eval-after-load 'cc-mode '(load "flycheck"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 配置auto-complete
 ;; http://cx4a.org/software/auto-complete/
 ;; http://blog.csdn.net/winterttr/article/details/7524336
-(when (>= emacs-major-version 24)
-  (add-to-list 'load-path my-auto-complete-path)
-  (require 'auto-complete-config)
-  (ac-config-default)
-  (add-to-list 'ac-dictionary-directories my-auto-complete-dict-path)
-  ;; Auto start auto-complete-mode with jde-mode.
-  ;; http://stackoverflow.com/questions/11715296/emacs-auto-complete-dont-work-with-jde
-  (push 'jde-mode ac-modes))
+(add-to-list 'load-path my-auto-complete-path)
+(require 'auto-complete-config)
+(ac-config-default)
+(add-to-list 'ac-dictionary-directories my-auto-complete-dict-path)
+;; Auto start auto-complete-mode with jde-mode.
+;; http://stackoverflow.com/questions/11715296/emacs-auto-complete-dont-work-with-jde
+(push 'jde-mode ac-modes)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; projectile: “工程管理”插件，可快速访问项目里任何文件，快速在项目中搜索关键字
 ;; 所谓“工程”就是一些文件的集合，默认projectile支持git，mercurial，bazaar等工程；
 ;; 手动创建一个工程的方法：在工程根目录中创建一个名为.projectile的空文件即可。
 ;; See https://github.com/bbatsov/projectile
-(when (>= emacs-major-version 24)
-  (require 'projectile)
-  (projectile-mode))
+(require 'projectile)
+(projectile-mode)
 
 ;; projectile中默认快捷键前缀为`C-c p`
 ;; projectile最常用的两个快捷键：
@@ -559,44 +553,42 @@
 ;; `C-c p C-h` ：查看projectile的快捷键绑定
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(when (>= emacs-major-version 24)
-  (add-to-list 'load-path my-neotree-path)
-  (require 'neotree)
+(add-to-list 'load-path my-neotree-path)
+(require 'neotree)
 
-  ;; 禁止自动刷新，自动刷新会改变显示的根目录
-  ;; 当禁止自动刷新后，切换到不同工程文件的buffer后，也不会刷新了
-  ;; 如果想要刷新显示的根目录，执行两次下面的neotree-project-dir-toggle即可
-  (setq neo-autorefresh nil)
+;; 禁止自动刷新，自动刷新会改变显示的根目录
+;; 当禁止自动刷新后，切换到不同工程文件的buffer后，也不会刷新了
+;; 如果想要刷新显示的根目录，执行两次下面的neotree-project-dir-toggle即可
+(setq neo-autorefresh nil)
 
-  (defun neotree-project-dir-toggle ()
-    "Open NeoTree using the project root, using find-file-in-project,
+(defun neotree-project-dir-toggle ()
+  "Open NeoTree using the project root, using find-file-in-project,
 or the current buffer directory."
-    (interactive)
-    (let ((project-dir
-           (ignore-errors
+  (interactive)
+  (let ((project-dir
+         (ignore-errors
            ;;; Pick one: projectile or find-file-in-project
-             (projectile-project-root)
-             ;; (ffip-project-root)
-             ))
-          (file-name (buffer-file-name))
-          (neo-smart-open t))
-      (if (and (fboundp 'neo-global--window-exists-p)
-               (neo-global--window-exists-p))
-          (neotree-hide)
-        (progn
-          (neotree-show)
-          (if project-dir
-              (neotree-dir project-dir))
-          (if file-name
-              (neotree-find file-name))))))
+           (projectile-project-root)
+           ;; (ffip-project-root)
+           ))
+        (file-name (buffer-file-name))
+        (neo-smart-open t))
+    (if (and (fboundp 'neo-global--window-exists-p)
+             (neo-global--window-exists-p))
+        (neotree-hide)
+      (progn
+        (neotree-show)
+        (if project-dir
+            (neotree-dir project-dir))
+        (if file-name
+            (neotree-find file-name))))))
 
-  (global-set-key (kbd "<f9>") 'neotree-project-dir-toggle)
+(global-set-key (kbd "<f9>") 'neotree-project-dir-toggle)
 
-  (add-hook 'neotree-mode-hook
-            (lambda()
-              (if (boundp 'tabbar-local-mode)  ; 检测tabbar-local-mode是否存在
-                  (tabbar-local-mode 1))       ; 在neotree-mode中关闭tabbar
-              )))
+(add-hook 'neotree-mode-hook
+          (lambda()
+            (if (boundp 'tabbar-local-mode)  ; 检测tabbar-local-mode是否存在
+                (tabbar-local-mode 1))))     ; 在neotree-mode中关闭tabbar
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1005,16 +997,15 @@ reformat current entire buffer."
 (global-set-key [remap kill-ring-save] 'my-kill-ring-save)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(when (>= emacs-major-version 24)
-  (defun my-save-buffers-kill-terminal ()
-    (interactive)
-    ;; 对于GUI窗口，为防止误操作，不小心关掉所有tab，让C-x C-c无法退出emacs。
-    (if window-system
-        (progn
-          (message "%s" "Please type 'C-x 5 0' or use mouse to close frame!"))
-      (save-buffers-kill-terminal)))
+(defun my-save-buffers-kill-terminal ()
+  (interactive)
+  ;; 对于GUI窗口，为防止误操作，不小心关掉所有tab，让C-x C-c无法退出emacs。
+  (if window-system
+      (progn
+        (message "%s" "Please type 'C-x 5 0' or use mouse to close frame!"))
+    (save-buffers-kill-terminal)))
 
-  (global-set-key (kbd "C-x C-c") 'my-save-buffers-kill-terminal))
+(global-set-key (kbd "C-x C-c") 'my-save-buffers-kill-terminal)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; F11全屏窗口，在Emacs 24.4中已经默认支持。
@@ -1192,5 +1183,5 @@ reformat current entire buffer."
 ;; You can run ‘M-x emacs-init-time’ to check emacs initialize time.
 ;;
 ;; 使用工具profile-dotemacs.el，可以检查哪段代码执行比较耗时。
-;; $ emacs -Q -l path/to/profile-dotemacs.el -f profile-dotemacs
+;; $ emacs -Q -l ~/.emacs.d/profile-dotemacs.el -f profile-dotemacs
 ;; 参考：http://www.emacswiki.org/emacs/ProfileDotEmacs
