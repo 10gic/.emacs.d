@@ -363,7 +363,8 @@
   (my-set-frame))
 
 ;; 当前文件中查找光标下单词
-(defun my-occur-symbol-at-point ()
+(defun my-find-symbol-at-point-in-current-file ()
+  "Find keyword in current file."
   (interactive)
   (let ((sym (thing-at-point 'symbol)))
     (if sym
@@ -377,23 +378,25 @@
                        (format "regex (%s): " (thing-at-point 'word))
                        nil nil (thing-at-point 'word)))
          (search-path
-          (directory-file-name (expand-file-name (read-directory-name "directory:  "))))
+          (directory-file-name (expand-file-name
+                                (read-directory-name "directory:  "))))
          (default-directory (file-name-as-directory search-path))
-         (grep-command
+         (grep-cmd
           ;; `i` case insensitive, `n` print line number,
           ;; `I` ignore binary files, `E` extended regular expressions,
           ;; `r` recursive
+          ;; `--exclude-dir`排除目录，较新Linux/Mac的grep支持这个选项
           (concat
            grep-program
            " "
-           "-inIEr --color=always"
+           "-inIEr --color=always --exclude-dir='.*'"
            " "
            search-term
            " "
            search-path)))
-    (compilation-start grep-command 'grep-mode (lambda (mode) "*grep*") nil)))
+    (compilation-start grep-cmd 'grep-mode (lambda (mode) "*grep*") nil)))
 
-(defun my-find-in-project ()
+(defun my-find-symbol-at-point-in-project ()
   "Find keyword in project, or in directory if no project found."
   (interactive)
   (let ((project-dir
@@ -421,9 +424,9 @@
     (define-mac-hyper-key "-" 'my-decrease-font-size)) ; Command + -
 
   ;; 在当前文件中查找光标下单词
-  (define-mac-hyper-key "f" 'my-occur-symbol-at-point)   ; Command + f
+  (define-mac-hyper-key "f" 'my-find-symbol-at-point-in-current-file) ; Command + f
   ;; 在当前工程中查找光标下单词，没找到工程就在文件所在目录中查找
-  (define-mac-hyper-key "F" 'my-find-in-project)) ; Command + Shift + f
+  (define-mac-hyper-key "F" 'my-find-symbol-at-point-in-project)) ; Command + Shift + f
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Settings for Aquamacs
@@ -589,10 +592,10 @@
 
 ;; 禁止自动刷新，自动刷新会改变显示的根目录
 ;; 当禁止自动刷新后，切换到不同工程文件的buffer后，也不会刷新了
-;; 如果想要刷新显示的根目录，执行两次下面的my-neotree-project-dir-toggle即可
+;; 如果想要刷新显示的根目录，执行两次下面的neotree-project-dir-toggle即可
 (setq neo-autorefresh nil)
 
-(defun my-neotree-project-dir-toggle ()
+(defun neotree-project-dir-toggle ()
   "Open NeoTree using the project root, using find-file-in-project,
 or the current buffer directory."
   (interactive)
@@ -614,7 +617,7 @@ or the current buffer directory."
         (if file-name
             (neotree-find file-name))))))
 
-(global-set-key (kbd "<f9>") 'my-neotree-project-dir-toggle)
+(global-set-key (kbd "<f9>") 'neotree-project-dir-toggle)
 
 (add-hook 'neotree-mode-hook
           (lambda()
