@@ -372,7 +372,7 @@
     (call-interactively 'occur)))
 
 (defun my-recursive-grep ()
-  "Recursively grep file contents."
+  "Recursively grep file contents, use ripgrep (more faster than grep) if found"
   (interactive)
   (let* ((current-word (thing-at-point 'word))
          (search-term (read-string
@@ -397,10 +397,22 @@
            " "
            (shell-quote-argument search-term)
            " "
+           (shell-quote-argument search-path)))
+         (ripgrep-cmd
+          (concat
+           "rg"
+           " "
+           "-in --color=always --no-heading --with-filename"
+           " "
+           (shell-quote-argument search-term)
+           " "
            (shell-quote-argument search-path))))
     (if (string= "" search-term)
         (message "Your regex is empty, do nothing.")
-      (compilation-start grep-cmd 'grep-mode (lambda (mode) "*grep*") nil))))
+      (progn
+        (if (executable-find "rg")
+            (compilation-start ripgrep-cmd 'grep-mode (lambda (mode) "*grep*") nil)
+          (compilation-start grep-cmd 'grep-mode (lambda (mode) "*grep*") nil))))))
 
 (defun my-find-symbol-at-point-in-project ()
   "Find keyword in project, or in directory if no project found."
