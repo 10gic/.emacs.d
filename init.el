@@ -674,6 +674,20 @@ or the current buffer directory."
                             (setq truncate-lines t)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Dumb Jump is an Emacs "jump to definition" package with support for multiple
+;; programming languages that favors "just working". This means minimal -- and
+;; ideally zero -- configuration with absolutely no stored indexes (TAGS) or
+;; persistent background processes.
+;; See https://github.com/jacktasia/dumb-jump
+(require 'dumb-jump) ; Package-Requires: (f "0.20.0") (s "1.11.0")
+(dumb-jump-mode)
+
+;; Dumb Jump默认绑定的快捷键：
+;; C-M-g (dumb-jump-go)         跳到光标下符号的定义处
+;; C-M-p (dumb-jump-back)       回到跳转前位置
+;; C-M-q (dumb-jump-quick-look) 以tooltip形式显示光标下符号的定义的相关信息
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (add-hook 'prog-mode-hook (lambda ()
                             (imenu-add-menubar-index) ; 显示index菜单
