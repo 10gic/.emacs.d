@@ -657,9 +657,9 @@ or the current buffer directory."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (add-hook 'prog-mode-hook (lambda ()
-                            (imenu-add-menubar-index) ; 为prog-mode显示index菜单
-                            (linum-mode 1))) ; 为prog-mode显示行号
-
+                            (imenu-add-menubar-index) ; 显示index菜单
+                            (linum-mode 1)            ; 显示行号
+                            (electric-pair-mode 1)))  ; 打开自动输入匹配括号功能
 
 ;;;; For C
 ;; 默认M-x compiler时，make命令会提取下面环境变量。
