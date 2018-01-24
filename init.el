@@ -600,6 +600,9 @@
 (require 'projectile)
 (projectile-mode)
 
+;; 定制mode-line中的显示字符（把Projectile改为Prj，节省空间）
+(setq projectile-mode-line '(:eval (format " Prj[%s]" (projectile-project-name))))
+
 ;; projectile中默认快捷键前缀为`C-c p`
 ;; projectile最常用的两个快捷键：
 ;; `C-c p f`   ：在工程中查找文件
@@ -1242,3 +1245,12 @@ reformat current entire buffer."
 ;; 使用工具profile-dotemacs.el，可以检查哪段代码执行比较耗时。
 ;; $ emacs -Q -l ~/.emacs.d/profile-dotemacs.el -f profile-dotemacs
 ;; 参考：http://www.emacswiki.org/emacs/ProfileDotEmacs
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; 如果某个步骤有性能问题，可以使用profiler检查问题
+;; https://www.gnu.org/software/emacs/manual/html_node/elisp/Profiling.html
+;;
+;; M-x profiler-start
+;; do something......
+;; M-x profiler-report
+;; 注：在报告中的加号位置按回车可以展开更详细的报告
