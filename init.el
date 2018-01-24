@@ -488,12 +488,16 @@
 (setq back-button-mode-lighter nil) ; mode-line中不显示它
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(require 'column-marker)
+;; ;; column-marker有严重的性能问题：打开一个5M左右C程序可能会卡超过1分钟
+;; (require 'column-marker)
+;; (add-hook 'prog-mode-hook (lambda ()
+;;                             (column-marker-1 80)
+;;                             (column-marker-2 90)
+;;                             (column-marker-3 100)))
 
-(add-hook 'prog-mode-hook (lambda ()
-                            (column-marker-1 80)
-                            (column-marker-2 90)
-                            (column-marker-3 100)))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; 在第81列显示一个标尺，使用`M-x fci-mode`可打开或关闭它
+(require 'fill-column-indicator)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; https://github.com/syohex/emacs-git-gutter
