@@ -717,6 +717,9 @@ reformat current entire buffer."
      )
     (save-buffer)))
 
+;; 当buffer较大时，semantic分析时会非常慢，下面设置一个阈值，超过阈值不会分析
+(setq semantic-idle-scheduler-max-buffer-size 1048576) ; 1M
+
 (eval-after-load 'cc-mode
   '(progn
      ;; srefactor is a C/C++ refactoring tool based on Semantic parser framework.
