@@ -498,6 +498,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 在第81列显示一个标尺，使用`M-x fci-mode`可打开或关闭它
 (require 'fill-column-indicator)
+(defun my-toggle-rule-on-column-81 ()
+  "Toggle rule on column 81 (using fill-column-indicator)."
+  (interactive)
+  (call-interactively 'fci-mode))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; https://github.com/syohex/emacs-git-gutter
@@ -692,7 +696,9 @@ or the current buffer directory."
 (add-hook 'prog-mode-hook (lambda ()
                             (imenu-add-menubar-index) ; 显示index菜单
                             (linum-mode 1)            ; 显示行号
-                            (electric-pair-mode 1)))  ; 打开自动输入匹配括号功能
+                            (electric-pair-local-mode 1))) ; 打开自动输入匹配括号功能
+
+(setq electric-pair-inhibit-predicate 'electric-pair-conservative-inhibit)
 
 ;;;; For C
 ;; 默认M-x compiler时，make命令会提取下面环境变量。
@@ -1081,7 +1087,7 @@ reformat current entire buffer."
 (global-set-key [remap kill-ring-save] 'kill-ring-save-alternatively)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun my-save-buffers-kill-terminal ()
+(defun save-buffers-kill-terminal ()
   (interactive)
   ;; 对于GUI窗口，为防止误操作，不小心关掉所有tab，让C-x C-c无法退出emacs。
   (if window-system
@@ -1089,7 +1095,7 @@ reformat current entire buffer."
         (message "%s" "Please type 'C-x 5 0' or use mouse to close frame!"))
     (save-buffers-kill-terminal)))
 
-(global-set-key (kbd "C-x C-c") 'my-save-buffers-kill-terminal)
+(global-set-key (kbd "C-x C-c") 'save-buffers-kill-terminal)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 其它实用函数及设置
@@ -1174,10 +1180,10 @@ reformat current entire buffer."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 放弃更改，加载文件内容到buffer
-(defun my-revert-buffer-no-confirm ()
+(defun revert-buffer-no-confirm ()
   "Revert buffer without confirmation."
   (interactive) (revert-buffer t t))
-(global-set-key [C-f5] 'my-revert-buffer-no-confirm)
+(global-set-key [C-f5] 'revert-buffer-no-confirm)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 把当前行向上／下移动一行
