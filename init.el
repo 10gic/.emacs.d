@@ -482,12 +482,6 @@
 (setq save-place-file "~/.emacs.d/saved-places.dat")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(require 'back-button)
-(back-button-mode 1)
-(setq back-button-no-wrap t)  ; 定位到最后一个mark后，不会跳到第一个mark
-(setq back-button-mode-lighter nil) ; mode-line中不显示它
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; ;; column-marker有严重的性能问题：打开一个5M左右C程序可能会卡超过1分钟
 ;; (require 'column-marker)
 ;; (add-hook 'prog-mode-hook (lambda ()
