@@ -465,7 +465,12 @@
   ;; 打开aquamacs-autoface-mode时，Aquamacs默认使用Monaco字体，但Monaco没有粗体
   ;; 这里禁止aquamacs-autoface-mode
   (if (fboundp 'aquamacs-autoface-mode) (aquamacs-autoface-mode -1))
-  (setq frame-title-format "%f" ))
+
+  ;; Aquamacs内置有python mode，但它没有实现imenu的接口，打开py文件会提示：
+  ;; imenu-unavailable The mode ‘Py’ does not support Imenu
+  ;; Emacs中内置也有python mode，它实现了imenu接口
+  ;; 下面在Aquamacs中启用Emacs中内置的python mode
+  (require 'python))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Suppress error "directory ~/.emacs.d/server is unsafe" on emacs-w32 (issue
@@ -566,7 +571,7 @@
 ;; dash (a modern list api for Emacs).
 (add-to-list 'load-path my-flycheck-path)
 ;; 仅在第一次进入cc-mode时加载flycheck
-(eval-after-load 'cc-mode '(load "flycheck"))
+(with-eval-after-load 'cc-mode (load "flycheck"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 配置auto-complete
@@ -735,37 +740,33 @@ reformat current entire buffer."
 ;; 当buffer较大时，semantic分析时会非常慢，下面设置一个阈值，超过阈值不会分析
 (setq semantic-idle-scheduler-max-buffer-size 1048576) ; 1M
 
-(eval-after-load 'cc-mode
-  '(progn
-     ;; srefactor is a C/C++ refactoring tool based on Semantic parser framework.
-     ;; https://github.com/tuhdo/semantic-refactor
-     ;; https://github.com/10gic/semantic-refactor
-     ;; 说明：(require 'srefactor)比较耗时。
-     ;; 为加快启动，把它放到eval-after-load中，这样仅第一次加载cc-mode时会比较慢
-     (require 'srefactor)
-     (semantic-mode 1) ; this is needed by srefactor
-     (define-key c-mode-map (kbd "M-RET") 'srefactor-refactor-at-point)
-     (define-key c++-mode-map (kbd "M-RET") 'srefactor-refactor-at-point)
+(with-eval-after-load 'cc-mode
+  ;; srefactor is a C/C++ refactoring tool based on Semantic parser framework.
+  ;; https://github.com/tuhdo/semantic-refactor
+  ;; https://github.com/10gic/semantic-refactor
+  ;; 说明：(require 'srefactor)比较耗时。
+  ;; 为加快启动，把它放到eval-after-load中，这样仅第一次加载cc-mode时会比较慢
+  (require 'srefactor)
+  (semantic-mode 1) ; this is needed by srefactor
+  (define-key c-mode-map (kbd "M-RET") 'srefactor-refactor-at-point)
+  (define-key c++-mode-map (kbd "M-RET") 'srefactor-refactor-at-point)
 
-     ;; c/c++ mode中的其它一些设置
-     ;; 加载xcscope(Cscope的emacs扩展，依赖于Cscope)
-     ;; debian下可以这样安装xcscope: apt-get install cscope-el
-     ;; Refer to: https://github.com/dkogan/xcscope.el
-     (if (require 'xcscope nil 'noerror)
-         (progn
-           ;; ubuntu下默认不需要cscope-setup，但redhat中需要。
-           (when (fboundp 'cscope-setup) (cscope-setup))
-           (setq cscope-display-cscope-buffer nil) ; 不显示*cscope* buffer
-           (define-key c-mode-base-map [(ctrl f3)]
-             'cscope-find-global-definition-no-prompting)
-           (define-key c-mode-base-map [(ctrl f9)]
-             'cscope-history-backward-line-current-result)
-           (define-key c-mode-base-map [(ctrl f11)]
-             'cscope-history-forward-line-current-result))
-       (message "Warn: Find error when loading xcscope, skip its configuring"))
-
-     (define-key c-mode-map [f7] 'my-c-reformat-current-buffer)
-     (define-key c++-mode-map [f7] 'my-c-reformat-current-buffer)))
+  ;; c/c++ mode中的其它一些设置
+  ;; 加载xcscope(Cscope的emacs扩展，依赖于Cscope)
+  ;; debian下可以这样安装xcscope: apt-get install cscope-el
+  ;; Refer to: https://github.com/dkogan/xcscope.el
+  (if (require 'xcscope nil 'noerror)
+      (progn
+        ;; ubuntu下默认不需要cscope-setup，但redhat中需要。
+        (when (fboundp 'cscope-setup) (cscope-setup))
+        (setq cscope-display-cscope-buffer nil) ; 不显示*cscope* buffer
+        (define-key c-mode-base-map [(ctrl f3)]
+          'cscope-find-global-definition-no-prompting)
+        (define-key c-mode-base-map [(ctrl f9)]
+          'cscope-history-backward-line-current-result)
+        (define-key c-mode-base-map [(ctrl f11)]
+          'cscope-history-forward-line-current-result))
+    (message "Warn: Find error when loading xcscope, skip its configuring")))
 
 ;;;; For perl
 (defalias 'perl-mode 'cperl-mode) ; 设置默认使用cperl-mode代替perl-mode
@@ -835,8 +836,8 @@ reformat current entire buffer."
 
 ;;;; For go
 (require 'go-mode-autoloads)  ; https://github.com/dominikh/go-mode.el
-(eval-after-load "go-mode"
-  '(require 'go-guru))        ; 提示输入scope时，发现输入包名（如main）无效，输入点号.即可。
+(with-eval-after-load "go-mode"
+  (require 'go-guru))        ; 提示输入scope时，发现输入包名（如main）无效，输入点号.即可。
 
 ;; 保存go文件前先格式化代码
 (add-hook 'go-mode-hook
@@ -885,12 +886,12 @@ reformat current entire buffer."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 加载customize-org.el耗时比较多，仅在第一次进入org-mode时加载它
 ;; Using "org", because org-mode is defined in org.el
-(eval-after-load "org" '(load-file "~/.emacs.d/customize-org.el"))
+(with-eval-after-load "org" (load-file "~/.emacs.d/customize-org.el"))
 
-(eval-after-load "tex-mode"
-  '(if (require 'tex-buf nil 'noerror)
-       (load-file "~/.emacs.d/customize-latex.el")
-     (message "Warn: tex-buf is not available, skip its configuring")))
+(with-eval-after-load "tex-mode"
+  (if (require 'tex-buf nil 'noerror)
+      (load-file "~/.emacs.d/customize-latex.el")
+    (message "Warn: tex-buf is not available, skip its configuring")))
 
 ;; 可通过安装emacs-goodies-el来安装folding
 ;; http://www.emacswiki.org/emacs/FoldingMode
@@ -956,69 +957,64 @@ reformat current entire buffer."
   (global-set-key (kbd "<f2>") 'visit-ansi-term))
 
 ;; term 模式下不绑定M-0, M-1等，它们有其它用处。
-(eval-after-load "term"
-  '(progn
-     (define-key term-raw-map (kbd "M-0") nil)
-     (define-key term-raw-map (kbd "M-1") nil)
-     (define-key term-raw-map (kbd "M-2") nil)
-     (define-key term-raw-map (kbd "M-3") nil)
-     (define-key term-raw-map (kbd "M-4") nil)
-     (define-key term-raw-map (kbd "M-5") nil)
-     (define-key term-raw-map (kbd "M-6") nil)
-     (define-key term-raw-map (kbd "M-7") nil)
-     (define-key term-raw-map (kbd "M-8") nil)
-     (define-key term-raw-map (kbd "M-9") nil)))
+(with-eval-after-load "term"
+  (define-key term-raw-map (kbd "M-0") nil)
+  (define-key term-raw-map (kbd "M-1") nil)
+  (define-key term-raw-map (kbd "M-2") nil)
+  (define-key term-raw-map (kbd "M-3") nil)
+  (define-key term-raw-map (kbd "M-4") nil)
+  (define-key term-raw-map (kbd "M-5") nil)
+  (define-key term-raw-map (kbd "M-6") nil)
+  (define-key term-raw-map (kbd "M-7") nil)
+  (define-key term-raw-map (kbd "M-8") nil)
+  (define-key term-raw-map (kbd "M-9") nil))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (require 'autoinsert)
 (auto-insert-mode +1)          ; Enable auto-insert-mode
 (setq auto-insert-query nil)   ; No prompt before insertion
 
-(eval-after-load 'autoinsert
-  '(define-auto-insert '("\\.pl\\'" . "Perl skeleton")
-     '(nil
-       "#!/usr/bin/env perl" \n
-       \n
-       "use strict;" \n
-       "use warnings;" \n \n
-       _ \n)))
+(with-eval-after-load 'autoinsert
+  (define-auto-insert '("\\.pl\\'" . "Perl skeleton")
+    '(nil
+      "#!/usr/bin/env perl" \n
+      \n
+      "use strict;" \n
+      "use warnings;" \n \n
+      _ \n))
 
-(eval-after-load 'autoinsert
-  '(define-auto-insert
-     '("\\.\\(CC?\\|cc\\|cxx\\|cpp\\|c++\\)\\'" . "C++ skeleton")
-     '(nil
-       "#include <iostream>" \n \n
-       "using namespace std;" \n \n
-       "int main() {" \n
-       _ \n
-       "return 0;" \n
-       "}" > \n)))
+  (define-auto-insert
+    '("\\.\\(CC?\\|cc\\|cxx\\|cpp\\|c++\\)\\'" . "C++ skeleton")
+    '(nil
+      "#include <iostream>" \n \n
+      "using namespace std;" \n \n
+      "int main() {" \n
+      _ \n
+      "return 0;" \n
+      "}" > \n))
 
-(eval-after-load 'autoinsert
-  '(define-auto-insert
-     '("\\.c\\'" . "C skeleton")
-     '(nil
-       "#include <stdio.h>" \n \n
-       "int main() {" \n
-       _ \n
-       "return 0;" \n
-       "}" > \n)))
+  (define-auto-insert
+    '("\\.c\\'" . "C skeleton")
+    '(nil
+      "#include <stdio.h>" \n \n
+      "int main() {" \n
+      _ \n
+      "return 0;" \n
+      "}" > \n))
 
-(eval-after-load 'autoinsert
-  '(define-auto-insert '("\\.org\\'" . "Org skeleton")
-     '(nil
-       "#+TITLE: " (file-name-nondirectory (file-name-base (buffer-file-name))) \n
-       "#+DATE: " (format-time-string "<%Y-%m-%d %a>")\n
-       "#+SETUPFILE: setup.inc" \n \n
-       _ \n)))
+  (define-auto-insert '("\\.org\\'" . "Org skeleton")
+    '(nil
+      "#+TITLE: " (file-name-nondirectory (file-name-base (buffer-file-name))) \n
+      "#+DATE: " (format-time-string "<%Y-%m-%d %a>")\n
+      "#+SETUPFILE: setup.inc" \n \n
+      _ \n))
 
-(eval-after-load 'autoinsert
-  '(define-auto-insert
-     '("\\.py\\'" . "Python skeleton")
-     '(nil
-       "#!/usr/bin/env python" \n
-       "# -*- coding: utf-8 -*-" \n \n
-       _ \n)))
+  (define-auto-insert
+    '("\\.py\\'" . "Python skeleton")
+    '(nil
+      "#!/usr/bin/env python" \n
+      "# -*- coding: utf-8 -*-" \n \n
+      _ \n)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1072,7 +1068,7 @@ reformat current entire buffer."
 (global-set-key [remap kill-ring-save] 'kill-ring-save-alternatively)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun save-buffers-kill-terminal ()
+(defun save-buffers-kill-terminal-alternatively ()
   (interactive)
   ;; 对于GUI窗口，为防止误操作，不小心关掉所有tab，让C-x C-c无法退出emacs。
   (if window-system
@@ -1080,7 +1076,7 @@ reformat current entire buffer."
         (message "%s" "Please type 'C-x 5 0' or use mouse to close frame!"))
     (save-buffers-kill-terminal)))
 
-(global-set-key (kbd "C-x C-c") 'save-buffers-kill-terminal)
+(global-set-key (kbd "C-x C-c") 'save-buffers-kill-terminal-alternatively)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 其它实用函数及设置
