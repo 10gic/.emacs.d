@@ -680,10 +680,17 @@ or the current buffer directory."
 (require 'dumb-jump) ; Package-Requires: (f "0.20.0") (s "1.11.0")
 (dumb-jump-mode)
 
+;; 设置找不到工程根目录时的搜索目录，默认为$HOME（很可能太慢）
+(setq dumb-jump-default-project ".")
+
 ;; Dumb Jump默认绑定的快捷键：
 ;; C-M-g (dumb-jump-go)         跳到光标下符号的定义处
 ;; C-M-p (dumb-jump-back)       回到跳转前位置
 ;; C-M-q (dumb-jump-quick-look) 以tooltip形式显示光标下符号的定义的相关信息
+
+;; 取消Dumb Jump中的部分绑定，因为它覆盖了Emacs内置的绑定
+(define-key dumb-jump-mode-map (kbd "C-M-p") nil)
+(define-key dumb-jump-mode-map (kbd "C-M-q") nil)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
