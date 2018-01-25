@@ -527,7 +527,6 @@
 (setq my-org-path2 (car (file-expand-wildcards (concat my-pkg-path "org-*/contrib/lisp"))))
 (setq my-tabbar-path (concat my-pkg-path "tabbar-master"))
 (setq my-multiple-cursors-path (concat my-pkg-path "multiple-cursors.el-master"))
-(setq my-jdee-path (car (file-expand-wildcards (concat my-pkg-path "jdee-*/lisp"))))
 (setq my-flycheck-path (concat my-pkg-path "flycheck-master"))
 (setq my-auto-complete-path (car (file-expand-wildcards (concat my-pkg-path "auto-complete-*"))))
 (setq my-auto-complete-dict-path (car (file-expand-wildcards (concat my-pkg-path "auto-complete-*/dict"))))
@@ -558,17 +557,6 @@
 (global-set-key (kbd "M-n") 'mc/mark-next-like-this)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; jdee (Java Development Environment for Emacs)
-;; jdee require wget
-(if (executable-find
-     (if (eq system-type 'windows-nt) "wget.exe" "wget"))
-    (progn
-      (add-to-list 'load-path my-jdee-path)
-      (autoload 'jde-mode "jde" "JDE mode." t)
-      (add-to-list 'auto-mode-alist '("\\.java\\'" . jde-mode)))
-  (message "Warn: Cannot find wget, skip loading jdee"))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Load flycheck.
 ;; It requires:
 ;; gcc 4.8 or newer.
@@ -586,9 +574,6 @@
 (require 'auto-complete-config)
 (ac-config-default)
 (add-to-list 'ac-dictionary-directories my-auto-complete-dict-path)
-;; Auto start auto-complete-mode with jde-mode.
-;; http://stackoverflow.com/questions/11715296/emacs-auto-complete-dont-work-with-jde
-(push 'jde-mode ac-modes)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; projectile: “工程管理”插件，可快速访问项目里任何文件，快速在项目中搜索关键字
@@ -793,9 +778,6 @@ reformat current entire buffer."
 ;;;; For java
 (add-to-list 'auto-mode-alist '("\\.jj\\'" . java-mode))  ; javacc grammar file
 (add-to-list 'auto-mode-alist '("\\.jjt\\'" . java-mode)) ; javacc jjtree file
-
-(add-hook 'java-mode-hook (lambda () (setq c-basic-offset 2
-                                           tab-width 2)))
 
 ;;;; For shell
 (add-to-list 'auto-mode-alist '("setenv" . sh-mode)) ; 以setenv开头的文件使用sh-mode
