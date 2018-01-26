@@ -1,6 +1,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (setq gc-cons-threshold 100000000) ; 调大gc阈值，可显著加快启动速度
 
+(unless (version<= "24.4" emacs-version)
+  (error "This init.el requires emacs version 24.4 or later"))
+
 (setq inhibit-startup-message t)  ; 启动emacs时不显示GNU Emacs窗口。
 (setq initial-scratch-message "") ; scratch信息中显示为空。
 
@@ -498,7 +501,10 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 在第81列显示一个标尺，使用`M-x fci-mode`可打开或关闭它
-(require 'fill-column-indicator)
+(ignore-errors
+  ;; fill-column-indicator需要Emacs 25，否则会显式抛异常，下面方式无法抑制异常
+  ;; (require 'fill-column-indicator nil :noerror)
+  (require 'fill-column-indicator))
 (defun my-toggle-rule-on-column-81 ()
   "Toggle rule on column 81 (using fill-column-indicator)."
   (interactive)
@@ -686,10 +692,14 @@ or the current buffer directory."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(add-hook 'prog-mode-hook (lambda ()
-                            (imenu-add-menubar-index) ; 显示index菜单
-                            (linum-mode 1)            ; 显示行号
-                            (electric-pair-local-mode 1))) ; 打开自动输入匹配括号功能
+(add-hook 'prog-mode-hook
+          (lambda ()
+            (imenu-add-menubar-index)   ; 显示index菜单
+            (linum-mode 1)              ; 显示行号
+            ;; electric-pair-local-mode在Emacs 25.1中引入
+            ;; 打开自动输入匹配括号功能
+            (if (fboundp 'electric-pair-local-mode)
+                (electric-pair-local-mode 1))))
 
 (setq electric-pair-inhibit-predicate 'electric-pair-conservative-inhibit)
 
@@ -829,7 +839,8 @@ reformat current entire buffer."
 (autoload 'nginx-mode "nginx-mode" nil t)
 (add-to-list 'auto-mode-alist '("nginx.conf\\'" . nginx-mode))
 
-(load-file "~/.emacs.d/customize-lisp.el")
+;; 目前不开发lisp程序，暂时注释掉下面配置以加快启动速度
+;; (load-file "~/.emacs.d/customize-lisp.el")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (add-to-list 'load-path "~/.emacs.d/progmodes/")
