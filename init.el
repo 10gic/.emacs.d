@@ -694,8 +694,10 @@ or the current buffer directory."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (add-hook 'prog-mode-hook
           (lambda ()
-            (imenu-add-menubar-index)   ; 显示index菜单
-            (linum-mode 1)              ; 显示行号
+
+            (unless (derived-mode-p 'css-mode) ; CSS mode不支持Imenu
+              (imenu-add-menubar-index))       ; 启用Imenu（显示index菜单）
+            (linum-mode 1)                     ; 显示行号
             ;; electric-pair-local-mode在Emacs 25.1中引入
             ;; 打开自动输入匹配括号功能
             (if (fboundp 'electric-pair-local-mode)
