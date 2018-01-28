@@ -143,14 +143,9 @@
 (global-set-key "\C-m" 'reindent-then-newline-and-indent)
 (global-set-key (kbd "C-<return>") 'newline)
 
-(global-set-key [C-f4] 'kill-this-buffer)
-
-;; (global-set-key (kbd "<f5>") 'global-linum-mode)
-(global-set-key (kbd "<f5>") 'linum-mode)    ; toggle line number
-
-(global-set-key (kbd "<f8>") 'xterm-mouse-mode)
+;; (global-set-key (kbd "<f8>") 'xterm-mouse-mode)
 ;; (global-set-key (kbd "<f9>") 'view-mode)
-(global-set-key [C-f10] 'menu-bar-mode)
+;; (global-set-key [C-f10] 'menu-bar-mode)
 
 (global-set-key (kbd "<C-mouse-4>") 'text-scale-increase) ; 放大字体
 (global-set-key (kbd "<C-mouse-5>") 'text-scale-decrease) ; 缩小字体
@@ -426,7 +421,7 @@
          (ignore-errors
            (projectile-project-root))))
     (if project-dir
-        (call-interactively 'projectile-grep)
+        (call-interactively 'projectile-grep) ; 如果文件在工程中，则使用projectile-grep
       (call-interactively 'my-recursive-grep))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -565,9 +560,14 @@
 ;; Multiple cursors for Emacs. https://github.com/magnars/multiple-cursors.el
 (add-to-list 'load-path my-multiple-cursors-path)
 (require 'multiple-cursors)
-(global-set-key (kbd "C-c l") 'mc/edit-lines)
-(global-set-key (kbd "M-p") 'mc/mark-previous-like-this)
-(global-set-key (kbd "M-n") 'mc/mark-next-like-this)
+
+(require 'region-bindings-mode)
+(region-bindings-mode-enable)
+;; setup integrating the multiple-cursors package
+(define-key region-bindings-mode-map "a" 'mc/mark-all-like-this)
+(define-key region-bindings-mode-map "n" 'mc/mark-next-like-this)
+(define-key region-bindings-mode-map "p" 'mc/mark-previous-like-this)
+(define-key region-bindings-mode-map "m" 'mc/mark-more-like-this-extended)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Load flycheck.
@@ -647,14 +647,6 @@ or the current buffer directory."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(require 'region-bindings-mode)
-(region-bindings-mode-enable)
-;; setup integrating the multiple-cursors package
-(define-key region-bindings-mode-map "a" 'mc/mark-all-like-this)
-(define-key region-bindings-mode-map "p" 'mc/mark-previous-like-this)
-(define-key region-bindings-mode-map "n" 'mc/mark-next-like-this)
-(define-key region-bindings-mode-map "m" 'mc/mark-more-like-this-extended)
-
 (autoload 'ace-jump-mode "ace-jump-mode" "Emacs quick move minor mode" t)
 (define-key global-map (kbd "C-c SPC") 'ace-jump-mode)
 
@@ -702,6 +694,43 @@ or the current buffer directory."
 
 (setq electric-pair-inhibit-predicate 'electric-pair-conservative-inhibit)
 
+(require 'highlight-symbol)
+(highlight-symbol-nav-mode)
+(add-hook 'prog-mode-hook (lambda () (highlight-symbol-mode)))
+;; (add-hook 'org-mode-hook (lambda () (highlight-symbol-mode)))
+
+(setq highlight-symbol-idle-delay 0.3
+      highlight-symbol-on-navigation-p t)
+
+(global-set-key (kbd "M-n") 'highlight-symbol-next) ; 跳转到下一个相同符号
+(global-set-key (kbd "M-p") 'highlight-symbol-prev) ; 跳转到上一个相同符号
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; 加载xcscope(Cscope的emacs扩展，依赖于Cscope)
+;; debian下可以这样安装xcscope: apt-get install cscope-el
+;; Refer to: https://github.com/dkogan/xcscope.el
+(require 'xcscope)
+(cscope-setup)
+;; 默认cscope-setup时只会为c/c++ mode启用cscope-minor-mode
+;; 下面为golang也启用cscope-minor-mode
+(add-hook 'go-mode-hook (function cscope-minor-mode))
+;; (setq cscope-display-cscope-buffer nil) ; 不显示*cscope* buffer
+
+(setq cscope-option-use-inverted-index t) ; 使用反向索引，即cscope的-q选项
+(add-to-list 'cscope-indexer-suffixes "*.go") ; 增加go后缀，默认仅索引c/c++相关文件
+
+(defun generate-cscopes-files-in-project-root ()
+  "如果工程的根目录没有cscope.files，则生成该文件（当cscope.files存在时，xcscope会自动建立索引）"
+  (let ((project-dir
+         (ignore-errors
+           (projectile-project-root))))
+    (if (and project-dir
+             (not (file-exists-p (concat project-dir "/" "cscope.files"))))
+        (cscope-create-list-of-files-to-index project-dir))))
+
+(add-hook 'cscope-minor-mode-hooks 'generate-cscopes-files-in-project-root)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; For C
 ;; 默认M-x compiler时，make命令会提取下面环境变量。
 (setenv "CFLAGS" "-ggdb3 -Wall")
@@ -715,7 +744,7 @@ or the current buffer directory."
 ;; https://en.wikipedia.org/wiki/Indent_style
 ;; http://algo13.net/clang/clang-format-style-oputions.html
 ;; http://clang.llvm.org/docs/ClangFormat.html
-(defun my-c-reformat-current-buffer()
+(defun my-reformat-c-buffer()
   "Use external tool `clang-format' (if not find, try to use `indent') to
 reformat current entire buffer."
   (interactive)
@@ -758,24 +787,7 @@ reformat current entire buffer."
   (require 'srefactor)
   (semantic-mode 1) ; this is needed by srefactor
   (define-key c-mode-map (kbd "M-RET") 'srefactor-refactor-at-point)
-  (define-key c++-mode-map (kbd "M-RET") 'srefactor-refactor-at-point)
-
-  ;; c/c++ mode中的其它一些设置
-  ;; 加载xcscope(Cscope的emacs扩展，依赖于Cscope)
-  ;; debian下可以这样安装xcscope: apt-get install cscope-el
-  ;; Refer to: https://github.com/dkogan/xcscope.el
-  (if (require 'xcscope nil 'noerror)
-      (progn
-        ;; ubuntu下默认不需要cscope-setup，但redhat中需要。
-        (when (fboundp 'cscope-setup) (cscope-setup))
-        (setq cscope-display-cscope-buffer nil) ; 不显示*cscope* buffer
-        (define-key c-mode-base-map [(ctrl f3)]
-          'cscope-find-global-definition-no-prompting)
-        (define-key c-mode-base-map [(ctrl f9)]
-          'cscope-history-backward-line-current-result)
-        (define-key c-mode-base-map [(ctrl f11)]
-          'cscope-history-forward-line-current-result))
-    (message "Warn: Find error when loading xcscope, skip its configuring")))
+  (define-key c++-mode-map (kbd "M-RET") 'srefactor-refactor-at-point))
 
 ;;;; For perl
 (defalias 'perl-mode 'cperl-mode) ; 设置默认使用cperl-mode代替perl-mode
@@ -847,7 +859,8 @@ reformat current entire buffer."
 ;;;; For go
 (require 'go-mode-autoloads)  ; https://github.com/dominikh/go-mode.el
 (with-eval-after-load "go-mode"
-  (require 'go-guru))        ; 提示输入scope时，发现输入包名（如main）无效，输入点号.即可。
+  (if (executable-find "guru")
+      (require 'go-guru))) ; 提示输入scope时，发现输入包名（如main）无效，输入点号.即可
 
 ;; 保存go文件前先格式化代码
 (add-hook 'go-mode-hook
@@ -863,8 +876,8 @@ reformat current entire buffer."
             ;; Key bindings specific to go-mode
             (local-set-key (kbd "M-.") 'godef-jump)         ; Go to definition
             (local-set-key (kbd "M-*") 'pop-tag-mark)       ; Return from whence you came
-            (local-set-key (kbd "M-p") 'compile)            ; Invoke compiler
-            (local-set-key (kbd "M-P") 'recompile)          ; Redo most recent compile cmd
+            ;; (local-set-key (kbd "M-p") 'compile)            ; Invoke compiler
+            ;; (local-set-key (kbd "M-P") 'recompile)          ; Redo most recent compile cmd
             (local-set-key (kbd "M-]") 'next-error)         ; Go to next error (or msg)
             (local-set-key (kbd "M-[") 'previous-error)))   ; Go to previous error or msg
 
@@ -1097,6 +1110,12 @@ reformat current entire buffer."
     ad-do-it))
 (ad-activate 'align-regexp)
 
+;; 打开或关闭当前buffer的行号显示
+(defun my-toggle-linum-mode ()
+  "Toggle linum-mode for current buffer"
+  (interactive)
+  (call-interactively 'linum-mode)) ; 'global-linum-mode
+
 ;; 重命名当前文件名
 (defun my-rename-this-buffer-and-file ()
   "Renames current buffer and file it is visiting."
@@ -1115,8 +1134,6 @@ reformat current entire buffer."
                (set-buffer-modified-p nil)
                (message "File '%s' successfully renamed to '%s'" name
                         (file-name-nondirectory new-name))))))))
-
-(global-set-key (kbd "C-c r") 'my-rename-this-buffer-and-file)
 
 ;; 摘自Writing GNU Emacs Extensions
 (defun scroll-n-lines-ahead (&optional n)
@@ -1171,10 +1188,9 @@ reformat current entire buffer."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 放弃更改，加载文件内容到buffer
-(defun revert-buffer-no-confirm ()
+(defun my-revert-buffer-no-confirm ()
   "Revert buffer without confirmation."
   (interactive) (revert-buffer t t))
-(global-set-key [C-f5] 'revert-buffer-no-confirm)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 把当前行向上／下移动一行
