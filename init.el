@@ -658,9 +658,6 @@ or the current buffer directory."
 (autoload 'ace-jump-mode "ace-jump-mode" "Emacs quick move minor mode" t)
 (define-key global-map (kbd "C-c SPC") 'ace-jump-mode)
 
-(require 'idle-highlight-mode) ; 加载自动高亮的插件
-(global-set-key (kbd "<f6>") 'idle-highlight-mode)
-
 (require 'unicad) ; 该插件能自动识别文件编码
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
