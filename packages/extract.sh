@@ -43,4 +43,11 @@ for bz2_file in "$current_dir"/*.bz2; do
     fi
 done
 
+if [[ "$(uname -s)" = "Darwin" ]]; then
+    # A workaroud for Mac.
+    # In Mac, the close button in aquamacs tabbar is too big,
+    # Following code resizes it from 15x12 to 10x8
+    sips --resampleHeight 8 $extract_dir/tabbar-master/close-tab.tiff
+fi
+
 echo "Please remove this file if you add new compress package." >> "${current_dir}/extract.done"

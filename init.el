@@ -1,3 +1,5 @@
+;;; init.el --- GNU Emacs/Aquamacs configuration file.
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (setq gc-cons-threshold 100000000) ; 调大gc阈值，可显著加快启动速度
 
@@ -6,6 +8,10 @@
 
 (setq inhibit-startup-message t)  ; 启动emacs时不显示GNU Emacs窗口。
 (setq initial-scratch-message "") ; scratch信息中显示为空。
+
+(if (not (boundp 'aquamacs-version))
+    ;; 如果不是Aquamacs，就关闭tool-bar（Aquamacs的tool-bar比较好看，保留着）
+    (tool-bar-mode -1))
 
 ;; (tool-bar-mode -1) ; Note: (tool-bar-mode nil) cannot work in Ubuntu 14.04
 ;; (menu-bar-mode -1) ; Note: (memu-bar-mode nil) cannot work in Ubuntu 14.04
@@ -23,6 +29,14 @@
 
 (require 'ido)
 (ido-mode t) ; 启动ido-mode。如：键入C-x b时，可用ido快速地切换buffer
+
+;; 打开文件时回到上次打开文件的位置
+(if (version< "25.1" emacs-version)
+    (progn
+      (require 'saveplace)
+      (setq-default save-place t)
+      (setq save-place-file "~/.emacs.d/places"))
+  (save-place-mode +1)) ; save-place-mode在Emacs 25.1中才引入
 
 ;; Winner Mode is a global minor mode. When activated, it allows you to “undo”
 ;; (and “redo”) changes in the window configuration with the key commands
@@ -55,6 +69,22 @@
 ;; (add-hook 'text-mode-hook 'flyspell-mode)
 (setq ispell-personal-dictionary "~/.emacs.d/ispell-personal-dict.txt")
 
+;; wgrep（Writable grep）可直接在grep mode中编辑找到的结果，改动可保存到原文件中
+;; 比如，我们在10个文件中找到了AAA，想把它们都改为BBB，直接在grep mode中修改即可
+;; 修改完后按 `C-x C-s` 可保存，再执行wgrep-save-all-buffers可把改动保存到原文件
+;; https://github.com/mhayashi1120/Emacs-wgrep
+;; Some tips:
+;; 在grep mode中按 `g` (它来自compilation-mode中的recompile)可重新执行一次相同查
+;; 找以确认改动生效；如果要修改grep（比如增加参数）再执行，可以按`C-u g`。
+(require 'wgrep)
+
+;; 把启动wgrep的快捷键变为字母e
+;; 默认，在grep mode中输入 `C-c C-p` 可启动wgrep
+(setq wgrep-enable-key "e")
+
+;; 自动保存文件，相当于自动执行M-x wgrep-save-all-buffers
+(setq wgrep-auto-save-buffer t)
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -84,10 +114,15 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(my-linum-hl ((t (:inherit linum
+                             :background "controlHighlightColor"
+                             :foreground "alternateSelectedControlColor"))))
  '(which-func ((t (:foreground nil))))
  '(org-level-4 ((t (:inherit outline-4 :foreground "pink1")))))
 
 ;; 说明：
+;; ;; 把face my-linum-hl设置为misterioso主题下的区分度高的颜色搭配，
+;; ;; face my-linum-hl是后面定义的face，用于定制当前行号的样式。
 ;; ;; 在misterioso主题下，which-func前景色是蓝色，不好区分，下面设置取消其前景色
 ;; '(which-func ((t (:foreground nil))))
 ;; ;; 下面设置让注释看起来颜色暗些。
@@ -165,9 +200,8 @@
 
 (global-set-key (kbd "M-g") 'goto-line) ; 设置M-g为goto-line
 
-(global-set-key [f12] 'compile) ; compilation
-(global-set-key [C-f12] 'next-error) ; go to next error
-(global-set-key [S-f12] 'previous-error) ; go to previous error
+(global-set-key (kbd "M-n") 'next-error) ; go to next error (or next match in grep mode)
+(global-set-key (kbd "M-p") 'previous-error) ; go to previous error (or next match in grep mode)
 
 ;; 绑定M-/到hippie-expand，它比dabbrev-expand更强大
 (global-set-key [(meta ?/)] 'hippie-expand)
@@ -362,87 +396,125 @@
                   (my-set-frame))))
   (my-set-frame))
 
-;; 当前文件中查找光标下单词
-(defun my-find-symbol-at-point-in-current-file ()
-  "Find keyword in current file."
+(defun my-occur-symbol-at-point ()
+  "Find keyword (using occur) in current buffer."
   (interactive)
   (let ((sym (thing-at-point 'symbol)))
     (if sym
         (push (regexp-quote sym) regexp-history)) ; regexp-history defvared in replace.el
     (call-interactively 'occur)))
 
-(defun my-recursive-grep ()
-  "Recursively grep file contents, use ripgrep (more faster than grep) if found"
-  (interactive)
-  (let* ((current-word (thing-at-point 'word))
-         (search-term (read-string
-                       (format "regex %s: "
-                               (if current-word
-                                   (concat "(" current-word ")")
-                                 ""))
-                       nil nil current-word))
-         (search-path
-          (directory-file-name (expand-file-name
-                                (read-directory-name "directory:  "))))
-         (default-directory (file-name-as-directory search-path))
+(defun my-find-symbol-at-point-in-current-buffer (search-regex arg)
+  "Find keyword (using grep or occur) at point in current buffer."
+  (interactive
+   (list (read-string
+          (format "Find keyword matching regexp %s: "
+                  (if (thing-at-point 'symbol)
+                      (concat "(default " (thing-at-point 'symbol) ")")
+                    ""))
+          nil nil (thing-at-point 'symbol))
+         current-prefix-arg))
+  (let* ((current-file (if buffer-file-name buffer-file-name ""))
+         (default-directory (file-name-directory current-file))
+         (other-args (if current-prefix-arg
+                         (read-string "Other grep options (default '-w'): " nil nil "-w")
+                       nil))
          (grep-cmd
           ;; `i` case insensitive, `n` print line number,
-          ;; `I` ignore binary files, `E` extended regular expressions,
-          ;; `r` recursive
-          ;; `--exclude-dir`排除目录，较新Linux/Mac的grep支持这个选项
+          ;; `I` ignore binary files,
+          ;; `H` show file name always,
+          ;; `E` extended regular expressions,
           (concat
            grep-program
            " "
-           "-inIEr --color=always --exclude-dir='.*'"
+           "-inIHE --color=always"
+           (if other-args (concat " " other-args) "")
            " "
-           (shell-quote-argument search-term)
+           (shell-quote-argument search-regex)
            " "
-           (shell-quote-argument search-path)))
-         (ripgrep-cmd
-          (concat
-           "rg"
-           " "
-           "-in --color=always --no-heading --with-filename"
-           " "
-           (shell-quote-argument search-term)
-           " "
-           (shell-quote-argument search-path))))
-    (if (string= "" search-term)
-        (message "Your regex is empty, do nothing.")
-      (progn
-        (if (executable-find "rg")
-            (compilation-start ripgrep-cmd 'grep-mode (lambda (mode) "*grep*") nil)
-          (compilation-start grep-cmd 'grep-mode (lambda (mode) "*grep*") nil))))))
+           (shell-quote-argument (file-name-nondirectory current-file)))))
+    (cond
+     ((string= "" search-regex) (message "Your regexp is empty, do nothing."))
+     ((string= "" current-file)
+      ;; 如果当前buffer不关联文件，则使用occur查找光标下单词
+      (call-interactively 'my-occur-symbol-at-point))
+     (t (compilation-start grep-cmd 'grep-mode (lambda (mode) "*grep*") nil)))))
 
-(defun my-find-symbol-at-point-in-project ()
-  "Find keyword in project, or in directory if no project found."
-  (interactive)
-  (let ((project-dir
-         (ignore-errors
-           (projectile-project-root))))
-    (if project-dir
-        (call-interactively 'projectile-grep) ; 如果文件在工程中，则使用projectile-grep
-      (call-interactively 'my-recursive-grep))))
+(defun my-find-symbol-at-point-in-project (arg)
+  "Recursively grep keyword in project root, use ripgrep (more faster than grep) if found"
+  (interactive "p")
+  (let* ((project-dir (ignore-errors (projectile-project-root)))
+         (target-dir (if current-prefix-arg
+                         ;; 若提供了前缀参数，则总让用户输入查找目录
+                         (read-directory-name "Find keyword in directory: ")
+                       (if project-dir
+                           ;; 若没有提供前缀参数，且当前文件在工程中，则直接查找工程根目录
+                           project-dir
+                         ;; 若没有提供前缀参数，且当前文件不在工程中，则提示用户输入查找目录
+                         (read-directory-name "Find keyword in directory: "))))
+         (search-regex (read-string
+                        (format "Keyword regexp %s: "
+                                (if (thing-at-point 'symbol)
+                                    (concat "(default " (thing-at-point 'symbol) ")")
+                                  ""))
+                        nil nil (thing-at-point 'symbol)))
+         (use-ripgrep-p (executable-find "rg"))
+         (other-args-prompt (if use-ripgrep-p "Other ripgrep options (default '-w'): "
+                              "Other grep options (default '-w'): "))
+         (other-args (if current-prefix-arg
+                         ;; 当提供了前缀参数时，提示用户输入“额外的参数”
+                         (read-string other-args-prompt nil nil "-w")
+                       nil)))
+    (let* ((default-directory (file-name-as-directory target-dir))
+           (grep-cmd
+            ;; `i` case insensitive, `n` print line number,
+            ;; `I` ignore binary files, `E` extended regular expressions,
+            ;; `r` recursive
+            ;; `--exclude-dir`排除目录，较新Linux/Mac的grep支持这个选项
+            (concat
+             grep-program
+             " "
+             "-inIEr --color=always --exclude-dir='.*'"
+             (if other-args (concat " " other-args) "")
+             " "
+             (shell-quote-argument search-regex)
+             " "
+             (shell-quote-argument (expand-file-name default-directory))))
+           (ripgrep-cmd
+            (concat
+             "rg"
+             " "
+             "-in --color=always --no-heading --with-filename"
+             (if other-args (concat " " other-args) "")
+             " "
+             (shell-quote-argument search-regex))))
+      (cond
+       ((string= "" search-regex) (message "Your regex is empty, do nothing."))
+       (use-ripgrep-p
+        (compilation-start ripgrep-cmd 'grep-mode (lambda (mode) "*grep*") nil))
+       (t
+        (compilation-start grep-cmd 'grep-mode (lambda (mode) "*grep*") nil))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(when (eq system-type 'darwin)
-  ;; Mac下的一些设置
-  (defun define-mac-hyper-key (key fun)
-    (cond
-     ((boundp 'aquamacs-version)
-      ;; Aquamacs中，Command键为A
-      (define-key osx-key-mode-map (kbd (concat "A-" key)) fun))
-     (t
-      ;; GNU Emacs，Command键为s
-      (global-set-key (kbd (concat "s-" key)) fun))))
+(defun define-mac-hyper-key (key fun)
+  (when (eq system-type 'darwin)
+      (progn
+        (cond
+         ((boundp 'aquamacs-version)
+          ;; Aquamacs中，Command键为A
+          (define-key osx-key-mode-map (kbd (concat "A-" key)) fun))
+         (t
+          ;; GNU Emacs，Command键为s
+          (global-set-key (kbd (concat "s-" key)) fun))))))
 
+(when (eq system-type 'darwin)
   ;; 设置Mac下增加/减小字体大小的快捷键
   (when (display-graphic-p)
     (define-mac-hyper-key "=" 'my-increase-font-size)  ; Command + =
     (define-mac-hyper-key "-" 'my-decrease-font-size)) ; Command + -
 
   ;; 在当前文件中查找光标下单词
-  (define-mac-hyper-key "f" 'my-find-symbol-at-point-in-current-file) ; Command + f
+  (define-mac-hyper-key "f" 'my-find-symbol-at-point-in-current-buffer) ; Command + f
   ;; 在当前工程中查找光标下单词，没找到工程就在文件所在目录中查找
   (define-mac-hyper-key "F" 'my-find-symbol-at-point-in-project)) ; Command + Shift + f
 
@@ -479,12 +551,6 @@
 (when (and (>= emacs-major-version 23)
            (equal window-system 'w32))
   (defun server-ensure-safe-dir (dir) "Noop" t))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; 内置插件设置
-(require 'saveplace) ; 打开文件时回到上次打开文件的位置
-(setq-default save-place t)
-(setq save-place-file "~/.emacs.d/saved-places.dat")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; ;; column-marker有严重的性能问题：打开一个5M左右C程序可能会卡超过1分钟
@@ -529,7 +595,9 @@
 ;; Extract packages into ~/.emacs.d/packages/extract/
 (setq my-pkg-path "~/.emacs.d/packages/extract/")
 
-(message (shell-command-to-string "sh ~/.emacs.d/packages/extract.sh"))
+(if (file-exists-p "~/.emacs.d/packages/extract.done")
+    (message "File ~/.emacs.d/packages/extract.done exist, skip executing extract.sh.")
+  (message (shell-command-to-string "sh ~/.emacs.d/packages/extract.sh")))
 
 (setq my-org-path1 (car (file-expand-wildcards (concat my-pkg-path "org-*/lisp"))))
 (setq my-org-path2 (car (file-expand-wildcards (concat my-pkg-path "org-*/contrib/lisp"))))
@@ -538,6 +606,7 @@
 (setq my-flycheck-path (concat my-pkg-path "flycheck-master"))
 (setq my-auto-complete-path (car (file-expand-wildcards (concat my-pkg-path "auto-complete-*"))))
 (setq my-auto-complete-dict-path (car (file-expand-wildcards (concat my-pkg-path "auto-complete-*/dict"))))
+(setq my-all-the-icons-path (car (file-expand-wildcards (concat my-pkg-path "all-the-icons*"))))
 (setq my-neotree-path (car (file-expand-wildcards (concat my-pkg-path "emacs-neotree-*"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -548,9 +617,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; aquamacs-tabbar(from https://github.com/dholm/tabbar)比原始的tabbar更友好
 ;; Mac中Auqamacs内置有tabbar，且默认配置很好，无需再配置。
-;; aquamacs-tabbar在Mac原生Emacs中显示不好看；在Windows中显示不正常
-;; 下面仅在Linux中加载aquamacs-tabbar
-(when (eq system-type 'gnu/linux)
+;; 下面在非Auqamacs中加载aquamacs-tabbar
+(when (not (boundp 'aquamacs-version))
   (add-to-list 'load-path my-tabbar-path)
   (require 'aquamacs-tabbar)
   (tabbar-mode 1)
@@ -564,10 +632,12 @@
 (require 'region-bindings-mode)
 (region-bindings-mode-enable)
 ;; setup integrating the multiple-cursors package
-(define-key region-bindings-mode-map "a" 'mc/mark-all-like-this)
-(define-key region-bindings-mode-map "n" 'mc/mark-next-like-this)
-(define-key region-bindings-mode-map "p" 'mc/mark-previous-like-this)
+(define-key region-bindings-mode-map "a" 'mc/mark-all-like-this) ; 选择所有
+(define-key region-bindings-mode-map "n" 'mc/mark-next-like-this) ; 选择下一个
+(define-key region-bindings-mode-map "p" 'mc/mark-previous-like-this) ; 选择前一个
 (define-key region-bindings-mode-map "m" 'mc/mark-more-like-this-extended)
+(define-key region-bindings-mode-map "u" 'mc/unmark-next-like-this) ; 取消当前选择
+(define-key region-bindings-mode-map "s" 'mc/skip-to-next-like-this) ; 取消当前选择，选择下一个
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Load flycheck.
@@ -584,9 +654,15 @@
 ;; http://cx4a.org/software/auto-complete/
 ;; http://blog.csdn.net/winterttr/article/details/7524336
 (add-to-list 'load-path my-auto-complete-path)
-(require 'auto-complete-config)
-(ac-config-default)
-(add-to-list 'ac-dictionary-directories my-auto-complete-dict-path)
+(run-with-idle-timer
+ 1                                      ; after idle 1 second
+ nil                                    ; no repeat, runs just once
+ (lambda ()
+   ;; 加载auto-complete比较耗时，放在空闲时间加载
+   (require 'auto-complete-config)
+   (ac-config-default)
+   (add-to-list 'ac-dictionary-directories my-auto-complete-dict-path)
+   ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; projectile: “工程管理”插件，可快速访问项目里任何文件，快速在项目中搜索关键字
@@ -608,13 +684,26 @@
 ;; `C-c p C-h` ：查看projectile的快捷键绑定
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(add-to-list 'load-path my-all-the-icons-path)
+;; 注意：使用all-the-icons前需要安装相应字体。
+;; 方法一：手动安装其fonts子目录中的字体；
+;; 方法二：使用函数all-the-icons-install-fonts在线安装最新的相关字体。
+;; https://github.com/domtronn/all-the-icons.el
+(require 'all-the-icons)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (add-to-list 'load-path my-neotree-path)
 (require 'neotree)
 
-;; 禁止自动刷新，自动刷新会改变显示的根目录
-;; 当禁止自动刷新后，切换到不同工程文件的buffer后，也不会刷新了
-;; 如果想要刷新显示的根目录，执行两次下面的neotree-project-dir-toggle即可
+;; 禁止自动刷新，自动刷新可能使根目录变为文件父目录
 (setq neo-autorefresh nil)
+(setq neo-vc-integration (quote (face)))
+(setq neo-window-fixed-size nil)
+(setq neo-theme (if (display-graphic-p) 'icons 'arrow)) ; 依赖于all-the-icons
+
+;; 下面设置禁止neotree-find提示如下信息
+;; "File not found in root path, do you want to change root?"
+(setq neo-force-change-root t)
 
 (defun neotree-project-dir-toggle ()
   "Open NeoTree using the project root, using find-file-in-project,
@@ -622,21 +711,22 @@ or the current buffer directory."
   (interactive)
   (let ((project-dir
          (ignore-errors
-           ;;; Pick one: projectile or find-file-in-project
+           ;; Pick one: projectile or find-file-in-project
            (projectile-project-root)
            ;; (ffip-project-root)
            ))
         (file-name (buffer-file-name))
         (neo-smart-open t))
-    (if (and (fboundp 'neo-global--window-exists-p)
-             (neo-global--window-exists-p))
-        (neotree-hide)
-      (progn
-        (neotree-show)
-        (if project-dir
-            (neotree-dir project-dir))
-        (if file-name
-            (neotree-find file-name))))))
+    (save-selected-window
+      (if (and (fboundp 'neo-global--window-exists-p)
+               (neo-global--window-exists-p))
+          (neotree-hide)
+        (progn
+          (neotree-show)
+          (if project-dir
+              (neotree-dir project-dir))
+          (if file-name
+              (neotree-find file-name)))))))
 
 (global-set-key (kbd "<f9>") 'neotree-project-dir-toggle)
 
@@ -644,6 +734,24 @@ or the current buffer directory."
           (lambda()
             (if (boundp 'tabbar-local-mode)  ; 检测tabbar-local-mode是否存在
                 (tabbar-local-mode 1))))     ; 在neotree-mode中关闭tabbar
+
+(require 'switch-buffer-functions)
+;; 每次切换buffer后都会执行下面hook
+(add-hook 'switch-buffer-functions
+          (lambda (prev-buffer cur-buffer)
+            ;; 若当前buffer名不以*号开始，且neotree处于打开状态，则进一步处理
+            (if (and (not (string-prefix-p "*" (buffer-name cur-buffer)))
+                     (neo-global--window-exists-p))
+                (let ((project-dir
+                       (ignore-errors
+                         (projectile-project-root)))
+                      (file-name (buffer-file-name cur-buffer)))
+                  (save-selected-window
+                    (if project-dir
+                        (neotree-dir project-dir))
+                    (if file-name
+                        (neotree-find file-name)))))))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -680,6 +788,42 @@ or the current buffer directory."
 (define-key dumb-jump-mode-map (kbd "C-M-q") nil)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun my-jump-to-definition ()
+  "Jump to definition."
+  (interactive)
+  (let* ((id-at-point (thing-at-point 'symbol))
+         (identifier
+          (if (and (not current-prefix-arg) id-at-point)
+              ;; 如果用户没有提供前缀参数，而且当前光标下有符号，则直接使用它
+              id-at-point
+            ;; 如果用户提供了前缀参数，或者当前光标下无符号，则提示用户输入
+            (read-string
+             (format "Find definition of %s: "
+                     (if id-at-point
+                         (concat "(default " id-at-point ")")
+                       ""))
+             nil nil id-at-point))))
+    (let ((first-try
+           (ignore-errors
+             (cond
+              ((string= major-mode "emacs-lisp-mode")
+               ;; xref-find-definitions找不符号定义时，会产生user-error
+               ;; 这时，ignore-errors会返回nil
+               (xref-find-definitions identifier))
+              (t
+               ;; semantic-ia-fast-jump找不到符号定义时，会产生error
+               ;; 这时，ignore-errors会返回nil
+               (call-interactively 'semantic-ia-fast-jump))))))
+      (unless first-try
+        ;; 如果first-try失败（为nil），则调用dumb-jump-go作为第二次尝试
+        (call-interactively 'dumb-jump-go)))))
+
+;; 定义跳转到定义处的快捷健
+(define-mac-hyper-key "C-j" 'my-jump-to-definition) ; Command + Ctrl + j
+;; 上面绑定仅在Aquamacs中有效，在Emacs中使用下面设定可绑定到Command + Ctrl + j
+;; (global-set-key (kbd "C-s-<268632074>") 'my-jump-to-definition) ; ; Command + Ctrl + j
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (add-hook 'prog-mode-hook
           (lambda ()
@@ -694,16 +838,23 @@ or the current buffer directory."
 
 (setq electric-pair-inhibit-predicate 'electric-pair-conservative-inhibit)
 
-(require 'highlight-symbol)
-(highlight-symbol-nav-mode)
-(add-hook 'prog-mode-hook (lambda () (highlight-symbol-mode)))
-;; (add-hook 'org-mode-hook (lambda () (highlight-symbol-mode)))
+(run-with-idle-timer
+ 1                                      ; after idle 1 second
+ nil                                    ; no repeat, runs just once
+ (lambda ()
+   ;; 加载highlight-symbol比较耗时，放在空闲时间加载
+   (require 'highlight-symbol)
+   (highlight-symbol-nav-mode)
+   (add-hook 'prog-mode-hook (lambda () (highlight-symbol-mode)))
+   ;; (add-hook 'org-mode-hook (lambda () (highlight-symbol-mode)))
 
-(setq highlight-symbol-idle-delay 0.3
-      highlight-symbol-on-navigation-p t)
+   (setq highlight-symbol-idle-delay 0.3
+         highlight-symbol-on-navigation-p t)
 
-(global-set-key (kbd "M-n") 'highlight-symbol-next) ; 跳转到下一个相同符号
-(global-set-key (kbd "M-p") 'highlight-symbol-prev) ; 跳转到上一个相同符号
+   ;; Mac专有设置
+   (define-mac-hyper-key "g" 'highlight-symbol-next) ; Command + g, 跳转到下一个相同符号
+   (define-mac-hyper-key "G" 'highlight-symbol-prev) ; Command + Shift + g, 跳转到上一个相同符号
+   ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 加载xcscope(Cscope的emacs扩展，依赖于Cscope)
@@ -721,14 +872,43 @@ or the current buffer directory."
 
 (defun generate-cscopes-files-in-project-root ()
   "如果工程的根目录没有cscope.files，则生成该文件（当cscope.files存在时，xcscope会自动建立索引）"
-  (let ((project-dir
-         (ignore-errors
-           (projectile-project-root))))
+  (let ((project-dir (ignore-errors (projectile-project-root))))
     (if (and project-dir
-             (not (file-exists-p (concat project-dir "/" "cscope.files"))))
+             (not (file-exists-p (concat (file-name-as-directory project-dir)
+                                         "cscope.files"))))
         (cscope-create-list-of-files-to-index project-dir))))
 
-(add-hook 'cscope-minor-mode-hooks 'generate-cscopes-files-in-project-root)
+(add-hook 'cscope-minor-mode-hooks
+          (lambda ()
+            (generate-cscopes-files-in-project-root)))
+
+(defun erase-cscope-buffer (&rest args)
+  (ignore-errors
+    (save-excursion
+      (set-buffer "*cscope*")
+      (erase-buffer))))
+
+(defun advice-before-query-cscope ()
+  "cscope查询时会把新结果append到buffer *cscope*中，这里通过adivce-add的方式
+在每次查询前清空buffer *cscope*"
+  (let ((query-functions
+         '(cscope-find-this-symbol
+           cscope-find-global-definition
+           cscope-find-global-definition-no-prompting
+           cscope-find-assignments-to-this-symbol
+           cscope-find-functions-calling-this-function
+           cscope-find-called-functions
+           cscope-find-this-text-string
+           cscope-find-egrep-pattern
+           cscope-find-this-file
+           cscope-find-files-including-file)))
+    (dolist (func query-functions)
+      (advice-add func
+                  :before
+                  #'erase-cscope-buffer))))
+
+(with-eval-after-load 'xcscope
+  (advice-before-query-cscope))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; For C
@@ -805,8 +985,12 @@ reformat current entire buffer."
 
 ;;;; For shell
 (add-to-list 'auto-mode-alist '("setenv" . sh-mode)) ; 以setenv开头的文件使用sh-mode
-(add-hook 'sh-mode-hook (function (lambda () (setq tab-width 4))))
-
+(add-hook 'sh-mode-hook (function
+                         (lambda ()
+                           ;; sh-mode中把"C-c C-f"绑定到了sh-for，下面将其取消
+                           ;; 注："C-c C-f"已经全局地绑定到了打开recent files
+                           (define-key sh-mode-map (kbd "C-c C-f") nil)
+                           (setq tab-width 4))))
 
 ;;;; For html
 ;; web-mode.el is an autonomous emacs major-mode for editing web templates.
@@ -824,11 +1008,13 @@ reformat current entire buffer."
 
 ;; Highlight current HTML element (highlight matched tags).
 (setq web-mode-enable-current-element-highlight t)
+;; Disable auto indentation
+(setq web-mode-enable-auto-indentation nil)
 
 ;; Set indentation offset
-(setq web-mode-markup-indent-offset 2)
-(setq web-mode-css-indent-offset 2)
-(setq web-mode-code-indent-offset 2)
+;; (setq web-mode-markup-indent-offset 2)
+;; (setq web-mode-css-indent-offset 2)
+;; (setq web-mode-code-indent-offset 2)
 
 ;;;; For makefile
 (add-to-list 'auto-mode-alist '("[Mm]akefile" . makefile-mode)) ; 以makefile开头的文件使用makefile mode
@@ -875,11 +1061,7 @@ reformat current entire buffer."
 
             ;; Key bindings specific to go-mode
             (local-set-key (kbd "M-.") 'godef-jump)         ; Go to definition
-            (local-set-key (kbd "M-*") 'pop-tag-mark)       ; Return from whence you came
-            ;; (local-set-key (kbd "M-p") 'compile)            ; Invoke compiler
-            ;; (local-set-key (kbd "M-P") 'recompile)          ; Redo most recent compile cmd
-            (local-set-key (kbd "M-]") 'next-error)         ; Go to next error (or msg)
-            (local-set-key (kbd "M-[") 'previous-error)))   ; Go to previous error or msg
+            (local-set-key (kbd "M-*") 'pop-tag-mark)))     ; Return from whence you came
 
 
 (autoload 'yaml-mode "yaml-mode" "yaml mode" t)
@@ -1259,6 +1441,41 @@ reformat current entire buffer."
   (interactive)
   (let (kill-emacs-hook) ; set kill-emacs-hook to nil before calling kill-emacs
     (kill-emacs)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; 内置的hl-line-mode会高亮整个当前行，有点突兀。
+;; 下面通过advice的方式仅高亮当前行行号，代码摘自：
+;; https://stackoverflow.com/questions/10591334/colorize-current-line-number
+(require 'hl-line)
+(defface my-linum-hl
+  `((t :inherit linum :background ,(face-background 'hl-line nil t)))
+  "Face for the current line number."
+  :group 'linum)
+
+(defvar my-linum-format-string "%3d")
+
+(add-hook 'linum-before-numbering-hook 'my-linum-get-format-string)
+
+(defun my-linum-get-format-string ()
+  (let* ((width (1+ (length (number-to-string
+                             (count-lines (point-min) (point-max))))))
+         (format (concat "%" (number-to-string width) "d")))
+    (setq my-linum-format-string format)))
+
+(defvar my-linum-current-line-number 0)
+
+(setq linum-format 'my-linum-format)
+
+(defun my-linum-format (line-number)
+  (propertize (format my-linum-format-string line-number) 'face
+              (if (eq line-number my-linum-current-line-number)
+                  'my-linum-hl
+                'linum)))
+
+(defadvice linum-update (around my-linum-update)
+  (let ((my-linum-current-line-number (line-number-at-pos)))
+    ad-do-it))
+(ad-activate 'linum-update)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
