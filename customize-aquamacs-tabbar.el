@@ -8,7 +8,8 @@
       (global-set-key (kbd "s-6") 'tabbar-select-tab-6)
       (global-set-key (kbd "s-7") 'tabbar-select-tab-7)
       (global-set-key (kbd "s-8") 'tabbar-select-tab-8)
-      (global-set-key (kbd "s-9") 'tabbar-select-tab-9))
+      (global-set-key (kbd "s-9") 'tabbar-select-tab-9)
+      (global-set-key (kbd "s-t") 'new-tab)) ; Command + t
   (progn
     (global-set-key (kbd "M-1") 'tabbar-select-tab-1) ; Alt + 1
     (global-set-key (kbd "M-2") 'tabbar-select-tab-2)

@@ -45,9 +45,14 @@ done
 
 if [[ "$(uname -s)" = "Darwin" ]]; then
     # A workaroud for Mac.
-    # In Mac, the close button in aquamacs tabbar is too big,
-    # Following code resizes it from 15x12 to 10x8
-    sips --resampleHeight 8 $extract_dir/tabbar-master/close-tab.tiff
+    # 在Mac中，aquamacs tabbar的图标显示太大了
+    # 这是因为这些icon（tiff）中包含两个frame，Emacs使用了维度较大的tiff
+    # 经过下面操作后tiff中仅会留下一个维度小的frame，这样图标显示正常大小
+    sips --cropToHeightWidth 15 15 $extract_dir/tabbar-master/close-tab.tiff
+    sips --cropToHeightWidth 15 15 $extract_dir/tabbar-master/left.tiff
+    sips --cropToHeightWidth 15 15 $extract_dir/tabbar-master/left_disabled.tiff
+    sips --cropToHeightWidth 15 15 $extract_dir/tabbar-master/right.tiff
+    sips --cropToHeightWidth 15 15 $extract_dir/tabbar-master/right_disabled.tiff
 fi
 
 echo "Please remove this file if you add new compress package." >> "${current_dir}/extract.done"
