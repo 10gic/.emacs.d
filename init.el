@@ -419,6 +419,7 @@
          (other-args (if current-prefix-arg
                          (read-string "Other grep options (default '-w'): " nil nil "-w")
                        nil))
+         (grep-program (if (string-suffix-p ".gz" current-file) "zgrep" "grep"))
          (grep-cmd
           ;; `i` case insensitive, `n` print line number,
           ;; `I` ignore binary files,
@@ -1424,7 +1425,19 @@ reformat current entire buffer."
           (t (message "Quit")))
     (when new-kill-string
       (message "%s copied" new-kill-string)
+      ;; For `Command + v`
+      (if (eq system-type 'darwin) (paste-to-osx new-kill-string))
+      ;; For `Ctrl + y`
       (kill-new new-kill-string))))
+
+(defun copy-from-osx ()
+  (shell-command-to-string "pbpaste"))
+
+(defun paste-to-osx (text)
+  (let ((process-connection-type nil))
+    (let ((proc (start-process "pbcopy" "*Messages*" "pbcopy")))
+      (process-send-string proc text)
+      (process-send-eof proc))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; http://www.emacswiki.org/emacs/DosToUnix

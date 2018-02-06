@@ -68,8 +68,12 @@
               (kbd "C-c C-f") 'recentf-open-files)
 
             ;; 使用M-g跳转到指定行时，展开整个文档
-            (define-key org-mode-map
-              "\M-g" (lambda (n) (interactive "nGoto line: ") (outline-show-all) (goto-line n)))
+            (define-key org-mode-map "\M-g"
+              (lambda (n)
+                (interactive "nGoto line: ")
+                (outline-show-all) (goto-line n)))
+
+            (linum-mode 1)
 
             (auto-fill-mode -1) ;; disable auto-fill-mode
 
@@ -505,54 +509,65 @@ frame=tb                               % 在top/bottom位置显示边框（横�
 ;; 如果在org文件中单独设置LATEX_CLASS，可以覆盖这个设置
 (setq org-latex-default-class "my-org-article-zh")
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 定制在org-mode中，拖拽图片文件到emacs时的处理方式
 ;; 参考：http://kitchingroup.cheme.cmu.edu/blog/2015/07/10/Drag-images-and-files-onto-org-mode-and-insert-a-link-to-them/
-;; NOTE: 下面代码仅在OSX系统中有效。
-(defun my-dnd-func (event)
-  (interactive "e")
-  (goto-char (nth 1 (event-start event)))
-  (x-focus-frame nil)
-  (let* ((payload (car (last event)))
-         (type (car payload))
-         (fname (cadr payload))
-         (img-regexp "\\(png\\|gif\\|svg\\|jp[e]?g\\)\\>"))
-    (cond
-     ;; In case of C-drag-n-drop
-     ((and  (eq 'C-drag-n-drop (car event))
-            (eq 'file type)
-            (string-match img-regexp fname))
-      (insert "#+ATTR_HTML: :width 500px\n")
-      (insert (concat  "#+CAPTION: " (file-name-base fname) "\n"))
-      (insert (concat  "#+NAME: fig:" (file-name-base fname) "\n"))
-      (insert (format "[[%s]]\n" (concat "./images/" (file-name-nondirectory fname))))
-      (let ((target-dir (concat (file-name-directory (buffer-file-name)) "./images/")))
-        (if (file-exists-p target-dir)
-            (copy-file fname target-dir)
-          (message "%s does not exist, cannot copy image into it." target-dir))))
-     ;; In case of drag-n-drop
-     ((and  (eq 'drag-n-drop (car event))
-            (eq 'file type)
-            (string-match img-regexp fname))
-      (insert "#+ATTR_HTML: :width 300px\n")
-      (insert (concat  "#+CAPTION: " (file-name-base fname) "\n"))
-      (insert (concat  "#+NAME: fig:" (file-name-base fname) "\n"))
-      (insert (format "[[%s]]\n" (concat "./images/" (file-name-nondirectory fname))))
-      (let ((target-dir (concat (file-name-directory (buffer-file-name)) "./images/")))
-        (if (file-exists-p target-dir)
-            (copy-file fname target-dir)
-          (message "%s does not exist, cannot copy image into it." target-dir))))
-     ;; regular drag and drop on file
-     ((eq 'file type)
-      (insert (format "[[%s]]\n" fname)))
-     (t
-      (error "I am not equipped for dnd on %s" payload)))))
+(when (eq system-type 'darwin)
+  (defun my-dnd-func (event)
+    ;; NOTE: 下面代码仅在OSX系统中有效。
+    (interactive "e")
+    (goto-char (nth 1 (event-start event)))
+    (x-focus-frame nil)
+    (let* ((payload (car (last event)))
+           (type (car payload))
+           (fname (cadr payload))       ; 拖拽多个文件时仅会处理其中一个
+           (img-regexp "\\(png\\|gif\\|svg\\|jp[e]?g\\)\\>"))
+      (unwind-protect
+          (cond
+           ;; In case of C-drag-n-drop
+           ((and  (eq 'C-drag-n-drop (car event))
+                  (eq 'file type)
+                  (string-match img-regexp fname))
+            (insert "#+ATTR_HTML: :width 500px\n")
+            (insert (concat  "#+CAPTION: " (file-name-base fname) "\n"))
+            (insert (concat  "#+NAME: fig:" (file-name-base fname) "\n"))
+            (insert (format "[[%s]]\n" (concat "./images/" (file-name-nondirectory fname))))
+            (let ((target-dir (concat (file-name-directory (buffer-file-name)) "./images/")))
+              (if (file-exists-p target-dir)
+                  (copy-file fname target-dir)
+                (message "%s does not exist, cannot copy image into it." target-dir))))
+           ;; In case of drag-n-drop
+           ((and  (eq 'drag-n-drop (car event))
+                  (eq 'file type)
+                  (string-match img-regexp fname))
+            (insert "#+ATTR_HTML: :width 300px\n")
+            (insert (concat  "#+CAPTION: " (file-name-base fname) "\n"))
+            (insert (concat  "#+NAME: fig:" (file-name-base fname) "\n"))
+            (insert (format "[[%s]]\n" (concat "./images/" (file-name-nondirectory fname))))
+            (let ((target-dir (concat (file-name-directory (buffer-file-name)) "./images/")))
+              (if (file-exists-p target-dir)
+                  (copy-file fname target-dir)
+                (message "%s does not exist, cannot copy image into it." target-dir))))
+           ;; regular drag and drop on file (not image)
+           ((eq 'file type)
+            (insert (format "[[%s]]\n" fname)))
+           (t
+            (error "I am not equipped for dnd on %s" payload)))
+        ;; 当有drog-and-drop事件时，Emacs会自动设置全局变量ns-input-file
+        ;; 内置函数ns-handle-drag-file会直接读取全局变量ns-input-file
+        ;; 为避免对其它模式中使用ns-handle-drag-file产生影响，下面把它重置为nil
+        (setq ns-input-file nil))))
+
+  (define-key org-mode-map (kbd "<drag-n-drop>") 'my-dnd-func)
+  (define-key org-mode-map (kbd "<C-drag-n-drop>") 'my-dnd-func))
 
 ;; In emacs-w32 in Cygwin. drag-n-drop event looks like
 ;; (drag-n-drop (#<window 26 on 1.org> 466 (323 . 240) 779451523 nil 466 (29 . 10) nil (323 . 0) (11 . 24)) (C:\Users\user1\Desktop\1.png))
 ;; the first element is type of event,
 ;; the second element is position,
 ;; the 3rd element is the files.
-(if (memq system-type '(cygwin))
+(when (memq system-type '(cygwin))
   (defun my-dnd-func (event)
     (interactive "e")
     (goto-char (nth 1 (event-start event)))
@@ -586,7 +601,7 @@ frame=tb                               % 在top/bottom位置显示边框（横�
           (message "%s does not exist, cannot copy image into it." target-dir)))
        ;; regular drag and drop on file
        (t
-        (insert (format "[[%s]]\n" fname)))))))
+        (insert (format "[[%s]]\n" fname))))))
 
-(define-key org-mode-map (kbd "<drag-n-drop>") 'my-dnd-func)
-(define-key org-mode-map (kbd "<C-drag-n-drop>") 'my-dnd-func)
+  (define-key org-mode-map (kbd "<drag-n-drop>") 'my-dnd-func)
+  (define-key org-mode-map (kbd "<C-drag-n-drop>") 'my-dnd-func))
