@@ -192,18 +192,6 @@
 (add-to-list 'org-latex-listings '("" "listings"))
 (add-to-list 'org-latex-listings '("" "color"))
 
-;;;; 通过设置\\setmainfont[Scale=1.04, Mapping=]{Times New Roman}可以禁止Ligatures，不再需要下面代码
-;; ;; 使用org-export-smart-quotes-alist中的设置对英文双引号和英文单引号进行转换
-;; (setq org-export-with-smart-quotes t)
-;; ;; 原样地输出英文双引号和英文单引号
-;; (add-to-list 'org-export-smart-quotes-alist
-;;              '("en"
-;;                (primary-opening   :latex "{\\ttfamily\"}")   ; {\ttfamily"}
-;;                (primary-closing   :latex "{\\ttfamily\"}")
-;;                (secondary-opening :latex "{\\ttfamily'}")
-;;                (secondary-closing :latex "{\\ttfamily'}")
-;;                (apostrophe        :latex "{\\ttfamily'}")))
-
 ;; Replace verbatim env by lstlisting env for example block
 ;; 导出latex时，默认 #+BEGIN_EXAMPLE...#+END_EXAMPLE 会导出为 \begin{verbatim}...\end{verbatim}
 ;; 这里把它换为 \begin{lstlisting}...\end{lstlisting}
@@ -312,8 +300,59 @@
         (replace-string "} ）" "}）"))
       (buffer-substring-no-properties (point-min) (point-max)))))
 
+(defun my-latex-export-remove-redundant-newline (text backend info)
+  "Remove redundant newline.
+
+由于前面设置导出时保留换行，这会使得listings环境和上一行之间会多个空格，这
+里把这个多余的空行删除掉。"
+  (when (org-export-derived-backend-p backend 'latex)
+    (with-temp-buffer
+      (insert text)
+      ;; (princ text)      ; just for debugging
+      (progn
+        (goto-char (point-min))
+        ;; 删除\lstset前的多余的换行符（即\\），比如转换：
+        ;; -------------------------------------
+        ;; 初始值不一定是常量，可以调用方法对域进行初始化。如：\\
+        ;; \lstset{language=java,label= ,caption= ,captionpos=b,numbers=none}
+        ;; \begin{lstlisting}
+        ;; public class A {
+        ;;     private int i = fun1();
+        ;; }
+        ;; \end{lstlisting}
+        ;; -----------------TO----------------->
+        ;; 初始值不一定是常量，可以调用方法对域进行初始化。如：
+        ;; \lstset{language=java,label= ,caption= ,captionpos=b,numbers=none}
+        ;; \begin{lstlisting}
+        ;; public class A {
+        ;;     private int i = fun1();
+        ;; }
+        ;; \end{lstlisting}
+        (replace-string "\\\\\n\\lstset{" "\\lstset{")
+        (goto-char (point-min))
+        ;; 删除\begin{lstlisting}前的多余的换行符（即\\），比如转换：
+        ;; -------------------------------------
+        ;; 下面方法编译运行：\\
+        ;; \begin{lstlisting}[style=myverbatimstyle]
+        ;; $ javac FirstSample.java
+        ;; $ java FirstSample
+        ;; Hello World!
+        ;; \end{lstlisting}
+        ;; -----------------TO----------------->
+        ;; 下面方法编译运行：
+        ;; \begin{lstlisting}[style=myverbatimstyle]
+        ;; $ javac FirstSample.java
+        ;; $ java FirstSample
+        ;; Hello World!
+        ;; \end{lstlisting}
+        (replace-string "\\\\\n\\begin{lstlisting}" "\\begin{lstlisting}")
+      (buffer-substring-no-properties (point-min) (point-max))))))
+
 (add-to-list 'org-export-filter-body-functions
              'my-latex-export-avoid-punctuation-in-beginning)
+
+(add-to-list 'org-export-filter-body-functions
+             'my-latex-export-remove-redundant-newline)
 
 ;; 自定义新的LaTex导出模板
 ;; https://github.com/w0mTea/An.Emacs.Tutorial.for.Vim.User/blob/master/An.Emacs.Tutorial.for.Vim.User.zh-CN.org
