@@ -706,7 +706,8 @@ Firstly, try projectile-regenerate-tags, ff fail, try `git grep --cached -Il '' 
                   ;; update TAGS in root of current project
                   ;; Must install Exuberant Ctags, `brew install ctags-exuberant`
                   (projectile-regenerate-tags))
-          ;; 如果运行projectile-regenerate-tags失败，则尝试直接用etags生成TAGS
+          ;; 如果运行projectile-regenerate-tags（它会使用Exuberant Ctags）失败，
+          ;; 则尝试直接用etags生成TAGS（不过更推荐Exuberant Ctags）
           (message "Generate TAGS fail (may be Exuberant Ctags is not installed), I will try etags")
           (if (file-exists-p (concat (file-name-as-directory project-dir) ".git"))
               ;; 若工程根目录存在.git目录，则当作git工程，使用下面命令生成TAGS
