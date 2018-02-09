@@ -20,7 +20,12 @@
 
 (defalias 'yes-or-no-p 'y-or-n-p) ; 设置y/n可代替yes/no
 
-(ffap-bindings) ; 默认为光标下单词，如C-x C-f，默认打开光标下的文件名对应文件。
+(run-with-idle-timer
+ 1                                      ; after idle 1 second
+ nil                                    ; no repeat, runs just once
+ (lambda ()
+   ;; 启用ffap-bindings比较耗时，放在空闲时间加载
+   (ffap-bindings)))
 
 (which-function-mode 1) ; displays the current function name in the mode line
 (setq which-func-unknown "n/a") ; Change ??? to n/a
@@ -288,7 +293,7 @@
     font-size-pair-list-unix)) ; Linux, Mac
 
 (defun get-font-size-for-face-default ()
-  "Get the font size of face default"
+  "Get the font size of face default."
   (aref
    ;; query-font返回字体信息相关数组，数组第3个元素为字体大小
    ;; https://www.gnu.org/software/emacs/manual/html_node/elisp/Low_002dLevel-Font.html
@@ -327,7 +332,7 @@
       (message "Already smallest font size, no smaller font size pair is found."))))
 
 (defun my-set-font-size (english-font-size chinese-font-size)
-  "Set English and Chinese font size"
+  "Set English and Chinese font size."
   (interactive
    (list
     (read-number "English font size: ")
@@ -442,7 +447,7 @@
      (t (compilation-start grep-cmd 'grep-mode (lambda (mode) "*grep*") nil)))))
 
 (defun my-find-symbol-at-point-in-project (arg)
-  "Recursively grep keyword in project root, use ripgrep (more faster than grep) if found"
+  "Recursively grep keyword in project root, use ripgrep (more faster than grep) if found."
   (interactive "p")
   (let* ((project-dir (ignore-errors (projectile-project-root)))
          (target-dir (if current-prefix-arg
@@ -598,7 +603,10 @@
 
 (if (file-exists-p "~/.emacs.d/packages/extract.done")
     (message "File ~/.emacs.d/packages/extract.done exist, skip executing extract.sh.")
-  (message (shell-command-to-string "sh ~/.emacs.d/packages/extract.sh")))
+  (let* ((script-path (expand-file-name "~/.emacs.d/packages/extract.sh"))
+         (output (process-lines "sh" script-path)))
+    (dolist (line output)
+      (message "%s" line))))
 
 (setq my-org-path1 (car (file-expand-wildcards (concat my-pkg-path "org-*/lisp"))))
 (setq my-org-path2 (car (file-expand-wildcards (concat my-pkg-path "org-*/contrib/lisp"))))
@@ -684,6 +692,63 @@
 ;; 还有很多其它快捷键绑定，如果记不住，你可以通过下面命令查看这些绑定：
 ;; `C-c p C-h` ：查看projectile的快捷键绑定
 
+
+;; 保存文件后，执行add-timer-for-updating-tags，它会在空闲时间自动更新TAGS
+(add-hook 'after-save-hook 'add-timer-for-updating-tags)
+
+(defun my-generate-tags-for-current-project ()
+  "Generate TAGS file for current project.
+Firstly, try projectile-regenerate-tags, ff fail, try `git grep --cached -Il '' | etags -`."
+  (interactive)
+  (let ((project-dir (ignore-errors (projectile-project-root))))
+    (if project-dir
+        (unless (ignore-errors
+                  ;; update TAGS in root of current project
+                  ;; Must install Exuberant Ctags, `brew install ctags-exuberant`
+                  (projectile-regenerate-tags))
+          ;; 如果运行projectile-regenerate-tags失败，则尝试直接用etags生成TAGS
+          (message "Generate TAGS fail (may be Exuberant Ctags is not installed), I will try etags")
+          (if (file-exists-p (concat (file-name-as-directory project-dir) ".git"))
+              ;; 若工程根目录存在.git目录，则当作git工程，使用下面命令生成TAGS
+              ;; `git grep --cached -Il '' | etags -`
+              ;; `git grep --cached -Il ''`是为了找到工程中所有非binary文件：
+              ;; -I : don't match the pattern in binary files
+              ;; -l : only show the matching file names, not matching lines
+              ;; '' : empty string matches any file
+              (let ((default-directory project-dir)
+                    (tags-file (concat (file-name-as-directory project-dir) "TAGS")))
+                (shell-command-to-string "git grep --cached -Il '' | etags -")
+                (if (file-exists-p tags-file)
+                    (message "Generated tags %s" tags-file)))
+            (message "Skip generating TAGS, only support git project")))
+      (message "Skip generating TAGS as find project root fail"))))
+
+
+;; 下面列表保存着工程名字，这些工程都存在更新TAGS文件的timer
+(setq my-projects-with-pending-timer '())
+(defun add-timer-for-updating-tags ()
+  "设置timer，它会在emacs空闲时调用projectile-regenerate-tags更新工程TAGS"
+  (let ((project-dir (ignore-errors (projectile-project-root))))
+    (when (and
+           ;; 如果当前文件位于工程中
+           project-dir
+           ;; 如果当前工程名不在my-projects-with-pending-timer中
+           (not (member project-dir my-projects-with-pending-timer)))
+      ;; 把当前工程名增加到my-projects-with-pending-timer中
+      (add-to-list 'my-projects-with-pending-timer project-dir)
+      (run-with-idle-timer
+       5                                ; after idle some second
+       nil                              ; no repeat, runs just once
+       (lambda (dir)
+         (let ((current-dir (ignore-errors (projectile-project-root))))
+           (if (string= dir current-dir)
+               (my-generate-tags-for-current-project)
+             (message "Skip updating TAGS for project (%s), as it's not current project" dir))
+           ;; 操作完成后，从my-projects-with-pending-timer中删除工程名
+           (setq my-projects-with-pending-timer
+                 (remove dir my-projects-with-pending-timer))))
+       project-dir))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (add-to-list 'load-path my-all-the-icons-path)
 ;; 注意：使用all-the-icons前需要安装相应字体。
@@ -707,8 +772,8 @@
 (setq neo-force-change-root t)
 
 (defun neotree-project-dir-toggle ()
-  "Open NeoTree using the project root, using find-file-in-project,
-or the current buffer directory."
+  "Open NeoTree using the project root.
+Using find-file-in-project, or the current buffer directory."
   (interactive)
   (let ((project-dir
          (ignore-errors
@@ -789,6 +854,13 @@ or the current buffer directory."
 (define-key dumb-jump-mode-map (kbd "C-M-q") nil)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; 用my-find-definition-p记录xref-find-definitions是否成功跳转
+;; 后面的函数my-jump-to-definition中用它来判断是否找到定义
+(setq my-find-definition-p nil)
+(add-hook 'xref-after-jump-hook
+          (lambda ()
+            (setq my-find-definition-p t)))
+
 (defun my-jump-to-definition ()
   "Jump to definition."
   (interactive)
@@ -803,21 +875,52 @@ or the current buffer directory."
                      (if id-at-point
                          (concat "(default " id-at-point ")")
                        ""))
-             nil nil id-at-point))))
-    (let ((first-try
-           (ignore-errors
-             (cond
-              ((string= major-mode "emacs-lisp-mode")
-               ;; xref-find-definitions找不符号定义时，会产生user-error
-               ;; 这时，ignore-errors会返回nil
-               (xref-find-definitions identifier))
-              (t
-               ;; semantic-ia-fast-jump找不到符号定义时，会产生error
-               ;; 这时，ignore-errors会返回nil
-               (call-interactively 'semantic-ia-fast-jump))))))
-      (unless first-try
-        ;; 如果first-try失败（为nil），则调用dumb-jump-go作为第二次尝试
-        (call-interactively 'dumb-jump-go)))))
+             nil nil id-at-point)))
+         (first-try nil)
+         (second-try nil))
+    ;; 第一次尝试：使用xref-find-definitions来查找identifier的定义位置
+    ;; 如果xref-find-definitions成功地找到定义，而且定义是唯一的，则会直接跳到定
+    ;; 义位置；如果定义不是唯一的（有多个位置），则会把所有可能列到*xref* buffer
+    ;; 中。
+    ;; 下面重置my-find-definition-p为nil，如果xref-find-definitions找到了唯一的
+    ;; 定义则会设置my-find-definition-p为t（这是通过xref-after-jump-hook实现的）
+    (setq my-find-definition-p nil)
+    ;; 下面当*xref* buffer存在时关闭它，如果xref-find-definitions找到定义的多个
+    ;; 位置，则会重新创建*xref* buffer
+    (if (get-buffer "*xref*")
+        (kill-buffer "*xref*"))
+    (ignore-errors
+      ;; xref-find-definitions找不符号定义时，会产生user-error
+      (let ((project-dir (ignore-errors (projectile-project-root))))
+        (when project-dir
+          ;; 调用visit-tags-table是为了设置变量tags-file-name为TAGS文件位置
+          ;; 如果不设置变量tags-file-name，xref-find-definitions可能提示用户输入
+          ;; TAGS文件位置，提示消息类似于：
+          ;; "Visit tags table (default TAGS): ..."
+          (visit-tags-table (concat (file-name-directory project-dir) "TAGS"))
+          (xref-find-definitions identifier))))
+    (if (or my-find-definition-p (get-buffer "*xref*"))
+        ;; 当my-find-definition-p为t时，说明xref-find-definitions找到了唯一定义
+        ;; 当*xref* buffer存在时，说明xref-find-definitions找到了多个定义
+        ;; 只要满足一个条件，则认为第一次尝试成功
+        (setq first-try t))
+    ;; (message "first-try=%s" first-try)  ; just for debugging
+    ;; 第二次尝试：使用semantic-ia-fast-jump来查找identifier的定义位置
+    (unless first-try
+      (setq second-try
+            (ignore-errors
+              ;; semantic-ia-fast-jump找不到符号定义时，可能询问用户是否查找光标
+              ;; 下前一个位置的符号定义，下面通过cl-flet/cl-letf直接拒绝这种询问
+              ;; （参考https://www.emacswiki.org/emacs/YesOrNoP）。找不到符号时
+              ;; 也可能产生error，这时，ignore-errors会返回nil
+              (cl-flet ((always-no (&rest _) nil))
+                (cl-letf (((symbol-function 'y-or-n-p) #'always-no)
+                          ((symbol-function 'yes-or-no-p) #'always-no))
+                  (call-interactively 'semantic-ia-fast-jump))))))
+    ;; (message "second-try=%s" second-try)  ; just for debugging
+    (unless (or first-try second-try)
+      ;; 如果前面的尝试都失败，则调用dumb-jump-go作最后尝试
+      (call-interactively 'dumb-jump-go))))
 
 ;; 定义跳转到定义处的快捷健
 (define-mac-hyper-key "C-j" 'my-jump-to-definition) ; Command + Ctrl + j
@@ -826,6 +929,11 @@ or the current buffer directory."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; https://stackoverflow.com/questions/4096580/how-to-make-emacs-reload-the-tags-file-automatically
+;; https://emacs.stackexchange.com/questions/14802/never-keep-current-list-of-tags-tables-also
+(setq tags-revert-without-query 1)      ; TAGS文件改变后重新加载时不提示用户
+(setq tags-add-tables nil)              ; 切换目录时，不提示“keep current list of tags tables also”
+
 (add-hook 'prog-mode-hook
           (lambda ()
 
@@ -864,14 +972,16 @@ or the current buffer directory."
 (require 'xcscope)
 (cscope-setup)
 ;; 默认cscope-setup时只会为c/c++ mode启用cscope-minor-mode
-;; 下面为golang也启用cscope-minor-mode
+;; 下面为golang/java也启用cscope-minor-mode
 (add-hook 'go-mode-hook (function cscope-minor-mode))
+(add-hook 'java-mode-hook (function cscope-minor-mode))
 ;; (setq cscope-display-cscope-buffer nil) ; 不显示*cscope* buffer
 
 (setq cscope-option-use-inverted-index t) ; 使用反向索引，即cscope的-q选项
 (add-to-list 'cscope-indexer-suffixes "*.go") ; 增加go后缀，默认仅索引c/c++相关文件
+(add-to-list 'cscope-indexer-suffixes "*.java") ; 增加java后缀，默认仅索引c/c++相关文件
 
-(defun generate-cscopes-files-in-project-root ()
+(defun generate-cscopes-files-in-current-project ()
   "如果工程的根目录没有cscope.files，则生成该文件（当cscope.files存在时，xcscope会自动建立索引）"
   (let ((project-dir (ignore-errors (projectile-project-root))))
     (if (and project-dir
@@ -881,7 +991,7 @@ or the current buffer directory."
 
 (add-hook 'cscope-minor-mode-hooks
           (lambda ()
-            (generate-cscopes-files-in-project-root)))
+            (generate-cscopes-files-in-current-project)))
 
 (defun erase-cscope-buffer (&rest args)
   (ignore-errors
@@ -1239,14 +1349,14 @@ reformat current entire buffer."
 ;; Idea from http://yakko.cs.wmich.edu/~rattles/development/misc/.emacs
 ;; Get help on current word
 (defun man-current-word ()
-  "Manual entry for the current word"
+  "Manual entry for the current word."
   (interactive)
   (if (member major-mode '(emacs-lisp-mode scheme-mode lisp-mode))
       (describe-function-or-variable)
     (manual-entry (current-word))))
 
 (defun info-current-word ()
-  "Info page for the current word"
+  "Info page for the current word."
   (interactive)
   (info-lookup-symbol (current-word)))
 
@@ -1295,7 +1405,7 @@ reformat current entire buffer."
 
 ;; 打开或关闭当前buffer的行号显示
 (defun my-toggle-linum-mode ()
-  "Toggle linum-mode for current buffer"
+  "Toggle linum-mode for current buffer."
   (interactive)
   (call-interactively 'linum-mode)) ; 'global-linum-mode
 
@@ -1510,4 +1620,4 @@ reformat current entire buffer."
 ;; M-x profiler-start
 ;; do something......
 ;; M-x profiler-report
-;; 注：在报告中的加号位置按回车可以展开更详细的报告
+;; 注：在报告中加号位置按回车可以展开更详细的报告，`Ctrl + u i`可以展开所有报告
