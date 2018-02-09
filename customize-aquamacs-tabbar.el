@@ -25,6 +25,13 @@
 ;; http://stackoverflow.com/questions/8520531/tabbar-mode-brings-editing-to-a-crawling-halt
 ;; (setq tabbar-use-images nil)
 
+;; Workaround for following error
+;; "Error during redisplay: (eval (tabbar-line)) signaled (wrong-type-argument consp nil)""
+;; https://github.com/mattfidler/tabbar-ruler.el/issues/39
+(defadvice tabbar-normalize-image (around check-first-arg activate)
+  (when (ad-get-arg 0)
+    ad-do-it))
+
 (defun my-tabbar-buffer-groups ()
   ;; 把buffer分为两组：
   ;; 一组名为emacs组，它的buffer名字以*开始(dired-mode和diary-mode也为emacs组)；
