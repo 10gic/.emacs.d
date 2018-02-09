@@ -1,5 +1,6 @@
 .DS_Store
 
+/TAGS
 /places
 /ac-comphist.dat
 /.mc-lists.el
