@@ -19,6 +19,7 @@ if [[ ! -d "$extract_dir" ]]; then
 fi
 
 for zip_file in "$current_dir"/*.zip; do
+    [ -e "$zip_file" ] || continue
     # DIR is the root dir in zip file
     DIR=$(unzip -Z -1 "$zip_file" | head -1)
     if [[ ! -d "$extract_dir/$DIR" ]]; then
@@ -28,6 +29,7 @@ for zip_file in "$current_dir"/*.zip; do
 done
 
 for gz_file in "$current_dir"/*.gz; do
+    [ -e "$gz_file" ] || continue
     DIR=$(tar -tzf "$gz_file" | sed -e 's@/.*@@' | uniq)
     if [[ ! -d "$extract_dir/$DIR" ]]; then
         echo "Extracting $gz_file"
@@ -36,6 +38,7 @@ for gz_file in "$current_dir"/*.gz; do
 done
 
 for bz2_file in "$current_dir"/*.bz2; do
+    [ -e "$bz2_file" ] || continue
     DIR=$(tar -tjf "$bz2_file" | sed -e 's@/.*@@' | uniq)
     if [[ ! -d "$extract_dir/$DIR" ]]; then
         echo "Extracting $bz2_file"
