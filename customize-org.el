@@ -328,7 +328,7 @@
         ;;     private int i = fun1();
         ;; }
         ;; \end{lstlisting}
-        (replace-string "\\\\\n\\lstset{" "\\lstset{")
+        (replace-string "\\\\\n\\lstset{" "\n\\lstset{")
         (goto-char (point-min))
         ;; 删除\begin{lstlisting}前的多余的换行符（即\\），比如转换：
         ;; -------------------------------------
@@ -345,7 +345,7 @@
         ;; $ java FirstSample
         ;; Hello World!
         ;; \end{lstlisting}
-        (replace-string "\\\\\n\\begin{lstlisting}" "\\begin{lstlisting}")
+        (replace-string "\\\\\n\\begin{lstlisting}" "\n\\begin{lstlisting}")
       (buffer-substring-no-properties (point-min) (point-max))))))
 
 (add-to-list 'org-export-filter-body-functions
