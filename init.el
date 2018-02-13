@@ -692,64 +692,6 @@
 ;; 还有很多其它快捷键绑定，如果记不住，你可以通过下面命令查看这些绑定：
 ;; `C-c p C-h` ：查看projectile的快捷键绑定
 
-
-;; 保存文件后，执行add-timer-for-updating-tags，它会在空闲时间自动更新TAGS
-(add-hook 'after-save-hook 'add-timer-for-updating-tags)
-
-(defun my-generate-tags-for-current-project ()
-  "Generate TAGS file for current project.
-Firstly, try projectile-regenerate-tags, ff fail, try `git grep --cached -Il '' | etags -`."
-  (interactive)
-  (let ((project-dir (ignore-errors (projectile-project-root))))
-    (if project-dir
-        (unless (ignore-errors
-                  ;; update TAGS in root of current project
-                  ;; Must install Exuberant Ctags, `brew install ctags-exuberant`
-                  (projectile-regenerate-tags))
-          ;; 如果运行projectile-regenerate-tags（它会使用Exuberant Ctags）失败，
-          ;; 则尝试直接用etags生成TAGS（不过更推荐Exuberant Ctags）
-          (message "Generate TAGS fail (may be Exuberant Ctags is not installed), I will try etags")
-          (if (file-exists-p (concat (file-name-as-directory project-dir) ".git"))
-              ;; 若工程根目录存在.git目录，则当作git工程，使用下面命令生成TAGS
-              ;; `git grep --cached -Il '' | etags -`
-              ;; `git grep --cached -Il ''`是为了找到工程中所有非binary文件：
-              ;; -I : don't match the pattern in binary files
-              ;; -l : only show the matching file names, not matching lines
-              ;; '' : empty string matches any file
-              (let ((default-directory project-dir)
-                    (tags-file (concat (file-name-as-directory project-dir) "TAGS")))
-                (shell-command-to-string "git grep --cached -Il '' | etags -")
-                (if (file-exists-p tags-file)
-                    (message "Generated tags %s" tags-file)))
-            (message "Skip generating TAGS, only support git project")))
-      (message "Skip generating TAGS as find project root fail"))))
-
-
-;; 下面列表保存着工程名字，这些工程都存在更新TAGS文件的timer
-(setq my-projects-with-pending-timer '())
-(defun add-timer-for-updating-tags ()
-  "设置timer，它会在emacs空闲时调用projectile-regenerate-tags更新工程TAGS"
-  (let ((project-dir (ignore-errors (projectile-project-root))))
-    (when (and
-           ;; 如果当前文件位于工程中
-           project-dir
-           ;; 如果当前工程名不在my-projects-with-pending-timer中
-           (not (member project-dir my-projects-with-pending-timer)))
-      ;; 把当前工程名增加到my-projects-with-pending-timer中
-      (add-to-list 'my-projects-with-pending-timer project-dir)
-      (run-with-idle-timer
-       5                                ; after idle some second
-       nil                              ; no repeat, runs just once
-       (lambda (dir)
-         (let ((current-dir (ignore-errors (projectile-project-root))))
-           (if (string= dir current-dir)
-               (my-generate-tags-for-current-project)
-             (message "Skip updating TAGS for project (%s), as it's not current project" dir))
-           ;; 操作完成后，从my-projects-with-pending-timer中删除工程名
-           (setq my-projects-with-pending-timer
-                 (remove dir my-projects-with-pending-timer))))
-       project-dir))))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (add-to-list 'load-path my-all-the-icons-path)
 ;; 注意：使用all-the-icons前需要安装相应字体。
@@ -834,107 +776,7 @@ Using find-file-in-project, or the current buffer directory."
                             (setq truncate-lines t)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Dumb Jump is an Emacs "jump to definition" package with support for multiple
-;; programming languages that favors "just working". This means minimal -- and
-;; ideally zero -- configuration with absolutely no stored indexes (TAGS) or
-;; persistent background processes.
-;; See https://github.com/jacktasia/dumb-jump
-(require 'dumb-jump) ; Package-Requires: (f "0.20.0") (s "1.11.0")
-(dumb-jump-mode)
-
-;; 设置找不到工程根目录时的搜索目录，默认为$HOME（很可能太慢）
-(setq dumb-jump-default-project ".")
-
-;; Dumb Jump默认绑定的快捷键：
-;; C-M-g (dumb-jump-go)         跳到光标下符号的定义处
-;; C-M-p (dumb-jump-back)       回到跳转前位置
-;; C-M-q (dumb-jump-quick-look) 以tooltip形式显示光标下符号的定义的相关信息
-
-;; 取消Dumb Jump中的部分绑定，因为它覆盖了Emacs内置的绑定
-(define-key dumb-jump-mode-map (kbd "C-M-p") nil)
-(define-key dumb-jump-mode-map (kbd "C-M-q") nil)
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; 用my-find-definition-p记录xref-find-definitions是否成功跳转
-;; 后面的函数my-jump-to-definition中用它来判断是否找到定义
-(setq my-find-definition-p nil)
-(add-hook 'xref-after-jump-hook
-          (lambda ()
-            (setq my-find-definition-p t)))
-
-(defun my-jump-to-definition ()
-  "Jump to definition."
-  (interactive)
-  (let* ((id-at-point (thing-at-point 'symbol))
-         (identifier
-          (if (and (not current-prefix-arg) id-at-point)
-              ;; 如果用户没有提供前缀参数，而且当前光标下有符号，则直接使用它
-              id-at-point
-            ;; 如果用户提供了前缀参数，或者当前光标下无符号，则提示用户输入
-            (read-string
-             (format "Find definition of %s: "
-                     (if id-at-point
-                         (concat "(default " id-at-point ")")
-                       ""))
-             nil nil id-at-point)))
-         (first-try nil)
-         (second-try nil))
-    ;; 第一次尝试：使用xref-find-definitions来查找identifier的定义位置
-    ;; 如果xref-find-definitions成功地找到定义，而且定义是唯一的，则会直接跳到定
-    ;; 义位置；如果定义不是唯一的（有多个位置），则会把所有可能列到*xref* buffer
-    ;; 中。
-    ;; 下面重置my-find-definition-p为nil，如果xref-find-definitions找到了唯一的
-    ;; 定义则会设置my-find-definition-p为t（这是通过xref-after-jump-hook实现的）
-    (setq my-find-definition-p nil)
-    ;; 下面当*xref* buffer存在时关闭它，如果xref-find-definitions找到定义的多个
-    ;; 位置，则会重新创建*xref* buffer
-    (if (get-buffer "*xref*")
-        (kill-buffer "*xref*"))
-    (ignore-errors
-      ;; xref-find-definitions找不符号定义时，会产生user-error
-      (let ((project-dir (ignore-errors (projectile-project-root))))
-        (when project-dir
-          ;; 调用visit-tags-table是为了设置变量tags-file-name为TAGS文件位置
-          ;; 如果不设置变量tags-file-name，xref-find-definitions可能提示用户输入
-          ;; TAGS文件位置，提示消息类似于：
-          ;; "Visit tags table (default TAGS): ..."
-          (visit-tags-table (concat (file-name-directory project-dir) "TAGS"))
-          (xref-find-definitions identifier))))
-    (if (or my-find-definition-p (get-buffer "*xref*"))
-        ;; 当my-find-definition-p为t时，说明xref-find-definitions找到了唯一定义
-        ;; 当*xref* buffer存在时，说明xref-find-definitions找到了多个定义
-        ;; 只要满足一个条件，则认为第一次尝试成功
-        (setq first-try t))
-    ;; (message "first-try=%s" first-try)  ; just for debugging
-    ;; 第二次尝试：使用semantic-ia-fast-jump来查找identifier的定义位置
-    (unless first-try
-      (setq second-try
-            (ignore-errors
-              ;; semantic-ia-fast-jump找不到符号定义时，可能询问用户是否查找光标
-              ;; 下前一个位置的符号定义，下面通过cl-flet/cl-letf直接拒绝这种询问
-              ;; （参考https://www.emacswiki.org/emacs/YesOrNoP）。找不到符号时
-              ;; 也可能产生error，这时，ignore-errors会返回nil
-              (cl-flet ((always-no (&rest _) nil))
-                (cl-letf (((symbol-function 'y-or-n-p) #'always-no)
-                          ((symbol-function 'yes-or-no-p) #'always-no))
-                  (call-interactively 'semantic-ia-fast-jump))))))
-    ;; (message "second-try=%s" second-try)  ; just for debugging
-    (unless (or first-try second-try)
-      ;; 如果前面的尝试都失败，则调用dumb-jump-go作最后尝试
-      (call-interactively 'dumb-jump-go))))
-
-;; 定义跳转到定义处的快捷健
-(define-mac-hyper-key "C-j" 'my-jump-to-definition) ; Command + Ctrl + j
-;; 上面绑定仅在Aquamacs中有效，在Emacs中使用下面设定可绑定到Command + Ctrl + j
-;; (global-set-key (kbd "C-s-<268632074>") 'my-jump-to-definition) ; ; Command + Ctrl + j
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; https://stackoverflow.com/questions/4096580/how-to-make-emacs-reload-the-tags-file-automatically
-;; https://emacs.stackexchange.com/questions/14802/never-keep-current-list-of-tags-tables-also
-(setq tags-revert-without-query 1)      ; TAGS文件改变后重新加载时不提示用户
-(setq tags-add-tables nil)              ; 切换目录时，不提示“keep current list of tags tables also”
-
 (add-hook 'prog-mode-hook
           (lambda ()
 
@@ -1094,6 +936,15 @@ reformat current entire buffer."
 ;;;; For java
 (add-to-list 'auto-mode-alist '("\\.jj\\'" . java-mode))  ; javacc grammar file
 (add-to-list 'auto-mode-alist '("\\.jjt\\'" . java-mode)) ; javacc jjtree file
+
+(autoload 'jtags-mode "jtags" "Toggle jtags mode." t)
+(add-hook 'java-mode-hook 'jtags-mode)
+
+(add-hook 'jtags-mode-hook (lambda ()
+                             ;; jtags-show-declaration默认绑定到"M-,"
+                             ;; 它覆盖了全局的绑定xref-pop-marker-stack
+                             ;; 下面取消jtags-mode-map的中"M-,"绑定
+                             (define-key jtags-mode-map (kbd "M-,") nil)))
 
 ;;;; For shell
 (add-to-list 'auto-mode-alist '("setenv" . sh-mode)) ; 以setenv开头的文件使用sh-mode
@@ -1404,12 +1255,6 @@ reformat current entire buffer."
     ad-do-it))
 (ad-activate 'align-regexp)
 
-;; 打开或关闭当前buffer的行号显示
-(defun my-toggle-linum-mode ()
-  "Toggle linum-mode for current buffer."
-  (interactive)
-  (call-interactively 'linum-mode)) ; 'global-linum-mode
-
 ;; 重命名当前文件名
 (defun my-rename-this-buffer-and-file ()
   "Renames current buffer and file it is visiting."
@@ -1600,6 +1445,13 @@ reformat current entire buffer."
   (let ((my-linum-current-line-number (line-number-at-pos)))
     ad-do-it))
 (ad-activate 'linum-update)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(run-with-idle-timer
+ 1                                      ; after idle 1 second
+ nil                                    ; no repeat, runs just once
+ (lambda ()
+   (load-file "~/.emacs.d/customize-jump-to-definition.el")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
