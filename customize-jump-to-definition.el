@@ -146,15 +146,18 @@ Firstly, try projectile-regenerate-tags, ff fail, try `git grep --cached -Il '' 
 (defun my-jump-to-definition ()
   "Jump to definition."
   (interactive)
-  (let* ((id-at-point (thing-at-point 'symbol))
-         (current-file (if buffer-file-name buffer-file-name
-                         (user-error "Can only used in buffer associated with file")))
-         (java-file (string-suffix-p ".java" current-file))
+  (let* ((id-at-point (thing-at-point 'symbol t))
+         (current-file
+          (if buffer-file-name buffer-file-name
+            (user-error "Cannot use my-jump-to-definition on a buffer without a file name")))
+         (java-file-p (string-suffix-p ".java" current-file))
+         (go-file-p (string-suffix-p ".go" current-file))
          (identifier
-          (if java-file
-              ;; 后面将使用jtags查找java中的tag，但jtags只支持查找光标下符号，
-              ;; 不支持手动指定其它tag。
-              ;; 所以若当前文件是java，则总使用光标下符号（请确保光标下有符号）
+          (if (or java-file-p go-file-p)
+              ;; 后面将使用jtags查找java中的tag，但jtags只支持查找光标下符号，不
+              ;; 支持手动指定其它tag。类似地，后面将使用godef-jump查找go中的tag，
+              ;; 它也只支持查找光标下符号。所以若当前文件是java/go，则总使用光标
+              ;; 下符号（请确保光标下有符号）
               id-at-point
             (if (and (not current-prefix-arg) id-at-point)
                 ;; 如果用户没有提供前缀参数，而且当前光标下有符号，则直接使用它
@@ -167,13 +170,42 @@ Firstly, try projectile-regenerate-tags, ff fail, try `git grep --cached -Il '' 
                          ""))
                nil nil id-at-point))))
          (find-def-p nil))
-    (when java-file
+    (when java-file-p
       (setq my-find-definition-by-jtags-p nil)
       ;; jtags-show-declaration找不到定义时会提示Tag not found!
       (jtags-show-declaration)
       (if my-find-definition-by-jtags-p
           (setq find-def-p t)))
-    (message "my-jump-to-definition find-def-p here1 ? %s" find-def-p)  ; just for debugging
+    (when go-file-p
+      ;; 尝试使用godef-jump查找定义
+      (when (and (executable-find "godef") (fboundp 'godef-jump))
+        ;; 后面会检查*Messages* buffer中的最后一行，为了防止使用旧数据，特意写入
+        ;; 下面这一行无关数据
+        (message "my-jump-to-definition, magic clear for godef-jump")
+        (ignore-errors
+          (call-interactively 'godef-jump))
+        (save-excursion
+          (set-buffer "*Messages*")
+          (goto-char (point-max))
+          (let ((last-line (thing-at-point 'line t)))
+            ;; 当godef-jump找不到光标下符号定义时，
+            ;; 会输出类似下面的信息到*Messages*中
+            ;; godef: no identifier found
+            ;; godef: no declaration found for xxx
+            (message "my-jump-to-definition, last-line=%s" last-line)
+            (if (string-prefix-p "godef: no" last-line)
+                (message "my-jump-to-definition, godef-jump don't find definition")
+              (setq find-def-p t)))))
+      ;; 尝试使用go-guru-definition查找定义
+      (unless find-def-p
+        (when (fboundp 'go-guru-definition)
+          ;; 测试发现，当go-guru-definition找不到定义时会抛异常，
+          ;; 如果没有异常则认为go-guru-definition找到了定义
+          (if (ignore-errors ; 有异常时ignore-errors返回nil
+                (call-interactively 'go-guru-definition))
+              (setq find-def-p t)
+            (message "my-jump-to-definition, go-guru-definition don't find definition")))))
+    (message "my-jump-to-definition, find-def-p here1 ? %s" find-def-p) ; just for debugging
     (unless find-def-p
       ;; 尝试使用xref-find-definitions查找identifier的定义位置
       ;; 如果xref-find-definitions成功地找到定义，而且定义是唯一的，则会直接跳到定
@@ -203,7 +235,7 @@ Firstly, try projectile-regenerate-tags, ff fail, try `git grep --cached -Il '' 
           ;; 当*xref* buffer存在时，说明xref-find-definitions找到了多个定义
           ;; 只要满足一个条件，则认为第一次尝试成功
           (setq find-def-p t)))
-    (message "my-jump-to-definition find-def-p here2 ? %s" find-def-p)  ; just for debugging
+    (message "my-jump-to-definition, find-def-p here2 ? %s" find-def-p) ; just for debugging
     (unless find-def-p
       ;; 尝试使用semantic-ia-fast-jump查找光标下符号的定义（不一定是identifier）
       (setq find-def-p
@@ -216,8 +248,8 @@ Firstly, try projectile-regenerate-tags, ff fail, try `git grep --cached -Il '' 
                 (cl-letf (((symbol-function 'y-or-n-p) #'always-no)
                           ((symbol-function 'yes-or-no-p) #'always-no))
                   (call-interactively 'semantic-ia-fast-jump))))))
-    (message "my-jump-to-definition find-def-p here3 ? %s" find-def-p)  ; just for debugging
-    (message nil) ; 清空minibuffer
+    (message "my-jump-to-definition, find-def-p here3 ? %s" find-def-p) ; just for debugging
+    (message nil)                       ; 清空minibuffer
     (unless find-def-p
       ;; 如果前面的尝试都失败，则调用dumb-jump-go作最后尝试
       (dumb-jump-go nil nil identifier))))
