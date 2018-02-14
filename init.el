@@ -1023,9 +1023,8 @@ reformat current entire buffer."
                      "go build -v && go test -v && go vet"))
 
             ;; Key bindings specific to go-mode
-            (local-set-key (kbd "M-.") 'godef-jump)         ; Go to definition
-            (local-set-key (kbd "M-*") 'pop-tag-mark)))     ; Return from whence you came
-
+            (local-set-key (kbd "M-.") 'godef-jump) ; Go to definition
+            (local-set-key [f1] 'godoc-at-point)))
 
 (autoload 'yaml-mode "yaml-mode" "yaml mode" t)
 (add-to-list 'auto-mode-alist '("\\.ya?ml$" . yaml-mode))
