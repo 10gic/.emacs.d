@@ -35,6 +35,11 @@
 (require 'ido)
 (ido-mode t) ; 启动ido-mode。如：键入C-x b时，可用ido快速地切换buffer
 
+(require 'smex)
+(global-set-key (kbd "M-x") 'smex)
+(global-set-key (kbd "M-X") 'smex-major-mode-commands)
+(global-set-key (kbd "C-c C-c M-x") 'execute-extended-command) ; This is your old M-x.
+
 ;; 打开文件时回到上次打开文件的位置
 (if (version< "25.1" emacs-version)
     (progn
