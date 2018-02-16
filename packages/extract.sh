@@ -56,6 +56,15 @@ if [[ "$(uname -s)" = "Darwin" ]]; then
     sips --cropToHeightWidth 15 15 $extract_dir/tabbar-master/left_disabled.tiff
     sips --cropToHeightWidth 15 15 $extract_dir/tabbar-master/right.tiff
     sips --cropToHeightWidth 15 15 $extract_dir/tabbar-master/right_disabled.tiff
+
+    # 安装all-the-icons所需要的字体，即复制字体到目录${HOME}/Library/Fonts
+    for font_file in "$extract_dir"/all-the-icons.el-*/fonts/*.ttf; do
+        [ -e "$font_file" ] || continue
+        if [ ! -a ${HOME}/Library/Fonts/${font_file##*/} ]; then
+            # 如果${HOME}/Library/Fonts中不存在相应字体文件，就复制它
+            cp ${font_file} ${HOME}/Library/Fonts/
+        fi
+    done
 fi
 
 echo "Please remove this file if you add new compress package." >> "${current_dir}/extract.done"
