@@ -1,10 +1,9 @@
 ;;; init.el --- GNU Emacs/Aquamacs configuration file.
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(setq gc-cons-threshold 100000000) ; 调大gc阈值，可显著加快启动速度
+(unless (version< "25.1" emacs-version)
+  (error "This init.el requires emacs version 25.1 or later"))
 
-(unless (version<= "24.4" emacs-version)
-  (error "This init.el requires emacs version 24.4 or later"))
+(setq gc-cons-threshold 100000000) ; 调大gc阈值，可显著加快启动速度
 
 (setq inhibit-startup-message t)  ; 启动emacs时不显示GNU Emacs窗口。
 (setq initial-scratch-message "") ; scratch信息中显示为空。
@@ -41,12 +40,7 @@
 (global-set-key (kbd "C-c C-c M-x") 'execute-extended-command) ; This is your old M-x.
 
 ;; 打开文件时回到上次打开文件的位置
-(if (version< "25.1" emacs-version)
-    (progn
-      (require 'saveplace)
-      (setq-default save-place t)
-      (setq save-place-file "~/.emacs.d/places"))
-  (save-place-mode +1)) ; save-place-mode在Emacs 25.1中才引入
+(save-place-mode +1)                    ; save-place-mode在Emacs 25.1中引入
 
 ;; Winner Mode is a global minor mode. When activated, it allows you to “undo”
 ;; (and “redo”) changes in the window configuration with the key commands
@@ -302,17 +296,14 @@
   (aref
    ;; query-font返回字体信息相关数组，数组第3个元素为字体大小
    ;; https://www.gnu.org/software/emacs/manual/html_node/elisp/Low_002dLevel-Font.html
-   (query-font
-    (face-attribute 'default :font))
-   2))
+   (query-font (face-attribute 'default :font)) 2))
 
 (defun my-increase-font-size ()
   "增加字体大小，同时确保1个中文和两个英文等宽"
   (interactive)
-  (let ((size-pair (car ; 取过滤后的第一个“字体大小对”
-                    (cl-remove-if ; 过滤掉“小于等于”当前英文字体大小的“字体大小对”
-                     (lambda (x) (<= (car x) (get-font-size-for-face-default)))
-                     (get-mix-mono-font-size-pair)))))
+  (let ((size-pair (seq-find            ; 取第一个“大于”目前字体的“字体大小对”
+                    (lambda (x) (> (car x) (get-font-size-for-face-default)))
+                    (get-mix-mono-font-size-pair))))
     (if size-pair
         (progn
           (message "Set English/Chinese font size to %s/%s."
@@ -324,9 +315,9 @@
 (defun my-decrease-font-size ()
   "减小字体大小，同时确保1个中文和两个英文等宽"
   (interactive)
-  (let ((size-pair (car (last ; 取过滤后的最后一个“字体大小对” (car (last list)) -> "last element in list"
-                         (cl-remove-if ; 过滤掉“大于等于”当前英文字体大小的“字体大小对”
-                          (lambda (x) (>= (car x) (get-font-size-for-face-default)))
+  (let ((size-pair (car (last ; 取结果的最后一个“字体大小对” (car (last list)) -> "last element in list"
+                         (seq-take-while ; 只取list中“小于”当前英文字体大小的“字体大小对”
+                          (lambda (x) (< (car x) (get-font-size-for-face-default)))
                           (get-mix-mono-font-size-pair))))))
     (if size-pair
         (progn
