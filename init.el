@@ -431,7 +431,7 @@
            " "
            "-inIHE --color=always"
            (if other-args (concat " " other-args) "")
-           " "
+           " -- "
            (shell-quote-argument search-regex)
            " "
            (shell-quote-argument (file-name-nondirectory current-file)))))
@@ -478,7 +478,7 @@
              " "
              "-inIEr --color=always --exclude-dir='.*'"
              (if other-args (concat " " other-args) "")
-             " "
+             " -- "
              (shell-quote-argument search-regex)
              " "
              (shell-quote-argument (expand-file-name default-directory))))
@@ -488,7 +488,7 @@
              " "
              "-in --color=always --no-heading --with-filename"
              (if other-args (concat " " other-args) "")
-             " "
+             " -- "
              (shell-quote-argument search-regex))))
       (cond
        ((string= "" search-regex) (message "Your regex is empty, do nothing."))
