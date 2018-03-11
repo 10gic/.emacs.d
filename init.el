@@ -1184,6 +1184,17 @@ reformat current entire buffer."
       _ \n))
 
   (define-auto-insert
+    '("\\.go\\'" . "Golang skeleton")
+    '(nil
+      "package main" ?\n ?\n
+      "import (" ?\n
+      "	\"fmt\"" ?\n
+      ")" ?\n ?\n
+      "func main() {" ?\n
+      "	" _ ?\n
+      "}" ?\n))
+
+  (define-auto-insert
     '("\\.py\\'" . "Python skeleton")
     '(nil
       "#!/usr/bin/env python" \n
