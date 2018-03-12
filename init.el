@@ -144,10 +144,13 @@
  kept-new-versions 3 ; 保留最近的3个备份。
  kept-old-versions 2) ; 保留最早的2个备份，即第1次编辑前的文件和第2次编辑前的文件。
 
-;; add "~/bin" to PATH and exec-path
+;; add "~/bin", "~/go/bin" to PATH and exec-path
 (when (file-exists-p "~/bin")
   (setenv "PATH" (concat (getenv "PATH") ":~/bin"))
   (setq exec-path (append exec-path '("~/bin"))))
+(when (file-exists-p "~/go/bin")
+  (setenv "PATH" (concat (getenv "PATH") ":~/go/bin"))
+  (setq exec-path (append exec-path '("~/go/bin"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; buffer-local相关变量，用setq-default设置
@@ -1004,14 +1007,22 @@ reformat current entire buffer."
 ;;;; For go
 (require 'go-mode-autoloads)  ; https://github.com/dominikh/go-mode.el
 (with-eval-after-load "go-mode"
+  ;; 下面可实现go补全，它依赖于gocode（安装方法`go get -u -v github.com/nsf/gocode`）
+  (require 'go-autocomplete)
+
+  ;; go-eldoc.el可以在modeline中显示当前光标位置变量或函数的相关信息
+  (require 'go-eldoc)
+
   (if (executable-find "guru")
-      (require 'go-guru))) ; 提示输入scope时，发现输入包名（如main）无效，输入点号.即可
+      (require 'go-guru)))              ; 提示输入scope时，输入点号.即可
+
 
 ;; 保存go文件前先格式化代码
 (add-hook 'go-mode-hook
           (lambda ()
 
-            ;; (setq gofmt-command "goimports")  ; use goimports, rather than gofmt
+            (go-eldoc-setup)            ; for go-eldoc
+
             ;; (add-hook 'before-save-hook 'gofmt-before-save)
 
             (if (not (string-match "go" compile-command))
