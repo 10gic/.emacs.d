@@ -501,6 +501,7 @@
 %language=C,
 %basicstyle=\\ttfamily,
 basicstyle=\\ttfamily\\footnotesize,   % 把字体设置得更小
+tabsize=4,
 %columns=fixed,
 %numbers=left,          % where to put the line-numbers
 %numberstyle=\\tiny,
@@ -517,6 +518,7 @@ frame=tb                % 在top/bottom位置显示边框（横线）
 \\lstdefinestyle{myverbatimstyle} {
 language=myverbatim,
 basicstyle=\\ttfamily\\footnotesize,   % 把字体设置得更小
+tabsize=4,
 keepspaces=true,
 showspaces=false,
 showstringspaces=false,
