@@ -387,9 +387,14 @@
       (my-set-font-size 16 18)
     (my-set-font-size 15 18))
 
-  ;; (setq frame-title-format "%b") ; %b让标题栏显示buffer的名字。
   (set-cursor-color "red") ; 定制光标颜色，这样在“深色”主题下更醒目
-  (setq frame-title-format `(,(user-login-name) "@" ,(system-name) " %f" )))
+  (setq-default frame-title-format
+                '(:eval
+                  (format "%s"
+                          (cond
+                           (buffer-file-name buffer-file-name)
+                           (dired-directory dired-directory)
+                           (t (buffer-name)))))))
 
 ;; 设置daemon方式和非deamon方式启动时都执行my-set-frame
 (if (and (fboundp 'daemonp) (daemonp))
