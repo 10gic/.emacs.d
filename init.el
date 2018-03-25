@@ -468,7 +468,8 @@
                                     (concat "(default " (thing-at-point 'symbol) ")")
                                   ""))
                         nil nil (thing-at-point 'symbol)))
-         (use-ripgrep-p (executable-find "rg"))
+         (use-ripgrep-p (and (executable-find "rg")
+                             (not (file-remote-p target-dir)))) ; 远程机器上不使用rg
          (other-args-prompt (if use-ripgrep-p "Other ripgrep options (default '-w'): "
                               "Other grep options (default '-w'): "))
          (other-args (if current-prefix-arg
@@ -484,12 +485,12 @@
             (concat
              grep-program
              " "
-             "-inIEr --color=always --exclude-dir='.*'"
+             "-inIEr --color=always --exclude-dir='.?*'"
              (if other-args (concat " " other-args) "")
              " -- "
              (shell-quote-argument search-regex)
              " "
-             (shell-quote-argument (expand-file-name default-directory))))
+             "."))
            (ripgrep-cmd
             (concat
              "rg"
