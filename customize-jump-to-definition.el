@@ -45,8 +45,8 @@
               (add-timer-for-generating-tags t))))
 
 (defun my-update-tags-for-current-project ()
-  "Update TAGS file for current project, if TAGS don't exist, generate it
-Firstly, try projectile-regenerate-tags, ff fail, try `git grep --cached -Il '' | etags -`."
+  "Update (or generate) TAGS file for current project.
+   Firstly, try ctags, if fail, try `git grep --cached -Il '' | etags -`."
   (interactive)
   (let ((project-dir (ignore-errors (projectile-project-root))))
     (if project-dir
@@ -58,10 +58,19 @@ Firstly, try projectile-regenerate-tags, ff fail, try `git grep --cached -Il '' 
                     ;; -R选项是Exuberant Ctags才有，原始ctags不支持
                     ;; Mac下安装方法：`brew install ctags-exuberant`
                     ;; 如果ctags出错返回为非零，则process-lines会抛出异常
-                    (process-lines "ctags" "-Re" default-directory)
+                    ;; 为了避免ctags运行很长时间导致Emacs hang，设置最长运行8秒
+                    (let ((lines
+                           (process-lines "perl"
+                                          (expand-file-name
+                                           "~/.emacs.d/bin/my_timeout.pl")
+                                          "8" ; timeout value in seconds
+                                          "ctags" "-Re" default-directory)))
+                      ;; (dolist (line lines)
+                      ;;  (message line)) ; only debug
+                      )
                     (if (file-exists-p tags-file)
                         (message "Generated tags %s" tags-file)))
-            (message "Generate TAGS fail (may be Exuberant Ctags is not installed), I will try etags")
+            (message "Generate TAGS fail (may be timeout or Exuberant Ctags is not installed), I will try etags")
             ;; 尝试使用etags生成TAGS（不过更推荐Exuberant Ctags）
             (if (file-exists-p (concat default-directory ".git"))
                 ;; 若工程根目录存在.git目录，则使用下面命令生成TAGS
@@ -82,6 +91,8 @@ Firstly, try projectile-regenerate-tags, ff fail, try `git grep --cached -Il '' 
 
 ;; 下面列表保存着工程名字，这些工程都存在还未执行的更新TAGS文件的timer
 (setq my-projects-with-pending-timer '())
+;; 如果TAGS文件的大小大于下面阈值，则不更新（注：更新大文件会很慢）。
+(setq tag-file-size-threshold 500000000) ; 约500M
 (defun add-timer-for-generating-tags (skip-if-tags-exsits)
   "设置timer，它会在emacs空闲时调用my-update-tags-for-current-project更新工程TAGS"
   (let* ((project-dir (ignore-errors (projectile-project-root))))
@@ -102,9 +113,17 @@ Firstly, try projectile-regenerate-tags, ff fail, try `git grep --cached -Il '' 
        5                                ; after idle some second
        nil                              ; no repeat, runs just once
        (lambda (dir)
-         (let ((current-dir (ignore-errors (projectile-project-root))))
+         (let* ((current-dir (ignore-errors (projectile-project-root)))
+                (tag-file-attr (file-attributes (concat (file-name-as-directory dir) "TAGS")))
+                ;; Note: tag-file-attr is nil when file not exist
+                ;; the 7th element is size attr
+                (small-than-threshold (if tag-file-attr
+                                          (< (nth 7 tag-file-attr) tag-file-size-threshold)
+                                        t)))
            (if (string= dir current-dir)
-               (my-update-tags-for-current-project)
+               (if small-than-threshold
+                   (my-update-tags-for-current-project)
+                 (message "Skip updating TAGS as your TAGS file is too big"))
              (message "Skip updating TAGS for project (%s), as it's not current project" dir))
            ;; 操作完成后，从my-projects-with-pending-timer中删除工程名
            (setq my-projects-with-pending-timer
