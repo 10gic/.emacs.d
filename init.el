@@ -1470,6 +1470,92 @@ reformat current entire buffer."
 (ad-activate 'linum-update)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun my-generate-ascii-table ()
+  "Convert html/csv to emacs/orgmode/mysql/markdown table, replacing the region in place"
+  (interactive)
+  (unless mark-active
+    (error "Please select a region firstly."))
+  (let ((choice (completing-read "Output style (default orgmode): "
+                                 '("orgmode" "emacs" "mysql" "markdown")
+                                 nil t nil nil "orgmode")))
+    (if (not (executable-find "yatg"))
+        (error "Please first install tool yatg: `pip install yatg`"))
+    (shell-command-on-region
+     (region-beginning) (region-end) (concat "yatg --output-style " choice) t t "*YATG*")))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun my-run-current-file ()  ;; xah-run-current-file
+  "Execute the current file.
+For example, if the current buffer is x.py, then it'll call 「python x.py」 in a shell.
+Output is printed to buffer “*xah-run output*”.
+
+The file can be Emacs Lisp, PHP, Perl, Python, Ruby, JavaScript, TypeScript, golang, Bash, Ocaml, Visual Basic, TeX, Java, Clojure.
+File suffix is used to determine what program to run.
+
+If the file is modified or not saved, save it automatically before run.
+
+URL `http://ergoemacs.org/emacs/elisp_run_current_file.html'
+Version 2018-03-01"
+  (interactive)
+  (let (
+        ($outputb "*xah-run output*")
+        (resize-mini-windows nil)
+        ($suffix-map
+         ;; (‹extension› . ‹shell program name›)
+         `(
+           ("php" . "php")
+           ("pl" . "perl")
+           ("py" . "python")
+           ("py3" . ,(if (string-equal system-type "windows-nt") "c:/Python32/python.exe" "python3"))
+           ("rb" . "ruby")
+           ("go" . "go run")
+           ("hs" . "runhaskell")
+           ("js" . "node")
+           ("ts" . "tsc") ; TypeScript
+           ("tsx" . "tsc")
+           ("sh" . "bash")
+           ("rkt" . "racket")
+           ("ml" . "ocaml")
+           ("tex" . "pdflatex")
+           ("latex" . "pdflatex")
+           ("java" . "javac")
+           ))
+        $fname
+        $fSuffix
+        $prog-name
+        $cmd-str)
+    (when (not (buffer-file-name)) (save-buffer))
+    (when (buffer-modified-p) (save-buffer))
+    (setq $fname (buffer-file-name))
+    (setq $fSuffix (file-name-extension $fname))
+    (setq $prog-name (cdr (assoc $fSuffix $suffix-map)))
+    (setq $cmd-str (concat $prog-name " \""   $fname "\""))
+    (cond
+     ((string-equal $fSuffix "el")
+      (load $fname))
+     ((or (string-equal $fSuffix "ts") (string-equal $fSuffix "tsx"))
+      (if (fboundp 'xah-ts-compile-file)
+          (xah-ts-compile-file current-prefix-arg)
+        (if $prog-name
+            (progn
+              (message "Running")
+              (shell-command $cmd-str $outputb ))
+          (message "No recognized program file suffix for this file."))))
+     ((string-equal $fSuffix "go")
+      ;; (when (fboundp 'gofmt) (gofmt) )
+      (shell-command $cmd-str $outputb ))
+     ((string-equal $fSuffix "java")
+      (progn
+        (shell-command (format "java %s" (file-name-sans-extension (file-name-nondirectory $fname))) $outputb )))
+     (t (if $prog-name
+            (progn
+              (message "Running")
+              (shell-command $cmd-str $outputb ))
+          (message "No recognized program file suffix for this file."))))))
+
+(global-set-key (kbd "<f12>") 'my-run-current-file)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (run-with-idle-timer
  1                                      ; after idle 1 second
  nil                                    ; no repeat, runs just once
