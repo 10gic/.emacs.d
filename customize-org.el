@@ -555,7 +555,7 @@ frame=tb                               % 在top/bottom位置显示边框（横�
 ;; 定制在org-mode中，拖拽图片文件到emacs时的处理方式
 ;; 参考：http://kitchingroup.cheme.cmu.edu/blog/2015/07/10/Drag-images-and-files-onto-org-mode-and-insert-a-link-to-them/
 (when (eq system-type 'darwin)
-  (defun my-dnd-func (event)
+  (defun dnd-func (event)
     ;; NOTE: 下面代码仅在OSX系统中有效。
     (interactive "e")
     (goto-char (nth 1 (event-start event)))
@@ -600,8 +600,8 @@ frame=tb                               % 在top/bottom位置显示边框（横�
         ;; 为避免对其它模式中使用ns-handle-drag-file产生影响，下面把它重置为nil
         (setq ns-input-file nil))))
 
-  (define-key org-mode-map (kbd "<drag-n-drop>") 'my-dnd-func)
-  (define-key org-mode-map (kbd "<C-drag-n-drop>") 'my-dnd-func))
+  (define-key org-mode-map (kbd "<drag-n-drop>") 'dnd-func)
+  (define-key org-mode-map (kbd "<C-drag-n-drop>") 'dnd-func))
 
 ;; In emacs-w32 in Cygwin. drag-n-drop event looks like
 ;; (drag-n-drop (#<window 26 on 1.org> 466 (323 . 240) 779451523 nil 466 (29 . 10) nil (323 . 0) (11 . 24)) (C:\Users\user1\Desktop\1.png))
@@ -609,7 +609,7 @@ frame=tb                               % 在top/bottom位置显示边框（横�
 ;; the second element is position,
 ;; the 3rd element is the files.
 (when (memq system-type '(cygwin))
-  (defun my-dnd-func (event)
+  (defun dnd-func (event)
     (interactive "e")
     (goto-char (nth 1 (event-start event)))
     (x-focus-frame nil)
@@ -644,5 +644,5 @@ frame=tb                               % 在top/bottom位置显示边框（横�
        (t
         (insert (format "[[%s]]\n" fname))))))
 
-  (define-key org-mode-map (kbd "<drag-n-drop>") 'my-dnd-func)
-  (define-key org-mode-map (kbd "<C-drag-n-drop>") 'my-dnd-func))
+  (define-key org-mode-map (kbd "<drag-n-drop>") 'dnd-func)
+  (define-key org-mode-map (kbd "<C-drag-n-drop>") 'dnd-func))
