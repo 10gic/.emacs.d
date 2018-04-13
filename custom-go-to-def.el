@@ -1,4 +1,4 @@
-;;; customize-jump-to-definition.el ---              -*- lexical-binding: t; -*-
+;;; custom-go-to-def.el ---              -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2018  cig01
 
@@ -149,26 +149,26 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 用my-find-definition-p记录xref-find-definitions是否成功跳转
-;; 后面函数my-jump-to-definition中用它判断是否通过xref-find-definitions找到定义
+;; 后面函数my-go-to-def中用它判断是否通过xref-find-definitions找到定义
 (setq my-find-definition-p nil)
 (add-hook 'xref-after-jump-hook
           (lambda ()
             (setq my-find-definition-p t)))
 
 ;; 用my-find-definition-by-jtags-p记录jtags-show-declaration是否成功跳转
-;; 后面函数my-jump-to-definition中用它判断是否通过jtags-show-declaration找到定义
+;; 后面函数my-go-to-def中用它判断是否通过jtags-show-declaration找到定义
 (setq my-find-definition-by-jtags-p nil)
 (add-hook 'find-tag-hook
           (lambda ()
             (setq my-find-definition-by-jtags-p t)))
 
-(defun my-jump-to-definition ()
+(defun my-go-to-def ()
   "Jump to definition."
   (interactive)
   (let* ((id-at-point (thing-at-point 'symbol t))
          (current-file
           (if buffer-file-name buffer-file-name
-            (user-error "Cannot use my-jump-to-definition on a buffer without a file name")))
+            (user-error "Cannot use my-go-to-def on a buffer without a file name")))
          (java-file-p (string-suffix-p ".java" current-file))
          (go-file-p (string-suffix-p ".go" current-file))
          (identifier
@@ -200,7 +200,7 @@
       (when (and (executable-find "godef") (fboundp 'godef-jump))
         ;; 后面会检查*Messages* buffer中的最后一行，为了防止使用旧数据，特意写入
         ;; 下面这一行无关数据
-        (message "my-jump-to-definition, magic clear for godef-jump")
+        (message "my-go-to-def, magic clear for godef-jump")
         (ignore-errors
           (call-interactively 'godef-jump))
         (save-excursion
@@ -211,9 +211,9 @@
             ;; 会输出类似下面的信息到*Messages*中
             ;; godef: no identifier found
             ;; godef: no declaration found for xxx
-            (message "my-jump-to-definition, last-line=%s" last-line)
+            (message "my-go-to-def, last-line=%s" last-line)
             (if (string-prefix-p "godef: no" last-line)
-                (message "my-jump-to-definition, godef-jump don't find definition")
+                (message "my-go-to-def, godef-jump don't find definition")
               (setq find-def-p t)))))
       ;; 尝试使用go-guru-definition查找定义
       (unless find-def-p
@@ -223,8 +223,8 @@
           (if (ignore-errors ; 有异常时ignore-errors返回nil
                 (call-interactively 'go-guru-definition))
               (setq find-def-p t)
-            (message "my-jump-to-definition, go-guru-definition don't find definition")))))
-    (message "my-jump-to-definition, find-def-p here1 ? %s" find-def-p) ; just for debugging
+            (message "my-go-to-def, go-guru-definition don't find definition")))))
+    (message "my-go-to-def, find-def-p here1 ? %s" find-def-p) ; just for debugging
     (unless find-def-p
       ;; 尝试使用xref-find-definitions查找identifier的定义位置
       ;; 如果xref-find-definitions成功地找到定义，而且定义是唯一的，则会直接跳到定
@@ -254,7 +254,7 @@
           ;; 当*xref* buffer存在时，说明xref-find-definitions找到了多个定义
           ;; 只要满足一个条件，则认为第一次尝试成功
           (setq find-def-p t)))
-    (message "my-jump-to-definition, find-def-p here2 ? %s" find-def-p) ; just for debugging
+    (message "my-go-to-def, find-def-p here2 ? %s" find-def-p) ; just for debugging
     (unless find-def-p
       ;; 尝试使用semantic-ia-fast-jump查找光标下符号的定义（不一定是identifier）
       (setq find-def-p
@@ -267,17 +267,17 @@
                 (cl-letf (((symbol-function 'y-or-n-p) #'always-no)
                           ((symbol-function 'yes-or-no-p) #'always-no))
                   (call-interactively 'semantic-ia-fast-jump))))))
-    (message "my-jump-to-definition, find-def-p here3 ? %s" find-def-p) ; just for debugging
+    (message "my-go-to-def, find-def-p here3 ? %s" find-def-p) ; just for debugging
     (message nil)                       ; 清空minibuffer
     (unless find-def-p
       ;; 如果前面的尝试都失败，则调用dumb-jump-go作最后尝试
       (dumb-jump-go nil nil identifier))))
 
 (if (boundp 'aquamacs-version)
-    ;; 绑定my-jump-to-definition到Command + Ctrl + j （Aquamacs中，Command键为A）
-    (define-key osx-key-mode-map (kbd "A-C-j") 'my-jump-to-definition))
+    ;; 绑定my-go-to-def到Command + Ctrl + j （Aquamacs中，Command键为A）
+    (define-key osx-key-mode-map (kbd "A-C-j") 'my-go-to-def))
 ;; 上面绑定仅在Aquamacs中有效，在Emacs中使用下面设定可绑定到Command + Ctrl + j
-;; (global-set-key (kbd "C-s-<268632074>") 'my-jump-to-definition) ; ; Command + Ctrl + j
+;; (global-set-key (kbd "C-s-<268632074>") 'my-go-to-def) ; ; Command + Ctrl + j
 
-;; (provide 'customize-jump-to-definition)
-;;; customize-jump-to-definition.el ends here
+;; (provide 'custom-go-to-def)
+;;; custom-go-to-def.el ends here

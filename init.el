@@ -636,7 +636,7 @@
   (add-to-list 'load-path my-tabbar-path)
   (require 'aquamacs-tabbar)
   (tabbar-mode 1)
-  (load-file "~/.emacs.d/customize-aquamacs-tabbar.el"))
+  (load-file "~/.emacs.d/custom-aquamacs-tabbar.el"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Multiple cursors for Emacs. https://github.com/magnars/multiple-cursors.el
@@ -1005,7 +1005,7 @@ reformat current entire buffer."
 (add-to-list 'auto-mode-alist '("nginx.conf\\'" . nginx-mode))
 
 ;; 目前不开发lisp程序，暂时注释掉下面配置以加快启动速度
-;; (load-file "~/.emacs.d/customize-lisp.el")
+;; (load-file "~/.emacs.d/custom-lisp.el")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (add-to-list 'load-path "~/.emacs.d/progmodes/")
@@ -1064,13 +1064,13 @@ reformat current entire buffer."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; 加载customize-org.el耗时比较多，仅在第一次进入org-mode时加载它
+;; 加载custom-org.el耗时比较多，仅在第一次进入org-mode时加载它
 ;; Using "org", because org-mode is defined in org.el
-(with-eval-after-load "org" (load-file "~/.emacs.d/customize-org.el"))
+(with-eval-after-load "org" (load-file "~/.emacs.d/custom-org.el"))
 
 (with-eval-after-load "tex-mode"
   (if (require 'tex-buf nil 'noerror)
-      (load-file "~/.emacs.d/customize-latex.el")
+      (load-file "~/.emacs.d/custom-latex.el")
     (message "Warn: tex-buf is not available, skip its configuring")))
 
 ;; 可通过安装emacs-goodies-el来安装folding
@@ -1560,7 +1560,7 @@ Version 2018-03-01"
  1                                      ; after idle 1 second
  nil                                    ; no repeat, runs just once
  (lambda ()
-   (load-file "~/.emacs.d/customize-jump-to-definition.el")))
+   (load-file "~/.emacs.d/custom-go-to-def.el")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
