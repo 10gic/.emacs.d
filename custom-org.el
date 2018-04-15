@@ -404,6 +404,21 @@
 \\normalspacedchars{•‘’-—–/`ˇ}    % 这里出现的字符两端不会自动添加空格。比如，It’s中的’后面就不会有过宽的空格了。
 \\xeCJKsetwidth{“”（）}{0.7em}    % 把这些标点的宽度设置得窄些（默认占一个中文宽度）。
 
+%% 下面定义一个新命令 ifenv ，用于测试当前环境，用法为 \ifenv{environment name}{part1}{part2}
+%% 如果当前环境为测试环境，则执行part1，否则执行part2
+%% 参考：https://tex.stackexchange.com/questions/39738/command-behavior-depending-on-current-environment
+\\makeatletter
+\\def\\ifenv#1{
+   \\def\\@tempa{#1}%
+   \\ifx\\@tempa\\@currenvir
+      \\expandafter\\@firstoftwo
+    \\else
+      \\expandafter\\@secondoftwo
+   \\fi
+}
+\\makeatother
+
+
 % 为了避免找不到字体（pdf中会以“豆腐块”形状字符代替），把备用字体\\myfallbackfont设置为“Arial Unicode MS”，
 % 它支持的字符很全，且在Mac和Windows平台都内置。
 % 如果你认为“Arial Unicode MS”支持的字体还不够，可以使用Code2000字体，或者Google的Noto字体，不过它们都要单独安装。
@@ -412,15 +427,18 @@
 \\usepackage{fontspec, newunicodechar}
 \\newfontfamily{\\myfallbackfont}{Arial Unicode MS}
 \\DeclareTextFontCommand{\\textfallback}{\\myfallbackfont}
-% 目前没有自动化，需要先找到无法显示的字符，再通过\\newunicodechar重新换一个字体。如下所示：
+% 目前没有自动化，需要先找到无法显示的字符，再通过\\newunicodechar重新换一个字体。
+% 注：这种替换字体的方式在lstlisting环境中无效！
+% 比如，正文中使用字体Times New Roman，它不包含↖↗↘↙，而lstlisting环境中使用字体Source Code Pro，它们包含↖↗↘↙
+% 为了使↖↗↘↙在正文和lstlisting环境都能正常显示，我们需要在正文中替换为Arial Unicode MS字体，而lstlisting环境中不变
 \\newunicodechar{☆}{\\textfallback{☆}}
 \\newunicodechar{❑}{\\textfallback{❑}}
 \\newunicodechar{⇔}{\\textfallback{⇔}}
 \\newunicodechar{⇒}{\\textfallback{⇒}}
-\\newunicodechar{↖}{\\textfallback{↖}}
-\\newunicodechar{↗}{\\textfallback{↗}}
-\\newunicodechar{↘}{\\textfallback{↘}}
-\\newunicodechar{↙}{\\textfallback{↙}}
+\\newunicodechar{↖}{\\ifenv{lstlisting}{↖}{\\textfallback{↖}}}  % 如果是lstlisting环境，则原封不动输出
+\\newunicodechar{↗}{\\ifenv{lstlisting}{↗}{\\textfallback{↗}}}  % 如果是lstlisting环境，则原封不动输出
+\\newunicodechar{↘}{\\ifenv{lstlisting}{↘}{\\textfallback{↘}}}  % 如果是lstlisting环境，则原封不动输出
+\\newunicodechar{↙}{\\ifenv{lstlisting}{↙}{\\textfallback{↙}}}  % 如果是lstlisting环境，则原封不动输出
 \\newunicodechar{①}{\\textfallback{①}}
 \\newunicodechar{②}{\\textfallback{②}}
 \\newunicodechar{③}{\\textfallback{③}}
