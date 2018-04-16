@@ -933,6 +933,11 @@ reformat current entire buffer."
 
 (add-hook 'cperl-mode-hook
           (function (lambda ()  ;only work in GUI.
+                      ;; pl文件中输入 if (0) { 时会自动变为 if (0) {}}
+                      ;; 多了一个右括号，下面是一个workaround，参考自：
+                      ;; https://github.com/syl20bnr/spacemacs/issues/480
+                      (local-unset-key (kbd "{"))
+
                       (local-set-key [f1] 'cperl-perldoc-at-point))))
 
 ;;;; For sql
