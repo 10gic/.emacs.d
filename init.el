@@ -1009,6 +1009,9 @@ reformat current entire buffer."
 (autoload 'nginx-mode "nginx-mode" nil t)
 (add-to-list 'auto-mode-alist '("nginx.conf\\'" . nginx-mode))
 
+(autoload 'protobuf-mode "protobuf-mode" nil t)
+(add-to-list 'auto-mode-alist '("\\.proto\\'" . protobuf-mode))
+
 ;; 目前不开发lisp程序，暂时注释掉下面配置以加快启动速度
 ;; (load-file "~/.emacs.d/custom-lisp.el")
 
