@@ -1081,11 +1081,8 @@ reformat current entire buffer."
       (load-file "~/.emacs.d/custom-latex.el")
     (message "Warn: tex-buf is not available, skip its configuring")))
 
-;; 可通过安装emacs-goodies-el来安装folding
-;; http://www.emacswiki.org/emacs/FoldingMode
-(autoload 'folding-mode          "folding" "Folding mode" t)
-(autoload 'turn-off-folding-mode "folding" "Folding mode" t)
-(autoload 'turn-on-folding-mode  "folding" "Folding mode" t)
+(add-hook 'prog-mode-hook #'hs-minor-mode) ; Hideshow minor mode (A fold mode)
+(global-set-key (kbd "C-`") #'hs-toggle-hiding)
 
 ;; Load htmlize
 (require 'htmlize)
