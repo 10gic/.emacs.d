@@ -595,10 +595,10 @@
 ;; 设置“跳到上一个（或下一个）修改位置”的快捷键
 (global-set-key (kbd "C-M-S-<up>") 'git-gutter:previous-hunk) ; Ctrl + Alt + Shift + ↑
 (global-set-key (kbd "C-M-S-<down>") 'git-gutter:next-hunk)   ; Ctrl + Alt + Shift + ↓
+;; 设置“stage当前位置的修改”的快捷键
+(global-set-key (kbd "C-M-S-<left>") 'git-gutter:stage-hunk) ; Ctrl + Alt + Shift + <-
 ;; 设置“取消（Revert）当前位置的修改”的快捷键
-(global-set-key (kbd "C-M-S-<left>") 'git-gutter:revert-hunk) ; Ctrl + Alt + Shift + <-
-;; 设置在新buffer中显示当前位置修改的快捷键
-(global-set-key (kbd "C-M-S-<right>") 'git-gutter:popup-hunk) ; Ctrl + Alt + Shift + ->
+(global-set-key (kbd "C-M-S-<right>") 'git-gutter:revert-hunk) ; Ctrl + Alt + Shift + ->
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
