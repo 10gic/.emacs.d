@@ -1423,6 +1423,14 @@ reformat current entire buffer."
       (process-send-string proc text)
       (process-send-eof proc))))
 
+(defun get-from-sys-clipboard ()
+  (if (eq system-type 'darwin)
+      (copy-from-osx)
+    ;; Only support Mac currently
+    (progn
+      (message "get-from-sys-clipboard only support Mac currently")
+      "")))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; http://www.emacswiki.org/emacs/DosToUnix
 (defun my-dos2unix ()
@@ -1476,17 +1484,35 @@ reformat current entire buffer."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun my-generate-ascii-table ()
-  "Convert html/csv to emacs/orgmode/mysql/markdown table, replacing the region in place"
+  "Convert html/csv to emacs/orgmode/mysql/markdown table, get source content from
+region (support html or csv) or clipboard (only support html)"
   (interactive)
-  (unless mark-active
-    (error "Please select a region firstly."))
-  (let ((choice (completing-read "Output style (default orgmode): "
-                                 '("orgmode" "emacs" "mysql" "markdown")
-                                 nil t nil nil "orgmode")))
-    (if (not (executable-find "yatg"))
-        (error "Please first install tool yatg: `pip install yatg`"))
-    (shell-command-on-region
-     (region-beginning) (region-end) (concat "yatg --output-style " choice) t t "*YATG*")))
+  (let* ((clip-content (get-from-sys-clipboard))
+         (clip-result "")
+         (region-has-content mark-active)
+         (clip-has-html (string-prefix-p ;; 如果剪贴板中内容为<开始，则认为是html
+                         "<"
+                         (replace-regexp-in-string
+                          "\\`[ \t\n]*" "" clip-content))))
+    (unless (or region-has-content clip-has-html)
+      (error "Please select a region firstly."))
+    (let ((choice (completing-read "Output style (default orgmode): "
+                                   '("orgmode" "emacs" "mysql" "markdown")
+                                   nil t nil nil "orgmode")))
+      (if (not (executable-find "yatg"))
+          (error "Please first install tool yatg: `pip install yatg`"))
+      (if region-has-content
+          ;; 转换region中内容为ascii table
+          (shell-command-on-region
+           (region-beginning) (region-end) (concat "yatg --output-style " choice) t t "*YATG*")
+        (progn
+          ;; 转换剪贴板中的html内容为ascii table
+          (with-temp-buffer
+            (insert clip-content)
+            (shell-command-on-region
+             (point-min) (point-max) (concat "yatg --output-style " choice) (buffer-name) t "*YATG*")
+            (setq clip-result (buffer-substring-no-properties (point-min) (point-max) )))
+          (insert clip-result))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun my-run-current-file ()  ;; xah-run-current-file
