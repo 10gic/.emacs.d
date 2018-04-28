@@ -35,7 +35,8 @@
 ;; 保存文件后，执行add-timer-for-generating-tags，它会在空闲时间自动更新TAGS
 (add-hook 'after-save-hook
           (lambda ()
-            (add-timer-for-generating-tags nil)))
+            (if (derived-mode-p 'prog-mode)
+                (add-timer-for-generating-tags nil))))
 
 ;; 打开程序后，执行add-timer-for-generating-tags，当工程根目录下TAGS不存在时会在
 ;; 空闲时间自动生成它；当工程根目录下TAGS存在时什么都不做
