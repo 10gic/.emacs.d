@@ -154,7 +154,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; buffer-local相关变量，用setq-default设置
-(setq-default indent-tabs-mode nil) ; 只使用空格进行缩进，不使用tab键。
+(setq-default indent-tabs-mode nil) ; 默认只使用空格（而不是tab）进行缩进。
 (setq-default cursor-type 'bar) ; 在X窗口下，光标将变成一根竖线，而不是方块。
 (setq-default require-final-newline t) ; Always end a file with a newline.
 (setq-default fill-column 80) ; Change fill-column (default is 70) to 80.
@@ -168,16 +168,20 @@
 (add-hook 'term-mode-hook (lambda () (setq show-trailing-whitespace nil)))
 (add-hook 'Info-mode-hook (lambda () (setq show-trailing-whitespace nil)))
 
-;; Draw tabs with the same color as trailing whitespace in prog-mode
+;; Draw tabs with face widget-field（灰色）
 ;; From http://emacswiki.org/emacs/ShowWhiteSpace
 (add-hook 'prog-mode-hook
           (lambda ()
             (unless (derived-mode-p 'go-mode)    ; prog-mode（除go-mode外）中特别显示"\t"
               (font-lock-add-keywords
                nil
-               '(("\t" 0 'trailing-whitespace prepend))))))
+               '(("\t" 0 'widget-field prepend))))))
 
 ;; (global-whitespace-mode t) ; 全局打开whitespace-mode
+
+;; dtrt-indent可猜测缩进格式，并自动设置indent-tabs-mode等变量
+(require 'dtrt-indent)
+(dtrt-indent-global-mode 1)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 常规键绑定设置
@@ -962,8 +966,7 @@ reformat current entire buffer."
                          (lambda ()
                            ;; sh-mode中把"C-c C-f"绑定到了sh-for，下面将其取消
                            ;; 注："C-c C-f"已经全局地绑定到了打开recent files
-                           (define-key sh-mode-map (kbd "C-c C-f") nil)
-                           (setq tab-width 4))))
+                           (define-key sh-mode-map (kbd "C-c C-f") nil))))
 
 ;;;; For html
 ;; web-mode.el is an autonomous emacs major-mode for editing web templates.
