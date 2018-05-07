@@ -1418,7 +1418,7 @@ reformat current entire buffer."
       (kill-new new-kill-string))))
 
 (defun copy-from-osx ()
-  (shell-command-to-string "pbpaste"))
+  (shell-command-to-string "export LANG=en_US.UTF-8; pbpaste"))
 
 (defun paste-to-osx (text)
   (let ((process-connection-type nil))
@@ -1507,13 +1507,15 @@ region (support html or csv) or clipboard (only support html)"
       (if region-has-content
           ;; 转换region中内容为ascii table
           (shell-command-on-region
-           (region-beginning) (region-end) (concat "yatg --output-style " choice) t t "*YATG*")
+           (region-beginning) (region-end)
+           (concat "export LANG=en_US.UTF-8; yatg --output-style " choice) t t "*YATG*")
         (progn
           ;; 转换剪贴板中的html内容为ascii table
           (with-temp-buffer
             (insert clip-content)
             (shell-command-on-region
-             (point-min) (point-max) (concat "yatg --output-style " choice) (buffer-name) t "*YATG*")
+             (point-min) (point-max)
+             (concat "export LANG=en_US.UTF-8; yatg --output-style " choice) (buffer-name) t "*YATG*")
             (setq clip-result (buffer-substring-no-properties (point-min) (point-max) )))
           (insert clip-result))))))
 
