@@ -657,6 +657,9 @@
 (define-key region-bindings-mode-map "u" 'mc/unmark-next-like-this) ; 取消当前选择
 (define-key region-bindings-mode-map "s" 'mc/skip-to-next-like-this) ; 取消当前选择，选择下一个
 
+(global-unset-key (kbd "M-<down-mouse-1>"))
+(global-set-key (kbd "M-<mouse-1>") 'mc/add-cursor-on-click) ; Alt+鼠标左键单击
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Load flycheck.
 ;; It requires:
