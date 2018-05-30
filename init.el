@@ -144,13 +144,12 @@
  kept-new-versions 3 ; 保留最近的3个备份。
  kept-old-versions 2) ; 保留最早的2个备份，即第1次编辑前的文件和第2次编辑前的文件。
 
-;; add "~/bin", "~/go/bin" to PATH and exec-path
-(when (file-exists-p "~/bin")
-  (setenv "PATH" (concat (getenv "PATH") ":~/bin"))
-  (setq exec-path (append exec-path '("~/bin"))))
-(when (file-exists-p "~/go/bin")
-  (setenv "PATH" (concat (getenv "PATH") ":~/go/bin"))
-  (setq exec-path (append exec-path '("~/go/bin"))))
+;; Add some path to PATH and exec-path. Node: On Mac OS X, when you start emacs
+;; from GUI, emacs does not inherit environment variables from your shell.
+(cl-loop for dir in '("/usr/local/bin" "~/bin" "~/go/bin")
+      do (when (file-exists-p dir)
+           (setenv "PATH" (concat (getenv "PATH") ":" dir))
+           (add-to-list 'exec-path dir)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; buffer-local相关变量，用setq-default设置
