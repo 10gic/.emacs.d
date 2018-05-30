@@ -58,6 +58,8 @@
 (recentf-mode 1)
 (setq recentf-max-menu-items 25)
 (global-set-key (kbd "C-c C-f") 'recentf-open-files)
+(add-to-list 'recentf-exclude "\\ido.last\\'")
+(add-to-list 'recentf-exclude "\\TAGS\\'")
 
 ;; set comment char to '#' in assembly mode (GNU Assembler style)
 (setq asm-comment-char 35)
@@ -526,6 +528,8 @@
   (when (display-graphic-p)
     (define-mac-hyper-key "=" 'my-increase-font-size)  ; Command + =
     (define-mac-hyper-key "-" 'my-decrease-font-size)) ; Command + -
+
+  (define-mac-hyper-key "w" 'close-window) ; Command + w
 
   ;; 在当前文件中查找光标下单词
   (define-mac-hyper-key "f" 'my-find-symbol-at-point-in-current-buffer) ; Command + f
@@ -1165,6 +1169,12 @@ reformat current entire buffer."
 (setq auto-insert-query nil)   ; No prompt before insertion
 
 (with-eval-after-load 'autoinsert
+  (define-auto-insert '("\\.sh\\'" . "Shell skeleton")
+    '(nil
+      "#!/bin/bash" \n
+      \n
+      _ \n))
+
   (define-auto-insert '("\\.pl\\'" . "Perl skeleton")
     '(nil
       "#!/usr/bin/env perl" \n
