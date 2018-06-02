@@ -442,7 +442,7 @@
           (concat
            grep-program
            " "
-           "-inIHE --color=always"
+           "--text -inHE --color=always"
            (if other-args (concat " " other-args) "")
            " -- "
            (shell-quote-argument search-regex)
