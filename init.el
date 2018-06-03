@@ -3,10 +3,21 @@
 (unless (version< "25.1" emacs-version)
   (error "This init.el requires emacs version 25.1 or later"))
 
-(setq gc-cons-threshold 100000000) ; 调大gc阈值，可显著加快启动速度
+(setq gc-cons-threshold 100000000)      ; 调大gc阈值，可显著加快启动速度
 
-(setq inhibit-startup-message t)  ; 启动emacs时不显示GNU Emacs窗口。
-(setq initial-scratch-message "") ; scratch信息中显示为空。
+(require 'package)
+(add-to-list 'package-archives
+             '("melpa-stable" . "https://stable.melpa.org/packages/") t)
+(setq package-user-dir "~/.emacs.d/.elpa")
+(package-initialize)
+
+;; Install 'use-package' if not installed.
+(unless (package-installed-p 'use-package)
+  (package-refresh-contents)
+  (package-install 'use-package))
+
+(setq inhibit-startup-message t)        ; 启动emacs时不显示GNU Emacs窗口。
+(setq initial-scratch-message "")       ; scratch信息中显示为空。
 
 (if (not (boundp 'aquamacs-version))
     ;; 如果不是Aquamacs，就关闭tool-bar（Aquamacs的tool-bar比较好看，保留着）
@@ -17,7 +28,7 @@
 
 (setq kill-whole-line t) ; 在行首C-k时，同时删除换行符。
 
-(defalias 'yes-or-no-p 'y-or-n-p) ; 设置y/n可代替yes/no
+(defalias 'yes-or-no-p 'y-or-n-p)       ; 设置y/n可代替yes/no
 
 (run-with-idle-timer
  1                                      ; after idle 1 second
@@ -26,18 +37,18 @@
    ;; 启用ffap-bindings比较耗时，放在空闲时间加载
    (ffap-bindings)))
 
-(which-function-mode 1) ; displays the current function name in the mode line
-(setq which-func-unknown "n/a") ; Change ??? to n/a
+(which-function-mode 1)    ; displays the current function name in the mode line
+(setq which-func-unknown "n/a")         ; Change ??? to n/a
 
 (add-to-list 'load-path "~/.emacs.d/elisp/")
 
 (require 'ido)
-(ido-mode t) ; 启动ido-mode。如：键入C-x b时，可用ido快速地切换buffer
+(ido-mode t)            ; 启动ido-mode。如：键入C-x b时，可用ido快速地切换buffer
 
 (require 'smex)
 (global-set-key (kbd "M-x") 'smex)
 (global-set-key (kbd "M-X") 'smex-major-mode-commands)
-(global-set-key (kbd "C-c C-c M-x") 'execute-extended-command) ; This is your old M-x.
+(global-set-key (kbd "C-c C-c M-x") 'execute-extended-command) ; Your old M-x.
 
 ;; 打开文件时回到上次打开文件的位置
 (save-place-mode +1)                    ; save-place-mode在Emacs 25.1中引入
@@ -51,7 +62,7 @@
 ;; Use "Dired Extrs" instead of Dired.
 (add-hook 'dired-load-hook
           (function (lambda () (load "dired-x"))))
-(setq dired-listing-switches "-lhFG") ; ls options in dired
+(setq dired-listing-switches "-lhFG")   ; ls options in dired
 
 ;; Recentf is a minor mode that builds a list of recently opened files.
 (require 'recentf)
@@ -101,13 +112,13 @@
  '(custom-enabled-themes (quote (misterioso))) ; adwaita/misterioso, etc
  '(display-time-24hr-format t) ; 可避免因显示中文“上午”或“下午”而导致mode line跨行显示
  '(display-time-mode t)
- '(git-gutter:update-interval 2) ; https://github.com/syohex/emacs-git-gutter
- '(git-gutter:lighter "") ; mode-line中不显示GitGutter字样
+ '(git-gutter:update-interval 2)    ; https://github.com/syohex/emacs-git-gutter
+ '(git-gutter:lighter "")           ; mode-line中不显示GitGutter字样
  '(mouse-wheel-mode t)
  '(ns-tool-bar-size-mode (quote small) t) ; 设置Aquamacs工具栏使用小图标
  '(scroll-bar-mode (quote nil))
  '(show-paren-mode t)
- '(size-indication-mode t) ; 在Mode line中显示当前Buffer的大小
+ '(size-indication-mode t)              ; 在Mode line中显示当前Buffer的大小
  '(xterm-mouse-mode t))
 
 ;; 在Aquamcs使用“深色”主题（如misterioso）会有问题，下面是一个workaround
@@ -139,26 +150,26 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 设置自动备份
 (setq
- version-control t ; 启用版本控制，即可以备份多次。
- backup-by-copying t ; 用复制（而不是mv）的方式备份文件。这可维持文件的硬链接。
+ version-control t    ; 启用版本控制，即可以备份多次。
+ backup-by-copying t  ; 用复制（而不是mv）的方式备份文件。这可维持文件的硬链接。
  backup-directory-alist '(("." . "~/.emacs.backups")) ; 设置自动备份目录。
- delete-old-versions t ; 自动删除旧的备份。
- kept-new-versions 3 ; 保留最近的3个备份。
+ delete-old-versions t                                ; 自动删除旧的备份。
+ kept-new-versions 3                                  ; 保留最近的3个备份。
  kept-old-versions 2) ; 保留最早的2个备份，即第1次编辑前的文件和第2次编辑前的文件。
 
 ;; Add some path to PATH and exec-path. Node: On Mac OS X, when you start emacs
 ;; from GUI, emacs does not inherit environment variables from your shell.
 (cl-loop for dir in '("/usr/local/bin" "~/bin" "~/go/bin")
-      do (when (file-exists-p dir)
-           (setenv "PATH" (concat (getenv "PATH") ":" dir))
-           (add-to-list 'exec-path dir)))
+         do (when (file-exists-p dir)
+              (setenv "PATH" (concat (getenv "PATH") ":" dir))
+              (add-to-list 'exec-path dir)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; buffer-local相关变量，用setq-default设置
-(setq-default indent-tabs-mode nil) ; 默认只使用空格（而不是tab）进行缩进。
-(setq-default cursor-type 'bar) ; 在X窗口下，光标将变成一根竖线，而不是方块。
-(setq-default require-final-newline t) ; Always end a file with a newline.
-(setq-default fill-column 80) ; Change fill-column (default is 70) to 80.
+(setq-default indent-tabs-mode nil)     ; 默认只使用空格（而不是tab）进行缩进。
+(setq-default cursor-type 'bar)    ; 在X窗口下，光标将变成一根竖线，而不是方块。
+(setq-default require-final-newline t)  ; Always end a file with a newline.
+(setq-default fill-column 80)        ; Change fill-column (default is 70) to 80.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 空格和tabs键显示设置
@@ -173,16 +184,17 @@
 ;; From http://emacswiki.org/emacs/ShowWhiteSpace
 (add-hook 'prog-mode-hook
           (lambda ()
-            (unless (derived-mode-p 'go-mode)    ; prog-mode（除go-mode外）中特别显示"\t"
+            (unless (derived-mode-p 'go-mode) ; prog-mode（除go-mode外）中特别显示"\t"
               (font-lock-add-keywords
                nil
                '(("\t" 0 'widget-field prepend))))))
 
-;; (global-whitespace-mode t) ; 全局打开whitespace-mode
-
 ;; dtrt-indent可猜测缩进格式，并自动设置indent-tabs-mode等变量
-(require 'dtrt-indent)
-(dtrt-indent-global-mode 1)
+(use-package dtrt-indent
+  :ensure t
+  :defer 3
+  :config
+  (dtrt-indent-global-mode 1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 常规键绑定设置
@@ -205,9 +217,9 @@
 ;; kill current buffer without confirmation unless the buffer has been modified.
 (global-set-key [(control x) (k)] 'kill-this-buffer)
 
-(global-set-key [M-up] 'windmove-up) ; 移动到上一个窗口
-(global-set-key [M-down] 'windmove-down) ; 移动到下一个窗口
-(global-set-key [M-left] 'windmove-left) ; 移动到左一个窗口
+(global-set-key [M-up] 'windmove-up)       ; 移动到上一个窗口
+(global-set-key [M-down] 'windmove-down)   ; 移动到下一个窗口
+(global-set-key [M-left] 'windmove-left)   ; 移动到左一个窗口
 (global-set-key [M-right] 'windmove-right) ; 移动到右一个窗口
 
 (global-set-key (kbd "M-g") 'goto-line) ; 设置M-g为goto-line
@@ -231,184 +243,6 @@
         try-expand-line
         try-complete-lisp-symbol-partially
         try-complete-lisp-symbol))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; 下面是字体相关设置
-(defconst font-size-pair-list-unix
-  '((6    8)
-    (8   10)
-    (10  12)
-    (12  14)
-    (14  16)
-    (15  18)
-    (16  20)
-    (18  22)
-    (20  24)
-    (22  26)
-    (24  28)
-    (25  30)
-    (26  32)
-    (28  34)
-    (30  36)
-    (32  38)
-    (34  40)
-    (35  42)
-    (36  44)
-    (38  46)
-    (40  48)
-    (42  50)
-    (44  52)
-    (45  54)
-    (46  56)
-    (48  58))
-  "一个列表，元素为“字体大小对”：(英文字号 中文字号)，Mac/Linux(Redhat)下测试可实现2个英文为1个中文等宽.")
-
-(defconst font-size-pair-list-ms
-  '((8    8)
-    (10  10)
-    (11  12)
-    (12  14)
-    (14  16)
-    (16  18)
-    (18  20)
-    (20  22)
-    (22  24)
-    (24  26)
-    (26  28)
-    (28  30)
-    (30  32)
-    (31  34)
-    (32  36)
-    (34  38)
-    (36  40)
-    (38  42)
-    (40  44)
-    (42  46)
-    (44  48)
-    (46  50)
-    (48  52)
-    (50  54)
-    (51  56)
-    (52  58))
-  "一个列表，元素为“字体大小对”：(英文字号 中文字号)，Windows 8.1下测试可实现2个英文为1个中文等宽.")
-
-(defun get-mix-mono-font-size-pair ()
-  (if (or (string-equal system-type "cygwin")
-          (string-equal system-type "windows-nt"))
-      font-size-pair-list-ms   ; MS Windows
-    font-size-pair-list-unix)) ; Linux, Mac
-
-(defun get-font-size-for-face-default ()
-  "Get the font size of face default."
-  (aref
-   ;; query-font返回字体信息相关数组，数组第3个元素为字体大小
-   ;; https://www.gnu.org/software/emacs/manual/html_node/elisp/Low_002dLevel-Font.html
-   (query-font (face-attribute 'default :font)) 2))
-
-(defun my-increase-font-size ()
-  "增加字体大小，同时确保1个中文和两个英文等宽"
-  (interactive)
-  (let ((size-pair (seq-find            ; 取第一个“大于”目前字体的“字体大小对”
-                    (lambda (x) (> (car x) (get-font-size-for-face-default)))
-                    (get-mix-mono-font-size-pair))))
-    (if size-pair
-        (progn
-          (message "Set English/Chinese font size to %s/%s."
-                   (nth 0 size-pair)
-                   (nth 1 size-pair))
-          (my-set-font-size (nth 0 size-pair) (nth 1 size-pair)))
-      (message "Already biggest font size, no bigger font size pair is found."))))
-
-(defun my-decrease-font-size ()
-  "减小字体大小，同时确保1个中文和两个英文等宽"
-  (interactive)
-  (let ((size-pair (car (last ; 取结果的最后一个“字体大小对” (car (last list)) -> "last element in list"
-                         (seq-take-while ; 只取list中“小于”当前英文字体大小的“字体大小对”
-                          (lambda (x) (< (car x) (get-font-size-for-face-default)))
-                          (get-mix-mono-font-size-pair))))))
-    (if size-pair
-        (progn
-          (message "Set English/Chinese font size to %s/%s."
-                   (nth 0 size-pair)
-                   (nth 1 size-pair))
-          (my-set-font-size (nth 0 size-pair) (nth 1 size-pair)))
-      (message "Already smallest font size, no smaller font size pair is found."))))
-
-(defun my-set-font-size (english-font-size chinese-font-size)
-  "Set English and Chinese font size."
-  (interactive
-   (list
-    (read-number "English font size: ")
-    (read-number "Chinese font size: ")))
-  (when (display-graphic-p)
-    (cond
-     ;; 设置英文字体，优先使用排在前面的字体
-     ((find-font (font-spec :name "Source Code Pro"))
-      ;; set-frame-font第2个参数为nil（或者t）表示不维持（维持）窗口大小
-      ;; set-frame-font第3个参数为t表示在新frame中也有效
-      ;; 写法"Source Code Pro-14"，在RedHat上有问题
-      ;; 应该写为"Source Code Pro:pixelsize=14"
-      (set-frame-font (format "Source Code Pro:pixelsize=%s" english-font-size) t t))
-     ((find-font (font-spec :name "Ubuntu Mono"))
-      (set-frame-font (format "Ubuntu Mono:pixelsize=%s" english-font-size) t t))
-     ((find-font (font-spec :name "DejaVu Sans Mono"))
-      (set-frame-font (format "DejaVu Sans Mono:pixelsize=%s" english-font-size) t t))
-     ((find-font (font-spec :name "Consolas"))     ; 微软等宽字体
-      (set-frame-font (format "Consolas:pixelsize=%s" english-font-size) t t))
-     ((find-font (font-spec :name "Courier New"))  ; Courier New存在于Mac和Windows中
-      (set-frame-font (format "Courier New:pixelsize=%s" english-font-size) t t)))
-    (cond
-     ;; 下面设置中文字体，优先使用排在前面的字体
-     ;; 注：cygwin中使用emacs-X11时无法加载Windows默认路径中字体（使用emacs-w32
-     ;; 则没有问题），如果你使用emacs-X11，请把相应的中文字体复制到~/.fonts
-     ((find-font (font-spec :name "Microsoft Yahei"))
-      (dolist (charset '(kana han symbol cjk-misc bopomofo))
-        (set-fontset-font (frame-parameter nil 'font)
-                          charset
-                          (font-spec :family "Microsoft Yahei"
-                                     :size chinese-font-size))))
-     ((find-font (font-spec :name "STHeiti"))
-      (dolist (charset '(kana han symbol cjk-misc bopomofo))
-        (set-fontset-font (frame-parameter nil 'font)
-                          charset
-                          (font-spec :family "STHeiti"  ; Mac中内置STHeiti
-                                     :size chinese-font-size))))
-     ((find-font (font-spec :name "WenQuanYi Zen Hei Mono"))
-      (dolist (charset '(kana han symbol cjk-misc bopomofo))
-        (set-fontset-font (frame-parameter nil 'font)
-                          charset
-                          (font-spec :family "WenQuanYi Zen Hei Mono"
-                                     :size chinese-font-size)))))))
-
-;;; frame相关的设置
-;; 字体的设置必须在after-make-frame-functions的hook中进行，否则其设置对用
-;; emacsclient启动的窗口无效。
-(defun my-set-frame()
-  ;; 英文为16/15，中文为18，可实现Windows/Unix下1个中文和2个英文等宽，
-  ;; 从get-mix-mono-font-size-pair中，可以找到其它中英文等宽的“字体大小对”
-  (if (or (string-equal system-type "cygwin")
-          (string-equal system-type "windows-nt"))
-      (my-set-font-size 16 18)
-    (my-set-font-size 15 18))
-
-  (set-cursor-color "red") ; 定制光标颜色，这样在“深色”主题下更醒目
-  (setq-default frame-title-format
-                '(:eval
-                  (format "%s"
-                          (cond
-                           (buffer-file-name buffer-file-name)
-                           (dired-directory dired-directory)
-                           (t (buffer-name)))))))
-
-;; 设置daemon方式和非deamon方式启动时都执行my-set-frame
-(if (and (fboundp 'daemonp) (daemonp))
-    ;; 以daemon方式启动时，要使与X相关配置生效，应使用这个hook
-    (add-hook 'after-make-frame-functions
-              (lambda (frame)
-                (with-selected-frame frame
-                  (my-set-frame))))
-  (my-set-frame))
 
 (defun my-occur-symbol-at-point ()
   "Find keyword (using occur) in current buffer."
@@ -514,20 +348,20 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun define-mac-hyper-key (key fun)
   (when (eq system-type 'darwin)
-      (progn
-        (cond
-         ((boundp 'aquamacs-version)
-          ;; Aquamacs中，Command键为A
-          (define-key osx-key-mode-map (kbd (concat "A-" key)) fun))
-         (t
-          ;; GNU Emacs，Command键为s
-          (global-set-key (kbd (concat "s-" key)) fun))))))
+    (progn
+      (cond
+       ((boundp 'aquamacs-version)
+        ;; Aquamacs中，Command键为A
+        (define-key osx-key-mode-map (kbd (concat "A-" key)) fun))
+       (t
+        ;; GNU Emacs，Command键为s
+        (global-set-key (kbd (concat "s-" key)) fun))))))
 
 (when (eq system-type 'darwin)
   ;; 设置Mac下增加/减小字体大小的快捷键
-  (when (display-graphic-p)
-    (define-mac-hyper-key "=" 'my-increase-font-size)  ; Command + =
-    (define-mac-hyper-key "-" 'my-decrease-font-size)) ; Command + -
+  ;;(when (display-graphic-p)
+  ;;(define-mac-hyper-key "=" 'my-increase-font-size)  ; Command + =
+  ;;(define-mac-hyper-key "-" 'my-decrease-font-size)) ; Command + -
 
   (define-mac-hyper-key "w" 'close-window) ; Command + w
 
@@ -552,13 +386,7 @@
 
   ;; 打开aquamacs-autoface-mode时，Aquamacs默认使用Monaco字体，但Monaco没有粗体
   ;; 这里禁止aquamacs-autoface-mode
-  (if (fboundp 'aquamacs-autoface-mode) (aquamacs-autoface-mode -1))
-
-  ;; Aquamacs内置有python mode，但它没有实现imenu的接口，打开py文件会提示：
-  ;; imenu-unavailable The mode ‘Py’ does not support Imenu
-  ;; Emacs中内置也有python mode，它实现了imenu接口
-  ;; 下面在Aquamacs中启用Emacs中内置的python mode
-  (require 'python))
+  (if (fboundp 'aquamacs-autoface-mode) (aquamacs-autoface-mode -1)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Suppress error "directory ~/.emacs.d/server is unsafe" on emacs-w32 (issue
@@ -623,10 +451,6 @@
 (setq my-org-path1 (car (file-expand-wildcards (concat my-pkg-path "org-*/lisp"))))
 (setq my-org-path2 (car (file-expand-wildcards (concat my-pkg-path "org-*/contrib/lisp"))))
 (setq my-tabbar-path (concat my-pkg-path "tabbar-master"))
-(setq my-multiple-cursors-path (concat my-pkg-path "multiple-cursors.el-master"))
-(setq my-flycheck-path (concat my-pkg-path "flycheck-master"))
-(setq my-auto-complete-path (car (file-expand-wildcards (concat my-pkg-path "auto-complete-*"))))
-(setq my-auto-complete-dict-path (car (file-expand-wildcards (concat my-pkg-path "auto-complete-*/dict"))))
 (setq my-all-the-icons-path (car (file-expand-wildcards (concat my-pkg-path "all-the-icons*"))))
 (setq my-neotree-path (car (file-expand-wildcards (concat my-pkg-path "emacs-neotree-*"))))
 
@@ -646,47 +470,37 @@
   (load-file "~/.emacs.d/custom-aquamacs-tabbar.el"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Multiple cursors for Emacs. https://github.com/magnars/multiple-cursors.el
-(add-to-list 'load-path my-multiple-cursors-path)
-(require 'multiple-cursors)
-
 (require 'region-bindings-mode)
 (region-bindings-mode-enable)
-;; setup integrating the multiple-cursors package
-(define-key region-bindings-mode-map "a" 'mc/mark-all-like-this) ; 选择所有
-(define-key region-bindings-mode-map "n" 'mc/mark-next-like-this) ; 选择下一个
-(define-key region-bindings-mode-map "p" 'mc/mark-previous-like-this) ; 选择前一个
-(define-key region-bindings-mode-map "m" 'mc/mark-more-like-this-extended)
-(define-key region-bindings-mode-map "u" 'mc/unmark-next-like-this) ; 取消当前选择
-(define-key region-bindings-mode-map "s" 'mc/skip-to-next-like-this) ; 取消当前选择，选择下一个
 
-(global-unset-key (kbd "M-<down-mouse-1>"))
-(global-set-key (kbd "M-<mouse-1>") 'mc/add-cursor-on-click) ; Alt+鼠标左键单击
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Load flycheck.
-;; It requires:
-;; gcc 4.8 or newer.
-;; let-alist (comes built-in with emacs 25.1).
-;; dash (a modern list api for Emacs).
-(add-to-list 'load-path my-flycheck-path)
-;; 仅在第一次进入cc-mode时加载flycheck
-(with-eval-after-load 'cc-mode (load "flycheck"))
+(use-package multiple-cursors
+  :ensure t
+  :bind
+  (:map region-bindings-mode-map
+        ("a" . mc/mark-all-like-this-dwim) ; 选择所有
+        ("n" . mc/mark-next-like-this)     ; 选择下一个
+        ("p" . mc/mark-previous-like-this) ; 选择前一个
+        ("u" . mc/remove-current-cursor)
+        ("<tab>" . nil)
+        ("<backtab>" . mc/cycle-backward)
+        ("C-;" . multiple-cursors-mode)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; 配置auto-complete
-;; http://cx4a.org/software/auto-complete/
-;; http://blog.csdn.net/winterttr/article/details/7524336
-(add-to-list 'load-path my-auto-complete-path)
-(run-with-idle-timer
- 1                                      ; after idle 1 second
- nil                                    ; no repeat, runs just once
- (lambda ()
-   ;; 加载auto-complete比较耗时，放在空闲时间加载
-   (require 'auto-complete-config)
-   (ac-config-default)
-   (add-to-list 'ac-dictionary-directories my-auto-complete-dict-path)
-   ))
+(use-package flycheck
+  :ensure t
+  :defer t)
+
+(use-package auto-complete
+  :ensure t
+  :defer t
+  :config
+  (global-auto-complete-mode t))
+
+(use-package auto-complete-config
+  :ensure auto-complete
+  :defer t
+  :config
+  (ac-config-default))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; projectile: “工程管理”插件，可快速访问项目里任何文件，快速在项目中搜索关键字
@@ -975,28 +789,18 @@ reformat current entire buffer."
                            (define-key sh-mode-map (kbd "C-c C-f") nil))))
 
 ;;;; For html
-;; web-mode.el is an autonomous emacs major-mode for editing web templates.
-(autoload 'web-mode "web-mode" "major-mode for editing web templates" t)
-
-(add-to-list 'auto-mode-alist '("\\.phtml\\'" . web-mode))
-(add-to-list 'auto-mode-alist '("\\.tpl\\.php\\'" . web-mode))
-(add-to-list 'auto-mode-alist '("\\.[agj]sp\\'" . web-mode))
-(add-to-list 'auto-mode-alist '("\\.as[cp]x\\'" . web-mode))
-(add-to-list 'auto-mode-alist '("\\.erb\\'" . web-mode))
-(add-to-list 'auto-mode-alist '("\\.mustache\\'" . web-mode))
-(add-to-list 'auto-mode-alist '("\\.djhtml\\'" . web-mode))
-(add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode))
-(add-to-list 'auto-mode-alist '("\\.xml?\\'" . web-mode))
-
-;; Highlight current HTML element (highlight matched tags).
-(setq web-mode-enable-current-element-highlight t)
-;; Disable auto indentation
-(setq web-mode-enable-auto-indentation nil)
-
-;; Set indentation offset
-;; (setq web-mode-markup-indent-offset 2)
-;; (setq web-mode-css-indent-offset 2)
-;; (setq web-mode-code-indent-offset 2)
+(use-package web-mode
+  :ensure t
+  :commands web-mode
+  :mode
+  ("\\.html?\\'" . web-mode)
+  ("\\.jsp\\'"   . web-mode)
+  ("\\.php\\'" . web-mode)
+  :config
+  ;; Highlight current HTML element (highlight matched tags).
+  (setq web-mode-enable-current-element-highlight t)
+  ;; Disable auto indentation
+  (setq web-mode-enable-auto-indentation nil))
 
 ;;;; For makefile
 (add-to-list 'auto-mode-alist '("[Mm]akefile" . makefile-mode)) ; 以makefile开头的文件使用makefile mode
@@ -1026,6 +830,34 @@ reformat current entire buffer."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (add-to-list 'load-path "~/.emacs.d/progmodes/")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; Begin configure python
+(if (boundp 'aquamacs-version)
+    ;; Aquamacs内置有python mode，但它没有实现imenu的接口，打开py文件会提示：
+    ;; imenu-unavailable The mode ‘Py’ does not support Imenu
+    ;; Emacs中内置也有python mode，它实现了imenu接口
+    ;; 下面在Aquamacs中启用Emacs中内置的python mode
+    (require 'python))
+
+;; jedi可实现python自动补全代码。它依赖于下面python库，请提前安装
+;; pip install epc
+;; pip install jedi
+;; pip install virtualenv
+(use-package jedi
+  :ensure t
+  :defer t
+  :config
+  (autoload 'jedi:setup "jedi" nil t)
+  (add-hook 'python-mode-hook 'jedi:setup)
+  (setq jedi:complete-on-dot t))
+
+(use-package flycheck-pyflakes
+  :ensure t
+  :defer t
+  :config
+  (add-hook 'python-mode-hook 'flycheck-mode))
+;;;; End configure python
 
 ;;;; For go
 (require 'go-mode-autoloads)  ; https://github.com/dominikh/go-mode.el
@@ -1505,7 +1337,7 @@ region (support html or csv) or clipboard (only support html)"
   (let* ((clip-content (get-from-sys-clipboard))
          (clip-result "")
          (region-has-content mark-active)
-         (clip-has-html (string-prefix-p ;; 如果剪贴板中内容为<开始，则认为是html
+         (clip-has-html (string-prefix-p ; 如果剪贴板中内容为<开始，则认为是html
                          "<"
                          (replace-regexp-in-string
                           "\\`[ \t\n]*" "" clip-content))))
@@ -1532,7 +1364,7 @@ region (support html or csv) or clipboard (only support html)"
           (insert clip-result))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun my-run-current-file ()  ;; xah-run-current-file
+(defun my-run-current-file ()           ; xah-run-current-file
   "Execute the current file.
 For example, if the current buffer is x.py, then it'll call 「python x.py」 in a shell.
 Output is printed to buffer “*xah-run output*”.
@@ -1559,7 +1391,7 @@ Version 2018-03-01"
            ("go" . "go run")
            ("hs" . "runhaskell")
            ("js" . "node")
-           ("ts" . "tsc") ; TypeScript
+           ("ts" . "tsc")               ; TypeScript
            ("tsx" . "tsc")
            ("sh" . "bash")
            ("rkt" . "racket")
@@ -1608,7 +1440,10 @@ Version 2018-03-01"
  1                                      ; after idle 1 second
  nil                                    ; no repeat, runs just once
  (lambda ()
-   (load-file "~/.emacs.d/custom-go-to-def.el")))
+   (load-file "~/.emacs.d/custom-frame.el")
+   (load-file "~/.emacs.d/custom-go-to-def.el")
+   (message "")                         ; clear modeline
+   ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
