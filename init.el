@@ -627,6 +627,10 @@
   (setcar (cdr (assq 'dtrt-indent-mode minor-mode-alist)) "") ; clear modeline
   (dtrt-indent-global-mode 1))
 
+(use-package goto-chg
+  :bind (("C-." . goto-last-change)
+         ("C-," . goto-last-change-reverse)))
+
 ;; wgrep（Writable grep）可直接在grep mode中编辑找到的结果，改动可保存到原文件中
 ;; 比如，我们在10个文件中找到了AAA，想把它们都改为BBB，直接在grep mode中修改即可
 ;; 修改完后按 `C-x C-s` 可保存，再执行wgrep-save-all-buffers可把改动保存到原文件
