@@ -226,8 +226,9 @@
 
 (add-hook 'prog-mode-hook
           (lambda ()
-            (unless (derived-mode-p 'css-mode) ; CSS mode不支持Imenu
-              (imenu-add-menubar-index))       ; 启用Imenu（显示index菜单）
+            (unless (or (derived-mode-p 'css-mode)         ; css-mode不支持Imenu
+                        (derived-mode-p 'dockerfile-mode)) ; dockerfile-mode不支持Imenu
+              (imenu-add-menubar-index)) ; 启用Imenu（显示index菜单）
 
             (linum-mode 1)              ; 显示行号
 
@@ -1018,6 +1019,10 @@ reformat current entire buffer."
 
 (use-package yaml-mode
   :mode "\\.ya?ml$")
+
+(use-package dockerfile-mode
+  :ensure t
+  :mode "Dockerfile\\'")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; Begin configure python
