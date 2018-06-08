@@ -7,8 +7,8 @@
 (setq gc-cons-threshold 100000000)      ; 调大gc阈值，可显著加快启动速度
 
 ;; 若访问网络需要配置proxy，请在下面文件中设置变量url-proxy-services
-(if (file-exists-p "~/.emacs.d/elisp/init-proxy.el")
-    (load-file "~/.emacs.d/elisp/init-proxy.el"))
+(if (file-exists-p "~/.emacs.d/lisp/init-proxy.el")
+    (load-file "~/.emacs.d/lisp/init-proxy.el"))
 
 (require 'package)
 (setq package-user-dir "~/.emacs.d/.elpa")
