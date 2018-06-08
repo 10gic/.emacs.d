@@ -1,4 +1,5 @@
 .DS_Store
+*.elc
 
 /TAGS
 /places
@@ -15,3 +16,6 @@
 /auto-save-list/
 /packages/extract/
 /semanticdb/
+
+/.elpa/
+/lisp/init-lisp.el

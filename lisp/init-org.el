@@ -664,3 +664,5 @@ frame=tb                               % 在top/bottom位置显示边框（横�
 
   (define-key org-mode-map (kbd "<drag-n-drop>") 'dnd-func)
   (define-key org-mode-map (kbd "<C-drag-n-drop>") 'dnd-func))
+
+(provide 'init-org)

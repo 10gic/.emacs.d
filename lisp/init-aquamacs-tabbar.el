@@ -33,9 +33,8 @@
     ad-do-it))
 
 (defun my-tabbar-buffer-groups ()
-  ;; 把buffer分为两组：
-  ;; 一组名为emacs组，它的buffer名字以*开始(dired-mode和diary-mode也为emacs组)；
-  ;; 其它的为另一组（名为user）。
+  "把buffer分为两组：一组名为emacs组，它的buffer名字以*开始(dired-mode和
+  diary-mode也为emacs组)；其它的为另一组（名为user）。"
   (list (cond ((eq major-mode 'term-mode) "user")
               ((eq major-mode 'diary-mode) "other")
               ;; ((eq major-mode 'refine-interaction-mode) "user")
@@ -48,3 +47,5 @@
 ;; (global-set-key [M-left] 'tabbar-backward-tab)
 (global-set-key [(control tab)] 'tabbar-forward-tab)
 (global-set-key (kbd "C-S-<iso-lefttab>") 'tabbar-backward-tab) ; Ctrl+Shift+Tab
+
+(provide 'init-aquamacs-tabbar)

@@ -1,4 +1,4 @@
-;;; custom-go-to-def.el ---              -*- lexical-binding: t; -*-
+;;; init-goto-def.el ---              -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2018  cig01
 
@@ -24,7 +24,6 @@
 
 ;;; Code:
 
-(require 'projectile)
 (projectile-mode)
 
 ;; https://stackoverflow.com/questions/4096580/how-to-make-emacs-reload-the-tags-file-automatically
@@ -131,45 +130,28 @@
                  (remove dir my-projects-with-pending-timer))))
        project-dir))))
 
-
-;; See https://github.com/jacktasia/dumb-jump
-(require 'dumb-jump)               ; Package-Requires: (f "0.20.0") (s "1.11.0")
-(dumb-jump-mode)
-
-;; 设置找不到工程根目录时的搜索目录，默认为$HOME（很可能太慢）
-(setq dumb-jump-default-project ".")
-
-;; Dumb Jump默认绑定的快捷键：
-;; C-M-g (dumb-jump-go)         跳到光标下符号的定义处
-;; C-M-p (dumb-jump-back)       回到跳转前位置
-;; C-M-q (dumb-jump-quick-look) 以tooltip形式显示光标下符号的定义的相关信息
-
-;; 取消Dumb Jump中的部分绑定，因为它覆盖了Emacs内置的绑定
-(define-key dumb-jump-mode-map (kbd "C-M-p") nil)
-(define-key dumb-jump-mode-map (kbd "C-M-q") nil)
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 用my-find-definition-p记录xref-find-definitions是否成功跳转
-;; 后面函数my-go-to-def中用它判断是否通过xref-find-definitions找到定义
+;; 后面函数my-goto-def中用它判断是否通过xref-find-definitions找到定义
 (setq my-find-definition-p nil)
 (add-hook 'xref-after-jump-hook
           (lambda ()
             (setq my-find-definition-p t)))
 
 ;; 用my-find-definition-by-jtags-p记录jtags-show-declaration是否成功跳转
-;; 后面函数my-go-to-def中用它判断是否通过jtags-show-declaration找到定义
+;; 后面函数my-goto-def中用它判断是否通过jtags-show-declaration找到定义
 (setq my-find-definition-by-jtags-p nil)
 (add-hook 'find-tag-hook
           (lambda ()
             (setq my-find-definition-by-jtags-p t)))
 
-(defun my-go-to-def ()
+(defun my-goto-def ()
   "Jump to definition."
   (interactive)
   (let* ((id-at-point (thing-at-point 'symbol t))
          (current-file
           (if buffer-file-name buffer-file-name
-            (user-error "Cannot use my-go-to-def on a buffer without a file name")))
+            (user-error "Cannot use my-goto-def on a buffer without a file name")))
          (java-file-p (string-suffix-p ".java" current-file))
          (go-file-p (string-suffix-p ".go" current-file))
          (identifier
@@ -201,7 +183,7 @@
       (when (and (executable-find "godef") (fboundp 'godef-jump))
         ;; 后面会检查*Messages* buffer中的最后一行，为了防止使用旧数据，特意写入
         ;; 下面这一行无关数据
-        (message "my-go-to-def, magic clear for godef-jump")
+        (message "my-goto-def, magic clear for godef-jump")
         (ignore-errors
           (call-interactively 'godef-jump))
         (save-excursion
@@ -212,20 +194,20 @@
             ;; 会输出类似下面的信息到*Messages*中
             ;; godef: no identifier found
             ;; godef: no declaration found for xxx
-            (message "my-go-to-def, last-line=%s" last-line)
+            (message "my-goto-def, last-line=%s" last-line)
             (if (string-prefix-p "godef: no" last-line)
-                (message "my-go-to-def, godef-jump don't find definition")
+                (message "my-goto-def, godef-jump don't find definition")
               (setq find-def-p t)))))
       ;; 尝试使用go-guru-definition查找定义
       (unless find-def-p
         (when (fboundp 'go-guru-definition)
           ;; 测试发现，当go-guru-definition找不到定义时会抛异常，
           ;; 如果没有异常则认为go-guru-definition找到了定义
-          (if (ignore-errors ; 有异常时ignore-errors返回nil
+          (if (ignore-errors            ; 有异常时ignore-errors返回nil
                 (call-interactively 'go-guru-definition))
               (setq find-def-p t)
-            (message "my-go-to-def, go-guru-definition don't find definition")))))
-    (message "my-go-to-def, find-def-p here1 ? %s" find-def-p) ; just for debugging
+            (message "my-goto-def, go-guru-definition don't find definition")))))
+    (message "my-goto-def, find-def-p here1 ? %s" find-def-p) ; just for debugging
     (unless find-def-p
       ;; 尝试使用xref-find-definitions查找identifier的定义位置
       ;; 如果xref-find-definitions成功地找到定义，而且定义是唯一的，则会直接跳到定
@@ -255,7 +237,7 @@
           ;; 当*xref* buffer存在时，说明xref-find-definitions找到了多个定义
           ;; 只要满足一个条件，则认为第一次尝试成功
           (setq find-def-p t)))
-    (message "my-go-to-def, find-def-p here2 ? %s" find-def-p) ; just for debugging
+    (message "my-goto-def, find-def-p here2 ? %s" find-def-p) ; just for debugging
     (unless find-def-p
       ;; 尝试使用semantic-ia-fast-jump查找光标下符号的定义（不一定是identifier）
       (setq find-def-p
@@ -268,17 +250,13 @@
                 (cl-letf (((symbol-function 'y-or-n-p) #'always-no)
                           ((symbol-function 'yes-or-no-p) #'always-no))
                   (call-interactively 'semantic-ia-fast-jump))))))
-    (message "my-go-to-def, find-def-p here3 ? %s" find-def-p) ; just for debugging
-    (message nil)                       ; 清空minibuffer
-    (unless find-def-p
+    (message "my-goto-def, find-def-p here3 ? %s" find-def-p) ; just for debugging
+    (message nil)                                              ; 清空minibuffer
+    (when (not find-def-p)
       ;; 如果前面的尝试都失败，则调用dumb-jump-go作最后尝试
+      (require 'dumb-jump)
+      (dumb-jump-mode)
       (dumb-jump-go nil nil identifier))))
 
-(if (boundp 'aquamacs-version)
-    ;; 绑定my-go-to-def到Command + Ctrl + j （Aquamacs中，Command键为A）
-    (define-key osx-key-mode-map (kbd "A-C-j") 'my-go-to-def))
-;; 上面绑定仅在Aquamacs中有效，在Emacs中使用下面设定可绑定到Command + Ctrl + j
-;; (global-set-key (kbd "C-s-<268632074>") 'my-go-to-def) ; ; Command + Ctrl + j
-
-;; (provide 'custom-go-to-def)
-;;; custom-go-to-def.el ends here
+(provide 'init-goto-def)
+;;; init-goto-def.el ends here

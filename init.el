@@ -1,14 +1,22 @@
 ;;; init.el --- GNU Emacs/Aquamacs configuration file.
+(setq debug-on-error t)
 
 (unless (version< "25.1" emacs-version)
   (error "This init.el requires emacs version 25.1 or later"))
 
 (setq gc-cons-threshold 100000000)      ; 调大gc阈值，可显著加快启动速度
 
+;; 若访问网络需要配置proxy，请在下面文件中设置变量url-proxy-services
+(if (file-exists-p "~/.emacs.d/elisp/init-proxy.el")
+    (load-file "~/.emacs.d/elisp/init-proxy.el"))
+
 (require 'package)
-(add-to-list 'package-archives
-             '("melpa-stable" . "https://stable.melpa.org/packages/") t)
 (setq package-user-dir "~/.emacs.d/.elpa")
+(add-to-list 'package-archives
+             '("melpa-stable" . "http://stable.melpa.org/packages/"))
+(add-to-list 'package-archives
+             '("melpa" . "http://melpa.org/packages/"))
+
 (package-initialize)
 
 ;; Install 'use-package' if not installed.
@@ -16,8 +24,12 @@
   (package-refresh-contents)
   (package-install 'use-package))
 
-(setq inhibit-startup-message t)        ; 启动emacs时不显示GNU Emacs窗口。
-(setq initial-scratch-message "")       ; scratch信息中显示为空。
+;; 设置use-package自动安装未安装的package。如果本地index过期，安装软件会失败，提
+;; 示404，这时需要手动执行package-refresh-contents。
+(setq use-package-always-ensure t)
+
+(setq inhibit-startup-message t)        ; 启动emacs时不显示GNU Emacs窗口
+(setq initial-scratch-message "")       ; scratch信息中显示为空
 
 (if (not (boundp 'aquamacs-version))
     ;; 如果不是Aquamacs，就关闭tool-bar（Aquamacs的tool-bar比较好看，保留着）
@@ -26,7 +38,7 @@
 ;; (tool-bar-mode -1) ; Note: (tool-bar-mode nil) cannot work in Ubuntu 14.04
 ;; (menu-bar-mode -1) ; Note: (memu-bar-mode nil) cannot work in Ubuntu 14.04
 
-(setq kill-whole-line t) ; 在行首C-k时，同时删除换行符。
+(setq kill-whole-line t)                ; 在行首C-k时，同时删除换行符。
 
 (defalias 'yes-or-no-p 'y-or-n-p)       ; 设置y/n可代替yes/no
 
@@ -40,15 +52,8 @@
 (which-function-mode 1)    ; displays the current function name in the mode line
 (setq which-func-unknown "n/a")         ; Change ??? to n/a
 
-(add-to-list 'load-path "~/.emacs.d/elisp/")
-
 (require 'ido)
 (ido-mode t)            ; 启动ido-mode。如：键入C-x b时，可用ido快速地切换buffer
-
-(require 'smex)
-(global-set-key (kbd "M-x") 'smex)
-(global-set-key (kbd "M-X") 'smex-major-mode-commands)
-(global-set-key (kbd "C-c C-c M-x") 'execute-extended-command) ; Your old M-x.
 
 ;; 打开文件时回到上次打开文件的位置
 (save-place-mode +1)                    ; save-place-mode在Emacs 25.1中引入
@@ -80,28 +85,29 @@
 (defun emacs-session-filename (SESSION-ID)
   (concat "~/.emacs.d/cache/session." SESSION-ID))
 
+;; Suppress error "directory ~/.emacs.d/server is unsafe" on emacs-w32 (issue
+;; found in windows 8.1).
+;; http://stackoverflow.com/questions/885793/emacs-error-when-calling-server-start
+;; http://www.emacswiki.org/emacs/EmacsW32
+(require 'server)
+(if (equal window-system 'w32)
+    (defun server-ensure-safe-dir (dir) "Noop" t))
+
 ;; 用flyspell，必须安装aspell-en(sudo apt-get install aspell-en)，
 ;; 否则提示错误No word lists can be found for the language “en_US”
-;; 在text-mode下打开flyspell，使用M-$更正错误
-;; (add-hook 'text-mode-hook 'flyspell-mode)
+;; 启用flyspell-mode后，使用 `M-$` 可更正错误
 (setq ispell-personal-dictionary "~/.emacs.d/ispell-personal-dict.txt")
 
-;; wgrep（Writable grep）可直接在grep mode中编辑找到的结果，改动可保存到原文件中
-;; 比如，我们在10个文件中找到了AAA，想把它们都改为BBB，直接在grep mode中修改即可
-;; 修改完后按 `C-x C-s` 可保存，再执行wgrep-save-all-buffers可把改动保存到原文件
-;; https://github.com/mhayashi1120/Emacs-wgrep
-;; Some tips:
-;; 在grep mode中按 `g` (它来自compilation-mode中的recompile)可重新执行一次相同查
-;; 找以确认改动生效；如果要修改grep（比如增加参数）再执行，可以按`C-u g`。
-(require 'wgrep)
+;; Add some path to PATH and exec-path. Node: On Mac OS X, when you start emacs
+;; from GUI, emacs does not inherit environment variables from your shell.
+(cl-loop for dir in '("/usr/local/bin" "~/bin" "~/go/bin")
+         do (when (file-exists-p dir)
+              (setenv "PATH" (concat (getenv "PATH") ":" dir))
+              (add-to-list 'exec-path dir)))
 
-;; 把启动wgrep的快捷键变为字母e
-;; 默认，在grep mode中输入 `C-c C-p` 可启动wgrep
-(setq wgrep-enable-key "e")
+(add-to-list 'load-path "~/.emacs.d/lisp/")
 
-;; 自动保存文件，相当于自动执行M-x wgrep-save-all-buffers
-(setq wgrep-auto-save-buffer t)
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -122,7 +128,7 @@
  '(xterm-mouse-mode t))
 
 ;; 在Aquamcs使用“深色”主题（如misterioso）会有问题，下面是一个workaround
-;; 参考：;; https://emacs.stackexchange.com/questions/26957/how-can-i-load-the-solarized-dark-theme-correctly-in-aquamacs-from-emacs
+;; 参考 https://emacs.stackexchange.com/questions/26957/how-can-i-load-the-solarized-dark-theme-correctly-in-aquamacs-from-emacs
 (if (and window-system (featurep 'aquamacs))
     (setq default-frame-alist nil))
 
@@ -137,16 +143,6 @@
  '(which-func ((t (:foreground nil))))
  '(org-level-4 ((t (:inherit outline-4 :foreground "pink1")))))
 
-;; 说明：
-;; ;; 把face my-linum-hl设置为misterioso主题下的区分度高的颜色搭配，
-;; ;; face my-linum-hl是后面定义的face，用于定制当前行号的样式。
-;; ;; 在misterioso主题下，which-func前景色是蓝色，不好区分，下面设置取消其前景色
-;; '(which-func ((t (:foreground nil))))
-;; ;; 下面设置让注释看起来颜色暗些。
-;; '(font-lock-comment-face ((t (:foreground "dim gray"))))
-;; ;; org-mode中level-4的face继承的是font-lock-comment-face，太暗，调亮一些
-;; '(org-level-4 ((t (:inherit outline-4 :foreground "pink1")))))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 设置自动备份
 (setq
@@ -157,14 +153,6 @@
  kept-new-versions 3                                  ; 保留最近的3个备份。
  kept-old-versions 2) ; 保留最早的2个备份，即第1次编辑前的文件和第2次编辑前的文件。
 
-;; Add some path to PATH and exec-path. Node: On Mac OS X, when you start emacs
-;; from GUI, emacs does not inherit environment variables from your shell.
-(cl-loop for dir in '("/usr/local/bin" "~/bin" "~/go/bin")
-         do (when (file-exists-p dir)
-              (setenv "PATH" (concat (getenv "PATH") ":" dir))
-              (add-to-list 'exec-path dir)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; buffer-local相关变量，用setq-default设置
 (setq-default indent-tabs-mode nil)     ; 默认只使用空格（而不是tab）进行缩进。
 (setq-default cursor-type 'bar)    ; 在X窗口下，光标将变成一根竖线，而不是方块。
@@ -189,48 +177,88 @@
                nil
                '(("\t" 0 'widget-field prepend))))))
 
-;; dtrt-indent可猜测缩进格式，并自动设置indent-tabs-mode等变量
-(use-package dtrt-indent
-  :ensure t
-  :defer 3
-  :config
-  (dtrt-indent-global-mode 1))
+(require 'unicad)                       ; 该插件能自动识别文件编码
+
+(run-with-idle-timer
+ 3                                      ; after idle 3 second
+ nil                                    ; no repeat, runs just once
+ (lambda ()
+   (require 'init-lisp)))
+
+(with-eval-after-load "tex-mode"
+  (if (require 'tex-buf nil 'noerror)
+      (require 'init-latex)
+    (message "Warn: tex-buf is not available, skip its configuring")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 常规键绑定设置
-;; 格式化当前行后缩进下行
-(global-set-key "\C-m" 'reindent-then-newline-and-indent)
-(global-set-key (kbd "C-<return>") 'newline)
+(defun define-mac-hyper-key (key fun)
+  (when (eq system-type 'darwin)
+    (progn
+      (cond
+       ((boundp 'aquamacs-version)
+        ;; Aquamacs中，Command键为A
+        (define-key osx-key-mode-map (kbd (concat "A-" key)) fun))
+       (t
+        ;; GNU Emacs中，Command键为s
+        (global-set-key (kbd (concat "s-" key)) fun))))))
 
-;; (global-set-key (kbd "<f8>") 'xterm-mouse-mode)
-;; (global-set-key (kbd "<f9>") 'view-mode)
-;; (global-set-key [C-f10] 'menu-bar-mode)
+(global-set-key (kbd "C-x C-b") 'ibuffer)        ; 用ibuffer替换BuferMenu
+(global-set-key (kbd "C-2") 'set-mark-command)   ; 按键C-@太麻烦，设置为C-2
+(global-set-key (kbd "C-x k") 'kill-this-buffer) ; 删除buffer不提示确认
 
-(global-set-key (kbd "<C-mouse-4>") 'text-scale-increase) ; 放大字体
-(global-set-key (kbd "<C-mouse-5>") 'text-scale-decrease) ; 缩小字体
+(global-set-key (kbd "M-<up>") 'windmove-up)       ; 移动到上一个窗口
+(global-set-key (kbd "M-<down>") 'windmove-down)   ; 移动到下一个窗口
+(global-set-key (kbd "M-<left>") 'windmove-left)   ; 移动到左一个窗口
+(global-set-key (kbd "M-<right>") 'windmove-right) ; 移动到右一个窗口
 
-(global-set-key (kbd "C-x C-b") 'ibuffer) ; 用ibuffer替换BuferMenu
-
-;; 由于C-@按键输入太麻烦，设置C-2为设置标记
-(global-set-key (kbd "C-2") 'set-mark-command)
-
-;; kill current buffer without confirmation unless the buffer has been modified.
-(global-set-key [(control x) (k)] 'kill-this-buffer)
-
-(global-set-key [M-up] 'windmove-up)       ; 移动到上一个窗口
-(global-set-key [M-down] 'windmove-down)   ; 移动到下一个窗口
-(global-set-key [M-left] 'windmove-left)   ; 移动到左一个窗口
-(global-set-key [M-right] 'windmove-right) ; 移动到右一个窗口
-
-(global-set-key (kbd "M-g") 'goto-line) ; 设置M-g为goto-line
+(global-set-key (kbd "M-g") 'goto-line)
 
 (global-set-key (kbd "M-n") 'next-error) ; go to next error (or next match in grep mode)
 (global-set-key (kbd "M-p") 'previous-error) ; go to previous error (or next match in grep mode)
 
-;; 绑定M-/到hippie-expand，它比dabbrev-expand更强大
-(global-set-key [(meta ?/)] 'hippie-expand)
+(define-mac-hyper-key "w" 'close-window) ; Command + w
+
+;; 禁止grep mode中的line wrap，使用M-x toggle-truncate-lines可以再打开line wrap
+;; https://www.reddit.com/r/emacs/comments/6zvw4d/grep_buffer_hide_find_command/
+(add-hook 'grep-mode-hook (lambda ()
+                            (setq truncate-lines t)))
+
+(add-hook 'prog-mode-hook
+          (lambda ()
+            (unless (derived-mode-p 'css-mode) ; CSS mode不支持Imenu
+              (imenu-add-menubar-index))       ; 启用Imenu（显示index菜单）
+
+            (linum-mode 1)              ; 显示行号
+
+            ;; Hideshow minor mode (A fold mode)
+            (hs-minor-mode)
+            (setcar (cdr (assq 'hs-minor-mode minor-mode-alist)) "")
+
+            ;; electric-pair-local-mode在Emacs 25.1中引入
+            ;; 打开自动输入匹配括号功能
+            (if (fboundp 'electric-pair-local-mode)
+                (electric-pair-local-mode 1))))
+
+(define-key prog-mode-map (kbd "C-`") 'hs-toggle-hiding) ; 折叠或展开代码片断
+(setq electric-pair-inhibit-predicate 'electric-pair-conservative-inhibit)
+
+;; 摘自Writing GNU Emacs Extensions
+(defun scroll-n-lines-ahead (&optional n)
+  "Scroll ahead N lines (1 by default)."
+  (interactive "P")
+  (scroll-up (prefix-numeric-value n)))
+(defun scroll-n-lines-behind (&optional n)
+  "Scroll behind N lines (1 by default)."
+  (interactive "P")
+  (scroll-down (prefix-numeric-value n)))
+(global-set-key (kbd "C-z") 'scroll-n-lines-ahead)  ; 向下移动屏幕一行
+(global-set-key (kbd "C-q") 'scroll-n-lines-behind) ; 向上移动屏幕一行
+
+;; hippie-expand比dabbrev-expand更强大
 ;; 变量hippie-expand-try-functions-list控制hippie-expand的补全信息来源及顺序，但
 ;; 其默认值不够智能。修改hippie-expand-try-functions-list调整补全信息来源的顺序。
+(global-set-key (kbd "M-/") 'hippie-expand)
 (setq hippie-expand-try-functions-list
       '(try-expand-dabbrev
         try-expand-dabbrev-visible
@@ -244,7 +272,8 @@
         try-complete-lisp-symbol-partially
         try-complete-lisp-symbol))
 
-(defun my-occur-symbol-at-point ()
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun internal-my-occur-symbol-at-point ()
   "Find keyword (using occur) in current buffer."
   (interactive)
   (let ((sym (thing-at-point 'symbol)))
@@ -252,7 +281,7 @@
         (push (regexp-quote sym) regexp-history)) ; regexp-history defvared in replace.el
     (call-interactively 'occur)))
 
-(defun my-find-symbol-at-point-in-current-buffer (search-regex arg)
+(defun internal-my-find-symbol-at-point-in-current-buffer (search-regex arg)
   "Find keyword (using grep or occur) at point in current buffer."
   (interactive
    (list (read-string
@@ -286,10 +315,10 @@
      ((string= "" search-regex) (message "Your regexp is empty, do nothing."))
      ((string= "" current-file)
       ;; 如果当前buffer不关联文件，则使用occur查找光标下单词
-      (call-interactively 'my-occur-symbol-at-point))
+      (call-interactively 'internal-my-occur-symbol-at-point))
      (t (compilation-start grep-cmd 'grep-mode (lambda (mode) "*grep*") nil)))))
 
-(defun my-find-symbol-at-point-in-project (arg)
+(defun internal-my-find-symbol-at-point-in-project (arg)
   "Recursively grep keyword in project root, use ripgrep (more faster than grep) if found."
   (interactive "p")
   (let* ((project-dir (ignore-errors (projectile-project-root)))
@@ -345,30 +374,192 @@
        (t
         (compilation-start grep-cmd 'grep-mode (lambda (mode) "*grep*") nil))))))
 
+;; 设置 Command + f 为在当前文件中查找光标下单词
+(define-mac-hyper-key "f" 'internal-my-find-symbol-at-point-in-current-buffer)
+;; 设置 Command + Shift + f 为在当前工程中查找光标下单词
+(define-mac-hyper-key "F" 'internal-my-find-symbol-at-point-in-project)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun define-mac-hyper-key (key fun)
-  (when (eq system-type 'darwin)
-    (progn
-      (cond
-       ((boundp 'aquamacs-version)
-        ;; Aquamacs中，Command键为A
-        (define-key osx-key-mode-map (kbd (concat "A-" key)) fun))
-       (t
-        ;; GNU Emacs，Command键为s
-        (global-set-key (kbd (concat "s-" key)) fun))))))
+;; 字体相关设置
+(defconst font-size-pair-list-unix
+  '((6    8)
+    (8   10)
+    (10  12)
+    (12  14)
+    (14  16)
+    (15  18)
+    (16  20)
+    (18  22)
+    (20  24)
+    (22  26)
+    (24  28)
+    (25  30)
+    (26  32)
+    (28  34)
+    (30  36)
+    (32  38)
+    (34  40)
+    (35  42)
+    (36  44)
+    (38  46)
+    (40  48)
+    (42  50)
+    (44  52)
+    (45  54)
+    (46  56)
+    (48  58))
+  "一个列表，元素为“字体大小对”：(英文字号 中文字号)，Mac/Linux(Redhat)下测试可实现2个英文为1个中文等宽.")
 
-(when (eq system-type 'darwin)
-  ;; 设置Mac下增加/减小字体大小的快捷键
-  ;;(when (display-graphic-p)
-  ;;(define-mac-hyper-key "=" 'my-increase-font-size)  ; Command + =
-  ;;(define-mac-hyper-key "-" 'my-decrease-font-size)) ; Command + -
+(defconst font-size-pair-list-ms
+  '((8    8)
+    (10  10)
+    (11  12)
+    (12  14)
+    (14  16)
+    (16  18)
+    (18  20)
+    (20  22)
+    (22  24)
+    (24  26)
+    (26  28)
+    (28  30)
+    (30  32)
+    (31  34)
+    (32  36)
+    (34  38)
+    (36  40)
+    (38  42)
+    (40  44)
+    (42  46)
+    (44  48)
+    (46  50)
+    (48  52)
+    (50  54)
+    (51  56)
+    (52  58))
+  "一个列表，元素为“字体大小对”：(英文字号 中文字号)，Windows 8.1下测试可实现2个英文为1个中文等宽.")
 
-  (define-mac-hyper-key "w" 'close-window) ; Command + w
+(defun get-mix-mono-font-size-pair ()
+  (if (or (string-equal system-type "cygwin")
+          (string-equal system-type "windows-nt"))
+      font-size-pair-list-ms            ; MS Windows
+    font-size-pair-list-unix))          ; Linux, Mac
 
-  ;; 在当前文件中查找光标下单词
-  (define-mac-hyper-key "f" 'my-find-symbol-at-point-in-current-buffer) ; Command + f
-  ;; 在当前工程中查找光标下单词，没找到工程就在文件所在目录中查找
-  (define-mac-hyper-key "F" 'my-find-symbol-at-point-in-project)) ; Command + Shift + f
+(defun get-font-size-for-face-default ()
+  "Get the font size of face default."
+  (aref
+   ;; query-font返回字体信息相关数组，数组第3个元素为字体大小
+   ;; https://www.gnu.org/software/emacs/manual/html_node/elisp/Low_002dLevel-Font.html
+   (query-font (face-attribute 'default :font)) 2))
+
+(defun my-increase-font-size ()
+  "增加字体大小，同时确保1个中文和两个英文等宽"
+  (interactive)
+  (let ((size-pair (seq-find            ; 取第一个“大于”目前字体的“字体大小对”
+                    (lambda (x) (> (car x) (get-font-size-for-face-default)))
+                    (get-mix-mono-font-size-pair))))
+    (if size-pair
+        (progn
+          (message "Set English/Chinese font size to %s/%s."
+                   (nth 0 size-pair)
+                   (nth 1 size-pair))
+          (internal-my-set-font-size (nth 0 size-pair) (nth 1 size-pair)))
+      (message "Already biggest font size, no bigger font size pair is found."))))
+
+(defun my-decrease-font-size ()
+  "减小字体大小，同时确保1个中文和两个英文等宽"
+  (interactive)
+  (let ((size-pair (car (last ; 取结果的最后一个“字体大小对” (car (last list)) -> "last element in list"
+                         (seq-take-while ; 只取list中“小于”当前英文字体大小的“字体大小对”
+                          (lambda (x) (< (car x) (get-font-size-for-face-default)))
+                          (get-mix-mono-font-size-pair))))))
+    (if size-pair
+        (progn
+          (message "Set English/Chinese font size to %s/%s."
+                   (nth 0 size-pair)
+                   (nth 1 size-pair))
+          (internal-my-set-font-size (nth 0 size-pair) (nth 1 size-pair)))
+      (message "Already smallest font size, no smaller font size pair is found."))))
+
+(defun internal-my-set-font-size (english-font-size chinese-font-size)
+  "Set English and Chinese font size."
+  (interactive
+   (list
+    (read-number "English font size: ")
+    (read-number "Chinese font size: ")))
+  (when (display-graphic-p)
+    (cond
+     ;; 设置英文字体，优先使用排在前面的字体
+     ((find-font (font-spec :name "Source Code Pro"))
+      ;; set-frame-font第2个参数为nil（或者t）表示不维持（维持）窗口大小
+      ;; set-frame-font第3个参数为t表示在新frame中也有效
+      ;; 写法"Source Code Pro-14"，在RedHat上有问题
+      ;; 应该写为"Source Code Pro:pixelsize=14"
+      (set-frame-font (format "Source Code Pro:pixelsize=%s" english-font-size) t t))
+     ((find-font (font-spec :name "Ubuntu Mono"))
+      (set-frame-font (format "Ubuntu Mono:pixelsize=%s" english-font-size) t t))
+     ((find-font (font-spec :name "DejaVu Sans Mono"))
+      (set-frame-font (format "DejaVu Sans Mono:pixelsize=%s" english-font-size) t t))
+     ((find-font (font-spec :name "Consolas")) ; 微软等宽字体
+      (set-frame-font (format "Consolas:pixelsize=%s" english-font-size) t t))
+     ((find-font (font-spec :name "Courier New")) ; Courier New存在于Mac和Windows中
+      (set-frame-font (format "Courier New:pixelsize=%s" english-font-size) t t)))
+    (cond
+     ;; 下面设置中文字体，优先使用排在前面的字体
+     ;; 注：cygwin中使用emacs-X11时无法加载Windows默认路径中字体（使用emacs-w32
+     ;; 则没有问题），如果你使用emacs-X11，请把相应的中文字体复制到~/.fonts
+     ((find-font (font-spec :name "Microsoft Yahei"))
+      (dolist (charset '(kana han symbol cjk-misc bopomofo))
+        (set-fontset-font (frame-parameter nil 'font)
+                          charset
+                          (font-spec :family "Microsoft Yahei"
+                                     :size chinese-font-size))))
+     ((find-font (font-spec :name "STHeiti"))
+      (dolist (charset '(kana han symbol cjk-misc bopomofo))
+        (set-fontset-font (frame-parameter nil 'font)
+                          charset
+                          (font-spec :family "STHeiti" ; Mac中内置STHeiti
+                                     :size chinese-font-size))))
+     ((find-font (font-spec :name "WenQuanYi Zen Hei Mono"))
+      (dolist (charset '(kana han symbol cjk-misc bopomofo))
+        (set-fontset-font (frame-parameter nil 'font)
+                          charset
+                          (font-spec :family "WenQuanYi Zen Hei Mono"
+                                     :size chinese-font-size)))))))
+
+;; 设置Mac下增加/减小字体大小的快捷键
+(define-mac-hyper-key "=" 'my-increase-font-size) ; Command + =
+(define-mac-hyper-key "-" 'my-decrease-font-size) ; Command + -
+
+;; 定制光标颜色，这样在“深色”主题下光标更醒目
+(add-to-list 'default-frame-alist '(cursor-color . "red"))
+
+;; 字体的设置必须在after-make-frame-functions的hook中进行，否则其设置对用
+;; emacsclient启动的窗口无效。
+(defun internal-my-set-frame()
+  ;; 英文为16/15，中文为18，可实现Windows/Unix下1个中文和2个英文等宽，
+  ;; 从get-mix-mono-font-size-pair中，可以找到其它中英文等宽的“字体大小对”
+  (if (or (string-equal system-type "cygwin")
+          (string-equal system-type "windows-nt"))
+      (internal-my-set-font-size 16 18)
+    (internal-my-set-font-size 15 18))
+
+  (setq-default frame-title-format
+                '(:eval
+                  (format "%s"
+                          (cond
+                           (buffer-file-name buffer-file-name)
+                           (dired-directory dired-directory)
+                           (t (buffer-name)))))))
+
+;; 设置daemon方式和非deamon方式启动时都执行my-set-frame
+(if (and (fboundp 'daemonp) (daemonp))
+    ;; 以daemon方式启动时，要使与X相关配置生效，应使用这个hook
+    (add-hook 'after-make-frame-functions
+              (lambda (frame)
+                (with-selected-frame frame
+                  (internal-my-set-frame))))
+  (internal-my-set-frame))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Settings for Aquamacs
@@ -389,54 +580,6 @@
   (if (fboundp 'aquamacs-autoface-mode) (aquamacs-autoface-mode -1)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Suppress error "directory ~/.emacs.d/server is unsafe" on emacs-w32 (issue
-;; found in windows 8.1).
-;; http://stackoverflow.com/questions/885793/emacs-error-when-calling-server-start
-;; http://www.emacswiki.org/emacs/EmacsW32
-(require 'server)
-(when (and (>= emacs-major-version 23)
-           (equal window-system 'w32))
-  (defun server-ensure-safe-dir (dir) "Noop" t))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; ;; column-marker有严重的性能问题：打开一个5M左右C程序可能会卡超过1分钟
-;; (require 'column-marker)
-;; (add-hook 'prog-mode-hook (lambda ()
-;;                             (column-marker-1 80)
-;;                             (column-marker-2 90)
-;;                             (column-marker-3 100)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; 在第81列显示一个标尺，使用`M-x fci-mode`可打开或关闭它
-(ignore-errors
-  ;; fill-column-indicator需要Emacs 25，否则会显式抛异常，下面方式无法抑制异常
-  ;; (require 'fill-column-indicator nil :noerror)
-  (require 'fill-column-indicator))
-(defun my-toggle-rule-on-column-81 ()
-  "Toggle rule on column 81 (using fill-column-indicator)."
-  (interactive)
-  (call-interactively 'fci-mode))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; https://github.com/syohex/emacs-git-gutter
-(require 'git-gutter)
-
-;; Enable global minor mode
-(global-git-gutter-mode t)
-
-;; Use git-gutter.el and linum-mode
-(git-gutter:linum-setup)
-
-;; 设置“跳到上一个（或下一个）修改位置”的快捷键
-(global-set-key (kbd "C-M-S-<up>") 'git-gutter:previous-hunk) ; Ctrl + Alt + Shift + ↑
-(global-set-key (kbd "C-M-S-<down>") 'git-gutter:next-hunk)   ; Ctrl + Alt + Shift + ↓
-;; 设置“stage当前位置的修改”的快捷键
-(global-set-key (kbd "C-M-S-<left>") 'git-gutter:stage-hunk) ; Ctrl + Alt + Shift + <-
-;; 设置“取消（Revert）当前位置的修改”的快捷键
-(global-set-key (kbd "C-M-S-<right>") 'git-gutter:revert-hunk) ; Ctrl + Alt + Shift + ->
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 加载其它包及设置
 ;; Extract packages into ~/.emacs.d/packages/extract/
 (setq my-pkg-path "~/.emacs.d/packages/extract/")
@@ -448,33 +591,93 @@
     (dolist (line output)
       (message "%s" line))))
 
+;; Use newer org-mode, the builtin version is too old.
 (setq my-org-path1 (car (file-expand-wildcards (concat my-pkg-path "org-*/lisp"))))
 (setq my-org-path2 (car (file-expand-wildcards (concat my-pkg-path "org-*/contrib/lisp"))))
-(setq my-tabbar-path (concat my-pkg-path "tabbar-master"))
-(setq my-all-the-icons-path (car (file-expand-wildcards (concat my-pkg-path "all-the-icons*"))))
-(setq my-neotree-path (car (file-expand-wildcards (concat my-pkg-path "emacs-neotree-*"))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Use newer org-mode, the builtin version is too old.
 (setq load-path (cons my-org-path1 load-path))
 (setq load-path (cons my-org-path2 load-path))
+;; 加载custom-org.el耗时比较多，仅在第一次进入org-mode时加载它
+;; Using "org", because org-mode is defined in org.el
+(with-eval-after-load "org"
+  (require 'init-org))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; aquamacs-tabbar(from https://github.com/dholm/tabbar)比原始的tabbar更友好
 ;; Mac中Auqamacs内置有tabbar，且默认配置很好，无需再配置。
 ;; 下面在非Auqamacs中加载aquamacs-tabbar
 (when (not (boundp 'aquamacs-version))
+  (setq my-tabbar-path (concat my-pkg-path "tabbar-master"))
   (add-to-list 'load-path my-tabbar-path)
   (require 'aquamacs-tabbar)
   (tabbar-mode 1)
-  (load-file "~/.emacs.d/custom-aquamacs-tabbar.el"))
+  (require 'init-aquamacs-tabbar))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(require 'region-bindings-mode)
-(region-bindings-mode-enable)
+;; Smex is a M-x enhancement for Emacs
+(use-package smex
+  :defer 1
+  :bind (("M-x" . smex)
+         ("M-X" . smex-major-mode-commands)
+         ("C-c C-c M-x". execute-extended-command))) ; Your old M-x.
+
+;; dtrt-indent可猜测缩进格式，并自动设置indent-tabs-mode等变量
+(use-package dtrt-indent
+  :defer 3
+  :config
+  (setcar (cdr (assq 'dtrt-indent-mode minor-mode-alist)) "") ; clear modeline
+  (dtrt-indent-global-mode 1))
+
+;; wgrep（Writable grep）可直接在grep mode中编辑找到的结果，改动可保存到原文件中
+;; 比如，我们在10个文件中找到了AAA，想把它们都改为BBB，直接在grep mode中修改即可
+;; 修改完后按 `C-x C-s` 可保存，再执行wgrep-save-all-buffers可把改动保存到原文件
+;; https://github.com/mhayashi1120/Emacs-wgrep
+;; Some tips:
+;; 在grep mode中按 `g` (它来自compilation-mode中的recompile)可重新执行一次相同查
+;; 找以确认改动生效；如果要修改grep（比如增加参数）再执行，可以按`C-u g`。
+(use-package wgrep
+  :defer 3
+  :config
+  ;; 把启动wgrep的快捷键设为e。默认，在grep mode中输入 `C-c C-p` 可启动wgrep
+  (setq wgrep-enable-key "e")
+  ;; 自动保存文件，相当于自动执行M-x wgrep-save-all-buffers
+  (setq wgrep-auto-save-buffer t))
+
+;; fill-column-indicator可在第81列显示一个标尺，使用`M-x fci-mode`可打开或关闭它
+(use-package fill-column-indicator
+  :defer 3
+  :config
+  (defun my-toggle-rule-on-column-81 ()
+    "Toggle rule on column 81 (using fill-column-indicator)."
+    (interactive)
+    (call-interactively 'fci-mode)))
+
+(use-package git-gutter
+  :defer 1
+  :bind (("C-M-S-<up>" . git-gutter:previous-hunk)   ; Ctrl + Alt + Shift + ↑
+         ("C-M-S-<down>" . git-gutter:next-hunk)     ; Ctrl + Alt + Shift + ↓
+         ("C-M-S-<left>" . git-gutter:stage-hunk)    ; Ctrl + Alt + Shift + <-
+         ("C-M-S-<right>" . git-gutter:revert-hunk)) ; Ctrl + Alt + Shift + ->
+  :config
+  (global-git-gutter-mode t)            ; Enable global minor mode
+  (git-gutter:linum-setup))             ; Use git-gutter.el and linum-mode
+
+;; anzu 可在搜索过程中显示当前是第几个匹配
+(use-package anzu
+  :defer 2
+  :config
+  (setq anzu-mode-lighter "")
+  (global-anzu-mode t))
+
+(use-package ace-jump-mode
+  :bind ("C-c SPC" . ace-jump-mode))
+
+(use-package region-bindings-mode
+  :config
+  ;; Do not activate `region-bindings-mode' in `dired' and `ibuffer'. Single-key
+  ;; bindings like 'm' are useful in those modes even when a region is selected.
+  (setq region-bindings-mode-disabled-modes '(dired-mode ibuffer-mode))
+  (region-bindings-mode-enable))
 
 (use-package multiple-cursors
-  :ensure t
   :bind
   (:map region-bindings-mode-map
         ("a" . mc/mark-all-like-this-dwim) ; 选择所有
@@ -485,213 +688,223 @@
         ("<backtab>" . mc/cycle-backward)
         ("C-;" . multiple-cursors-mode)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; iedit: Edit multiple regions in the same way simultaneously.
+(use-package iedit
+  :init
+  ;; 提前取消Aquamacs中默认绑定的C-;
+  (if (boundp 'osx-key-mode-map)
+      (unbind-key "C-;" osx-key-mode-map))
+  :bind (("C-;" . iedit-mode)))
+
+;; expand-region 可快速地选择区域
+(use-package expand-region
+  :bind ("C-=" . er/expand-region))
+
 (use-package flycheck
-  :ensure t
-  :defer t)
+  :defer 3
+  :config (global-flycheck-mode))
 
-(use-package auto-complete
-  :ensure t
-  :defer t
+;; company: Modular in-buffer completion framework for Emacs
+(use-package company
+  :defer 2
+  :init
   :config
-  (global-auto-complete-mode t))
+  (setcar (cdr (assq 'company-mode minor-mode-alist)) "") ; clear modeline
+  (global-company-mode)
+  (setq company-dabbrev-downcase nil)    ; 不让 company 自动转小写
+  (setq company-idle-delay 0)            ; always complete immediately
+  (setq company-minimum-prefix-length 2) ; 2个字符（默认为3）就开始补全
+  (setq company-selection-wrap-around t)
+  (setq company-tooltip-align-annotations t)
+  (setq company-tooltip-flip-when-above t)
+  (setq company-show-numbers t)         ; 按 M-<num> 可快速输入候选项
+  (setq company-transformers '(company-sort-by-occurrence)) ; weight by frequency
+  (define-key company-active-map (kbd "M-n") nil)
+  (define-key company-active-map (kbd "M-p") nil)
+  (define-key company-active-map (kbd "C-n") 'company-select-next)
+  (define-key company-active-map (kbd "C-p") 'company-select-previous)
+  (define-key company-active-map (kbd "TAB") 'company-complete-common-or-cycle)
+  (define-key company-active-map (kbd "<tab>") 'company-complete-common-or-cycle)
+  (define-key company-active-map (kbd "S-TAB") 'company-select-previous)
+  (define-key company-active-map (kbd "<backtab>") 'company-select-previous))
 
-(use-package auto-complete-config
-  :ensure auto-complete
-  :defer t
+(use-package highlight-parentheses
+  :defer 3
   :config
-  (ac-config-default))
+  (setcar (cdr (assq 'highlight-parentheses-mode minor-mode-alist)) "") ; clear modeline
+  (global-highlight-parentheses-mode)
+  (set-face-attribute 'hl-paren-face nil :weight 'ultra-bold)
+  ;; make paren highlight update after stuff like paredit changes
+  (add-to-list 'after-change-functions '(lambda (&rest x) (hl-paren-highlight))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(use-package highlight-symbol
+  :config
+  (setcar (cdr (assq 'highlight-symbol-mode minor-mode-alist)) "") ; clear modeline
+  (setq highlight-symbol-idle-delay 0.3
+        highlight-symbol-on-navigation-p t)
+  (highlight-symbol-mode)
+  (define-mac-hyper-key "g" 'highlight-symbol-next)  ; 跳转到下一个相同符号
+  (define-mac-hyper-key "G" 'highlight-symbol-prev)) ; 跳转到上一个相同符号
+
 ;; projectile: “工程管理”插件，可快速访问项目里任何文件，快速在项目中搜索关键字
 ;; 所谓“工程”就是一些文件的集合，默认projectile支持git，mercurial，bazaar等工程；
 ;; 手动创建一个工程的方法：在工程根目录中创建一个名为.projectile的空文件即可。
-;; See https://github.com/bbatsov/projectile
-(require 'projectile)
-(projectile-mode)
-
-;; 定制mode-line中的显示字符（把Projectile改为Prj，节省空间）
-(setq projectile-mode-line '(:eval (format " Prj[%s]" (projectile-project-name))))
-
+;;
 ;; projectile中默认快捷键前缀为`C-c p`
 ;; projectile最常用的两个快捷键：
 ;; `C-c p f`   ：在工程中查找文件
 ;; `C-c p s g` ：在工程中查找关键字
-;;
-;; 还有很多其它快捷键绑定，如果记不住，你可以通过下面命令查看这些绑定：
-;; `C-c p C-h` ：查看projectile的快捷键绑定
+;; 还有很多其它快捷键绑定，可以通过 `C-c p C-h` 查看projectile的快捷键绑定
+(use-package projectile
+  :defer 2
+  :init
+  ;; 定制modeline
+  (setq projectile-mode-line '(:eval (format " Prj[%s]" (projectile-project-name))))
+  :config
+  (projectile-mode))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(add-to-list 'load-path my-all-the-icons-path)
 ;; 注意：使用all-the-icons前需要安装相应字体。
-;; 方法一：手动安装其fonts子目录中的字体；
+;; 方法一：手动安装其fonts子目录中的字体。比如（以Mac系统为例），
+;; 把 https://github.com/domtronn/all-the-icons.el/tree/master/fonts 中的ttf文件
+;; 复制到目录 ${HOME}/Library/Fonts/ 中即可。
 ;; 方法二：使用函数all-the-icons-install-fonts在线安装最新的相关字体。
 ;; https://github.com/domtronn/all-the-icons.el
-(require 'all-the-icons)
+(use-package all-the-icons
+  :defer 3)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(add-to-list 'load-path my-neotree-path)
-(require 'neotree)
-
-;; 禁止自动刷新，自动刷新可能使根目录变为文件父目录
-(setq neo-autorefresh nil)
-(setq neo-vc-integration (quote (face)))
-(setq neo-window-fixed-size nil)
-(setq neo-theme (if (display-graphic-p) 'icons 'arrow)) ; 依赖于all-the-icons
-
-;; 下面设置禁止neotree-find提示如下信息
-;; "File not found in root path, do you want to change root?"
-(setq neo-force-change-root t)
-
-(defun neotree-project-dir-toggle ()
-  "Open NeoTree using the project root.
+;; (add-to-list 'load-path my-neotree-path)
+(use-package neotree
+  :defer 3
+  :init
+  (setq neo-autorefresh nil)    ; 禁止自动刷新，自动刷新会使根目录变为文件父目录
+  (setq neo-vc-integration (quote (face)))
+  (setq neo-window-fixed-size nil)
+  (setq neo-theme (if (display-graphic-p) 'icons 'arrow)) ; 依赖于all-the-icons
+  (setq neo-force-change-root t)        ; 禁止change root的提示
+  :config
+  (defun neotree-project-dir-toggle ()
+    "Open NeoTree using the project root.
 Using find-file-in-project, or the current buffer directory."
-  (interactive)
-  (let ((project-dir
-         (ignore-errors
-           ;; Pick one: projectile or find-file-in-project
-           (projectile-project-root)
-           ;; (ffip-project-root)
-           ))
-        (file-name (buffer-file-name))
-        (neo-smart-open t))
-    (save-selected-window
-      (if (and (fboundp 'neo-global--window-exists-p)
-               (neo-global--window-exists-p))
-          (neotree-hide)
-        (progn
-          (neotree-show)
-          (if project-dir
-              (neotree-dir project-dir))
-          (if file-name
-              (neotree-find file-name)))))))
+    (interactive)
+    (let ((project-dir
+           (ignore-errors
+             ;; Pick one: projectile or find-file-in-project
+             (projectile-project-root)
+             ;; (ffip-project-root)
+             ))
+          (file-name (buffer-file-name))
+          (neo-smart-open t))
+      (save-selected-window
+        (if (and (fboundp 'neo-global--window-exists-p)
+                 (neo-global--window-exists-p))
+            (neotree-hide)
+          (progn
+            (neotree-show)
+            (if project-dir
+                (neotree-dir project-dir))
+            (if file-name
+                (neotree-find file-name)))))))
 
-(global-set-key (kbd "<f9>") 'neotree-project-dir-toggle)
+  (global-set-key (kbd "<f9>") 'neotree-project-dir-toggle)
 
-(add-hook 'neotree-mode-hook
-          (lambda()
-            (if (boundp 'tabbar-local-mode)  ; 检测tabbar-local-mode是否存在
-                (tabbar-local-mode 1))))     ; 在neotree-mode中关闭tabbar
+  (add-hook 'neotree-mode-hook
+            (lambda()
+              (if (boundp 'tabbar-local-mode)
+                  ;; 在neotree-mode中关闭tabbar
+                  (tabbar-local-mode 1)))))
 
-(require 'switch-buffer-functions)
-;; 每次切换buffer后都会执行下面hook
-(add-hook 'switch-buffer-functions
-          (lambda (prev-buffer cur-buffer)
-            ;; 若当前buffer名不以*号开始，且neotree处于打开状态，则进一步处理
-            (if (and (not (string-prefix-p "*" (buffer-name cur-buffer)))
-                     (neo-global--window-exists-p))
-                (let ((project-dir
-                       (ignore-errors
-                         (projectile-project-root)))
-                      (file-name (buffer-file-name cur-buffer)))
-                  (save-selected-window
-                    (if project-dir
-                        (neotree-dir project-dir))
-                    (if file-name
-                        (neotree-find file-name)))))))
+(use-package switch-buffer-functions
+  :after (neotree projectile)
+  :config
+  ;; 每次切换buffer后都会执行下面hook
+  (add-hook 'switch-buffer-functions
+            (lambda (prev-buffer cur-buffer)
+              ;; 若当前buffer名不以*号开始，且neotree窗口处于打开状态时，更新
+              ;; neotree窗口为新工程的根目录
+              (if (and (not (string-prefix-p "*" (buffer-name cur-buffer)))
+                       (neo-global--window-exists-p))
+                  (let ((project-dir
+                         (ignore-errors
+                           (projectile-project-root)))
+                        (file-name (buffer-file-name cur-buffer)))
+                    (save-selected-window
+                      (if project-dir
+                          (neotree-dir project-dir))
+                      (if file-name
+                          (neotree-find file-name))))))))
 
+(use-package dumb-jump
+  :defer 2
+  :config
+  (dumb-jump-mode)
+  ;; 把找不到工程根目录时的搜索目录设置为当前目录，默认为$HOME（很可能太慢）
+  (setq dumb-jump-default-project ".")
+  ;; Dumb Jump默认绑定的快捷键：
+  ;; C-M-g (dumb-jump-go)         跳到光标下符号的定义处
+  ;; C-M-p (dumb-jump-back)       回到跳转前位置
+  ;; C-M-q (dumb-jump-quick-look) 以tooltip形式显示光标下符号的定义的相关信息
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(autoload 'ace-jump-mode "ace-jump-mode" "Emacs quick move minor mode" t)
-(define-key global-map (kbd "C-c SPC") 'ace-jump-mode)
-
-(require 'unicad) ; 该插件能自动识别文件编码
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; 禁止grep mode中的line wrap，使用M-x toggle-truncate-lines可以再打开line wrap
-;; https://www.reddit.com/r/emacs/comments/6zvw4d/grep_buffer_hide_find_command/
-(add-hook 'grep-mode-hook (lambda ()
-                            (setq truncate-lines t)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(add-hook 'prog-mode-hook
-          (lambda ()
-
-            (unless (derived-mode-p 'css-mode) ; CSS mode不支持Imenu
-              (imenu-add-menubar-index))       ; 启用Imenu（显示index菜单）
-            (linum-mode 1)                     ; 显示行号
-            ;; electric-pair-local-mode在Emacs 25.1中引入
-            ;; 打开自动输入匹配括号功能
-            (if (fboundp 'electric-pair-local-mode)
-                (electric-pair-local-mode 1))))
-
-(setq electric-pair-inhibit-predicate 'electric-pair-conservative-inhibit)
-
-(run-with-idle-timer
- 1                                      ; after idle 1 second
- nil                                    ; no repeat, runs just once
- (lambda ()
-   ;; 加载highlight-symbol比较耗时，放在空闲时间加载
-   (require 'highlight-symbol)
-   (highlight-symbol-nav-mode)
-   (add-hook 'prog-mode-hook (lambda () (highlight-symbol-mode)))
-   ;; (add-hook 'org-mode-hook (lambda () (highlight-symbol-mode)))
-
-   (setq highlight-symbol-idle-delay 0.3
-         highlight-symbol-on-navigation-p t)
-
-   ;; Mac专有设置
-   (define-mac-hyper-key "g" 'highlight-symbol-next) ; Command + g, 跳转到下一个相同符号
-   (define-mac-hyper-key "G" 'highlight-symbol-prev) ; Command + Shift + g, 跳转到上一个相同符号
-   ))
+  ;; 取消Dumb Jump中的部分绑定，因为它覆盖了Emacs内置的绑定
+  (define-key dumb-jump-mode-map (kbd "C-M-p") nil)
+  (define-key dumb-jump-mode-map (kbd "C-M-q") nil))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 加载xcscope(Cscope的emacs扩展，依赖于Cscope)
-;; debian下可以这样安装xcscope: apt-get install cscope-el
 ;; Refer to: https://github.com/dkogan/xcscope.el
-(require 'xcscope)
-(cscope-setup)
-;; 默认cscope-setup时只会为c/c++ mode启用cscope-minor-mode
-;; 下面为golang/java也启用cscope-minor-mode
-(add-hook 'go-mode-hook (function cscope-minor-mode))
-(add-hook 'java-mode-hook (function cscope-minor-mode))
-;; (setq cscope-display-cscope-buffer nil) ; 不显示*cscope* buffer
+(use-package xcscope
+  :init (cscope-setup)
+  :config
+  ;; 默认cscope-setup时只会为c/c++ mode启用cscope-minor-mode
+  ;; 下面为golang/java也启用cscope-minor-mode
+  (add-hook 'go-mode-hook (function cscope-minor-mode))
+  (add-hook 'java-mode-hook (function cscope-minor-mode))
+  ;; (setq cscope-display-cscope-buffer nil) ; 不显示*cscope* buffer
 
-(setq cscope-option-use-inverted-index t) ; 使用反向索引，即cscope的-q选项
-(add-to-list 'cscope-indexer-suffixes "*.go") ; 增加go后缀，默认仅索引c/c++相关文件
-(add-to-list 'cscope-indexer-suffixes "*.java") ; 增加java后缀，默认仅索引c/c++相关文件
+  (setq cscope-option-use-inverted-index t) ; 使用反向索引，即cscope的-q选项
+  (add-to-list 'cscope-indexer-suffixes "*.go") ; 增加go后缀，默认仅索引c/c++相关文件
+  (add-to-list 'cscope-indexer-suffixes "*.java") ; 增加java后缀，默认仅索引c/c++相关文件
 
-(defun generate-cscopes-files-in-current-project ()
-  "如果工程的根目录没有cscope.files，则生成该文件（当cscope.files存在时，xcscope会自动建立索引）"
-  (let ((project-dir (ignore-errors (projectile-project-root))))
-    (if (and project-dir
-             (not (file-exists-p (concat (file-name-as-directory project-dir)
-                                         "cscope.files"))))
-        (cscope-create-list-of-files-to-index project-dir))))
+  (defun generate-cscopes-files-in-current-project ()
+    "如果工程的根目录没有cscope.files，则生成该文件（当cscope.files存在时，xcscope会自动建立索引）"
+    (let ((project-dir (ignore-errors (projectile-project-root))))
+      (if (and project-dir
+               (not (file-exists-p (concat (file-name-as-directory project-dir)
+                                           "cscope.files"))))
+          (cscope-create-list-of-files-to-index project-dir))))
 
-(add-hook 'cscope-minor-mode-hooks
-          (lambda ()
-            (generate-cscopes-files-in-current-project)))
+  (add-hook 'cscope-minor-mode-hooks
+            (lambda ()
+              (generate-cscopes-files-in-current-project)))
 
-(defun erase-cscope-buffer (&rest args)
-  (ignore-errors
-    (save-excursion
-      (set-buffer "*cscope*")
-      (erase-buffer))))
+  (defun erase-cscope-buffer (&rest args)
+    (ignore-errors
+      (save-excursion
+        (set-buffer "*cscope*")
+        (erase-buffer))))
 
-(defun advice-before-query-cscope ()
-  "cscope查询时会把新结果append到buffer *cscope*中，这里通过adivce-add的方式
+  (defun advice-before-query-cscope ()
+    "cscope查询时会把新结果append到buffer *cscope*中，这里通过adivce-add的方式
 在每次查询前清空buffer *cscope*"
-  (let ((query-functions
-         '(cscope-find-this-symbol
-           cscope-find-global-definition
-           cscope-find-global-definition-no-prompting
-           cscope-find-assignments-to-this-symbol
-           cscope-find-functions-calling-this-function
-           cscope-find-called-functions
-           cscope-find-this-text-string
-           cscope-find-egrep-pattern
-           cscope-find-this-file
-           cscope-find-files-including-file)))
-    (dolist (func query-functions)
-      (advice-add func
-                  :before
-                  #'erase-cscope-buffer))))
+    (let ((query-functions
+           '(cscope-find-this-symbol
+             cscope-find-global-definition
+             cscope-find-global-definition-no-prompting
+             cscope-find-assignments-to-this-symbol
+             cscope-find-functions-calling-this-function
+             cscope-find-called-functions
+             cscope-find-this-text-string
+             cscope-find-egrep-pattern
+             cscope-find-this-file
+             cscope-find-files-including-file)))
+      (dolist (func query-functions)
+        (advice-add func
+                    :before
+                    #'erase-cscope-buffer))))
 
-(with-eval-after-load 'xcscope
-  (advice-before-query-cscope))
+  (with-eval-after-load 'xcscope
+    (advice-before-query-cscope)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; For C
@@ -741,17 +954,6 @@ reformat current entire buffer."
 ;; 当buffer较大时，semantic分析时会非常慢，下面设置一个阈值，超过阈值不会分析
 (setq semantic-idle-scheduler-max-buffer-size 1048576) ; 1M
 
-(with-eval-after-load 'cc-mode
-  ;; srefactor is a C/C++ refactoring tool based on Semantic parser framework.
-  ;; https://github.com/tuhdo/semantic-refactor
-  ;; https://github.com/10gic/semantic-refactor
-  ;; 说明：(require 'srefactor)比较耗时。
-  ;; 为加快启动，把它放到eval-after-load中，这样仅第一次加载cc-mode时会比较慢
-  (require 'srefactor)
-  (semantic-mode 1) ; this is needed by srefactor
-  (define-key c-mode-map (kbd "M-RET") 'srefactor-refactor-at-point)
-  (define-key c++-mode-map (kbd "M-RET") 'srefactor-refactor-at-point))
-
 ;;;; For perl
 (defalias 'perl-mode 'cperl-mode) ; 设置默认使用cperl-mode代替perl-mode
 
@@ -771,14 +973,15 @@ reformat current entire buffer."
 (add-to-list 'auto-mode-alist '("\\.jj\\'" . java-mode))  ; javacc grammar file
 (add-to-list 'auto-mode-alist '("\\.jjt\\'" . java-mode)) ; javacc jjtree file
 
-(autoload 'jtags-mode "jtags" "Toggle jtags mode." t)
-(add-hook 'java-mode-hook 'jtags-mode)
-
-(add-hook 'jtags-mode-hook (lambda ()
-                             ;; jtags-show-declaration默认绑定到"M-,"
-                             ;; 它覆盖了全局的绑定xref-pop-marker-stack
-                             ;; 下面取消jtags-mode-map的中"M-,"绑定
-                             (define-key jtags-mode-map (kbd "M-,") nil)))
+(use-package jtags
+  :after (java-mode)
+  :config
+  (add-hook 'java-mode-hook 'jtags-mode)
+  (add-hook 'jtags-mode-hook (lambda ()
+                               ;; jtags-show-declaration默认绑定到"M-,"
+                               ;; 它覆盖了全局的绑定xref-pop-marker-stack
+                               ;; 下面取消jtags-mode-map的中"M-,"绑定
+                               (define-key jtags-mode-map (kbd "M-,") nil))))
 
 ;;;; For shell
 (add-to-list 'auto-mode-alist '("setenv" . sh-mode)) ; 以setenv开头的文件使用sh-mode
@@ -788,48 +991,33 @@ reformat current entire buffer."
                            ;; 注："C-c C-f"已经全局地绑定到了打开recent files
                            (define-key sh-mode-map (kbd "C-c C-f") nil))))
 
-;;;; For html
 (use-package web-mode
-  :ensure t
   :commands web-mode
-  :mode
-  ("\\.html?\\'" . web-mode)
-  ("\\.jsp\\'"   . web-mode)
-  ("\\.php\\'" . web-mode)
+  :mode ("\\.html?\\'"
+         "\\.jsp\\'"
+         "\\.php\\'")
   :config
   ;; Highlight current HTML element (highlight matched tags).
   (setq web-mode-enable-current-element-highlight t)
   ;; Disable auto indentation
   (setq web-mode-enable-auto-indentation nil))
 
-;;;; For makefile
-(add-to-list 'auto-mode-alist '("[Mm]akefile" . makefile-mode)) ; 以makefile开头的文件使用makefile mode
+(use-package cmake-mode
+  :mode ("CMakeLists\\.txt\\'"
+         "\\.cmake\\'"))
 
-;; For CMake
-(autoload 'cmake-mode "cmake-mode" "cmake mode" t)
-(setq auto-mode-alist
-      (append
-       '(("CMakeLists\\.txt\\'" . cmake-mode))
-       '(("\\.cmake\\'" . cmake-mode))
-       auto-mode-alist))
+(use-package log4j-mode ; major mode for viewing log files
+  :mode ("catalina.out"
+         "\\.log\\'"))
 
-;; For log4j (major mode for viewing log files)
-(autoload 'log4j-mode "log4j-mode" "Major mode for viewing log files." t)
-(add-to-list 'auto-mode-alist '("catalina.out" . log4j-mode)) ; catalina.out is tomcat log file
-(add-to-list 'auto-mode-alist '("\\.log\\'" . log4j-mode))
+(use-package nginx-mode ; major mode for editing nginx.conf
+  :mode "nginx.conf\\'")
 
-;; For nginx (major mode for editing nginx.conf)
-(autoload 'nginx-mode "nginx-mode" nil t)
-(add-to-list 'auto-mode-alist '("nginx.conf\\'" . nginx-mode))
+(use-package protobuf-mode
+  :mode "\\.proto\\'")
 
-(autoload 'protobuf-mode "protobuf-mode" nil t)
-(add-to-list 'auto-mode-alist '("\\.proto\\'" . protobuf-mode))
-
-;; 目前不开发lisp程序，暂时注释掉下面配置以加快启动速度
-;; (load-file "~/.emacs.d/custom-lisp.el")
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(add-to-list 'load-path "~/.emacs.d/progmodes/")
+(use-package yaml-mode
+  :mode "\\.ya?ml$")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; Begin configure python
@@ -840,93 +1028,65 @@ reformat current entire buffer."
     ;; 下面在Aquamacs中启用Emacs中内置的python mode
     (require 'python))
 
-;; jedi可实现python自动补全代码。它依赖于下面python库，请提前安装
-;; pip install epc
-;; pip install jedi
-;; pip install virtualenv
-(use-package jedi
-  :ensure t
-  :defer t
+;; anaconda-mode: Code navigation, doc lookup and completion for Python
+;; 说明1：它依赖于python库jedi和service_factory，缺失时会自动安装它们，但可能安
+;; 装失败，最好提前手动安装，如：
+;; $ pip install jedi
+;; $ pip install service_factory
+;; 说明2：若在url-proxy-services中设置了代理，则需要把127.0.0.1设置为no_proxy：
+;; (setq url-proxy-services
+;;       '(("no_proxy" . "127.0.0.1")
+;;         ("http" . "proxy.com:8080")
+;;         ("https" . "proxy.com:8080")))
+(use-package anaconda-mode
+  :commands anaconda-mode
+  :init
+  (add-hook 'python-mode-hook 'anaconda-mode)
+  (add-hook 'python-mode-hook 'anaconda-eldoc-mode)
   :config
-  (autoload 'jedi:setup "jedi" nil t)
-  (add-hook 'python-mode-hook 'jedi:setup)
-  (setq jedi:complete-on-dot t))
+  (local-set-key [f1] 'anaconda-mode-show-doc))
+
+(use-package company-anaconda
+  :after (anaconda-mode company)
+  :config
+  (add-to-list 'company-backends 'company-anaconda))
 
 (use-package flycheck-pyflakes
-  :ensure t
-  :defer t
+  :defer 3
   :config
   (add-hook 'python-mode-hook 'flycheck-mode))
 ;;;; End configure python
 
-;;;; For go
-(require 'go-mode-autoloads)  ; https://github.com/dominikh/go-mode.el
-(with-eval-after-load "go-mode"
-  ;; 下面可实现go补全，它依赖于gocode（安装方法`go get -u -v github.com/nsf/gocode`）
-  (require 'go-autocomplete)
-
-  ;; go-eldoc.el可以在modeline中显示当前光标位置变量或函数的相关信息
-  (require 'go-eldoc)
-
-  (if (executable-find "guru")
-      (require 'go-guru)))              ; 提示输入scope时，输入点号.即可
-
-
-;; 保存go文件前先格式化代码
-(add-hook 'go-mode-hook
-          (lambda ()
-
-            (go-eldoc-setup)            ; for go-eldoc
-
-            ;; (add-hook 'before-save-hook 'gofmt-before-save)
-
-            (if (not (string-match "go" compile-command))
-                (set (make-local-variable 'compile-command)
-                     "go build -v && go test -v && go vet"))
-
-            ;; Key bindings specific to go-mode
-            (local-set-key (kbd "M-.") 'godef-jump) ; Go to definition
-            (local-set-key [f1] 'godoc-at-point)))
-
-(autoload 'yaml-mode "yaml-mode" "yaml mode" t)
-(add-to-list 'auto-mode-alist '("\\.ya?ml$" . yaml-mode))
-
-(autoload 'jcl-mode "jcl-mode" "jcl mode" t)
-(add-to-list 'auto-mode-alist '("\\.jcl\\'" . jcl-mode))
-
-(autoload 'refine-mode "refine-mode" "refine mode" t)
-(add-to-list 'auto-mode-alist '("\\.re\\'" . refine-mode))
-
-(autoload 'cobol-mode "cobol-mode" "cobol mode" t)
-(autoload 'cobol-free-mode "cobol-free-mode" "cobol mode for free format" t)
-(setq auto-mode-alist
-      (append
-       '(
-         ("\\.cpy\\'" . cobol-mode)
-         ("\\.cbl\\'" . cobol-mode)
-         ("\\.cob\\'" . cobol-mode)
-         ("\\.pco\\'" . cobol-mode)  ; File name ends in '.pco', Oracle Pro*COBOL files.
-         ("\\.sqb\\'" . cobol-mode)) ; File name ends in '.sqb', Db2 files.
-       auto-mode-alist))
-;; 当关键字IDENTIFICATION前面的空格为0-6(不到7)个时，设置为cobol-free-mode
-(add-to-list 'magic-mode-alist '("\\(^.*\n\\)*[ ]\\{0,6\\}IDENTIFICATION" . cobol-free-mode))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; 加载custom-org.el耗时比较多，仅在第一次进入org-mode时加载它
-;; Using "org", because org-mode is defined in org.el
-(with-eval-after-load "org" (load-file "~/.emacs.d/custom-org.el"))
+;;;; Begin configure golang
+(use-package go-mode
+  :mode "\\.go\\'"
+  :init
+  (defun my-go-mode-hook ()
+    (if (not (string-match "go" compile-command))
+        (set (make-local-variable 'compile-command)
+             "go build -v && go test -v && go vet"))
+    ;; Key bindings specific to go-mode
+    (local-set-key (kbd "M-.") 'godef-jump) ; Go to definition
+    (local-set-key [f1] 'godoc-at-point))
+  (add-hook 'go-mode-hook 'my-go-mode-hook))
 
-(with-eval-after-load "tex-mode"
-  (if (require 'tex-buf nil 'noerror)
-      (load-file "~/.emacs.d/custom-latex.el")
-    (message "Warn: tex-buf is not available, skip its configuring")))
+(use-package go-eldoc       ; 可在modeline中显示当前光标位置变量或函数的相关信息
+  :after (go-mode)
+  :init
+  (add-hook 'go-mode-hook 'go-eldoc-setup))
 
-(add-hook 'prog-mode-hook #'hs-minor-mode) ; Hideshow minor mode (A fold mode)
-(global-set-key (kbd "C-`") #'hs-toggle-hiding)
+(use-package company-go     ; 可实现go补全，它依赖于可执行程序gocode，请提前安装
+  :after (go-mode company)
+  :config
+  (add-to-list 'company-backends 'company-go))
 
-;; Load htmlize
-(require 'htmlize)
+(use-package go-guru                    ; 它依赖于可执行程序guru，请提前安装
+  :after (go-mode))
+;;;; End configure golang
+
+(use-package htmlize                    ; need by org-mode when publish html
+  :defer 3)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -997,8 +1157,8 @@ reformat current entire buffer."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (require 'autoinsert)
-(auto-insert-mode +1)          ; Enable auto-insert-mode
-(setq auto-insert-query nil)   ; No prompt before insertion
+(auto-insert-mode +1)                   ; Enable auto-insert-mode
+(setq auto-insert-query nil)            ; No prompt before insertion
 
 (with-eval-after-load 'autoinsert
   (define-auto-insert '("\\.sh\\'" . "Shell skeleton")
@@ -1087,9 +1247,8 @@ reformat current entire buffer."
   (interactive)
   (info-lookup-symbol (current-word)))
 
-(global-set-key [f1]   'man-current-word)  ; Show man page for current word
-(global-set-key [C-f1] 'info-current-word) ; Show info page for current word
-
+(global-set-key (kbd "<f1>") 'man-current-word)
+(global-set-key (kbd "C-<f1>") 'info-current-word)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 当没有选择文本时，改变M-w的行为为复制当前行。
@@ -1149,22 +1308,6 @@ reformat current entire buffer."
                (message "File '%s' successfully renamed to '%s'" name
                         (file-name-nondirectory new-name))))))))
 
-;; 摘自Writing GNU Emacs Extensions
-(defun scroll-n-lines-ahead (&optional n)
-  "Scroll ahead N lines (1 by default)."
-  (interactive "P")
-  (scroll-up (prefix-numeric-value n)))
-(defun scroll-n-lines-behind (&optional n)
-  "Scroll behind N lines (1 by default)."
-  (interactive "P")
-  (scroll-down (prefix-numeric-value n)))
-;; 绑定向下移动屏幕一行
-(global-set-key "\C-z" 'scroll-n-lines-ahead)
-;; 绑定向上移动屏幕一行，但默认quoted-insert绑定在C-q
-(global-set-key "\C-q" 'scroll-n-lines-behind)
-;; 重新绑定quoted-insert，默认dired-toggle-read-only绑定在C-x C-q
-;; (global-set-key "\C-x\C-q" 'quoted-insert)
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Linux中，在终端模式下，利用xsel实现clipboard共享
 ;; Idea from:
@@ -1199,39 +1342,6 @@ reformat current entire buffer."
       (switch-to-buffer scratch-buffer-name))))
 
 (global-set-key (kbd "M-0") 'switch-to-scratch-and-back)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; 放弃更改，加载文件内容到buffer
-(defun my-revert-buffer-no-confirm ()
-  "Revert buffer without confirmation."
-  (interactive) (revert-buffer t t))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; 把当前行向上／下移动一行
-;; Idea from http://blog.csdn.net/g9yuayon/article/details/1520466
-;; (global-set-key (kbd "M-<up>") 'move-line-up)
-;; (global-set-key (kbd "M-<down>") 'move-line-down)
-(defun move-line (&optional n)
-  "Move current line N (1) lines up/down leaving point in place."
-  (interactive "p")
-  (when (null n)
-    (setq n 1))
-  (let ((col (current-column)))
-    (beginning-of-line)
-    (next-line 1)
-    (transpose-lines n)
-    (previous-line 1)
-    (forward-char col)))
-
-(defun move-line-up (n)
-  "Moves current line N (1) lines up leaving point in place."
-  (interactive "p")
-  (move-line (if (null n) -1 (- n))))
-(defun move-line-down (n)
-  "Moves current line N (1) lines down leaving point in place."
-  (interactive "p")
-  (move-line (if (null n) 1 n)))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Copy full file path into clipboard
@@ -1433,23 +1543,15 @@ Version 2018-03-01"
               (shell-command $cmd-str $outputb ))
           (message "No recognized program file suffix for this file."))))))
 
-(global-set-key (kbd "<f12>") 'my-run-current-file)
+(define-key prog-mode-map (kbd "<f12>") 'my-run-current-file)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(run-with-idle-timer
- 1                                      ; after idle 1 second
- nil                                    ; no repeat, runs just once
- (lambda ()
-   (load-file "~/.emacs.d/custom-frame.el")
-   (load-file "~/.emacs.d/custom-go-to-def.el")
-   (message "")                         ; clear modeline
-   ))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Load other personal setting
-(if (file-exists-p "~/.emacs-personal-init.el")
-    (load-file "~/.emacs-personal-init.el"))
+(autoload 'my-goto-def "init-goto-def" "Goto definition" t)
+(if (boundp 'aquamacs-version)
+    ;; 绑定my-goto-def到Command + Ctrl + j （Aquamacs中，Command键为A）
+    (define-key osx-key-mode-map (kbd "A-C-j") 'my-goto-def))
+;; 上面绑定仅在Aquamacs中有效，在Emacs中使用下面设定可绑定到Command + Ctrl + j
+;; (global-set-key (kbd "C-s-<268632074>") 'my-goto-def) ; ; Command + Ctrl + j
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; You can run ‘M-x emacs-init-time’ to check emacs initialize time.
@@ -1457,6 +1559,9 @@ Version 2018-03-01"
 ;; 使用工具profile-dotemacs.el，可以检查哪段代码执行比较耗时。
 ;; $ emacs -Q -l ~/.emacs.d/profile-dotemacs.el -f profile-dotemacs
 ;; 参考：http://www.emacswiki.org/emacs/ProfileDotEmacs
+;;
+;; 注：编译el为elc，可加快加载速度，如：
+;; $ emacs -batch -f batch-byte-compile ~/.emacs.d/lisp/*.el
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 如果某个步骤有性能问题，可以使用profiler检查问题
