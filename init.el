@@ -1,5 +1,5 @@
 ;;; init.el --- GNU Emacs/Aquamacs configuration file.
-(setq debug-on-error t)
+;; (setq debug-on-error t)
 
 (unless (version< "25.1" emacs-version)
   (error "This init.el requires emacs version 25.1 or later"))
@@ -189,6 +189,15 @@
   (if (require 'tex-buf nil 'noerror)
       (require 'init-latex)
     (message "Warn: tex-buf is not available, skip its configuring")))
+
+;; tags 相关设置
+(setq tags-revert-without-query 1)      ; TAGS文件改变后重新加载时不提示用户
+(setq tags-add-tables nil) ; 切换目录时，不提示“keep current list of tags tables also”
+(run-with-idle-timer
+ 2                                      ; after idle 2 second
+ nil                                    ; no repeat, runs just once
+ (lambda ()
+   (require 'init-autogen-tags)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 常规键绑定设置
@@ -1025,7 +1034,6 @@ reformat current entire buffer."
   :mode "\\.ya?ml$")
 
 (use-package dockerfile-mode
-  :ensure t
   :mode "Dockerfile\\'")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1053,6 +1061,7 @@ reformat current entire buffer."
   (add-hook 'python-mode-hook 'anaconda-mode)
   (add-hook 'python-mode-hook 'anaconda-eldoc-mode)
   :config
+  (setcar (cdr (assq 'anaconda-mode minor-mode-alist)) "") ; clear modeline
   (local-set-key [f1] 'anaconda-mode-show-doc))
 
 (use-package company-anaconda
@@ -1570,7 +1579,7 @@ Version 2018-03-01"
 ;; 参考：http://www.emacswiki.org/emacs/ProfileDotEmacs
 ;;
 ;; 注：编译el为elc，可加快加载速度，如：
-;; $ emacs -batch -f batch-byte-compile ~/.emacs.d/lisp/*.el
+;; $ emacs -batch -f batch-byte-compile ~/.emacs.d/lisp/unicad.el
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 如果某个步骤有性能问题，可以使用profiler检查问题
