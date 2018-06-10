@@ -703,6 +703,7 @@
         ("C-;" . multiple-cursors-mode)))
 
 ;; iedit: Edit multiple regions in the same way simultaneously.
+;; Note: With digit prefix argument 0, only occurrences in current function are matched
 (use-package iedit
   :init
   ;; 提前取消Aquamacs中默认绑定的C-;
@@ -1010,7 +1011,8 @@ reformat current entire buffer."
   :mode ("\\.html?\\'"
          "\\.jsp\\'"
          "\\.php\\'")
-  :config
+  :magic ("<\\?xml" . web-mode)
+  :init
   ;; Highlight current HTML element (highlight matched tags).
   (setq web-mode-enable-current-element-highlight t)
   ;; Disable auto indentation
@@ -1058,11 +1060,14 @@ reformat current entire buffer."
 (use-package anaconda-mode
   :commands anaconda-mode
   :init
-  (add-hook 'python-mode-hook 'anaconda-mode)
-  (add-hook 'python-mode-hook 'anaconda-eldoc-mode)
+  (add-hook 'python-mode-hook
+            (lambda ()
+              (anaconda-mode)
+              (anaconda-eldoc-mode)
+              (local-set-key (kbd "<f1>") 'anaconda-mode-show-doc)
+              (local-set-key (kbd "C-c C-f") 'recentf-open-files)))
   :config
-  (setcar (cdr (assq 'anaconda-mode minor-mode-alist)) "") ; clear modeline
-  (local-set-key [f1] 'anaconda-mode-show-doc))
+  (setcar (cdr (assq 'anaconda-mode minor-mode-alist)) "")) ; clear modeline
 
 (use-package company-anaconda
   :after (anaconda-mode company)
