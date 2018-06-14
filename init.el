@@ -42,18 +42,13 @@
 
 (defalias 'yes-or-no-p 'y-or-n-p)       ; 设置y/n可代替yes/no
 
-(run-with-idle-timer
- 1                                      ; after idle 1 second
- nil                                    ; no repeat, runs just once
- (lambda ()
-   ;; 启用ffap-bindings比较耗时，放在空闲时间加载
-   (ffap-bindings)))
-
 (which-function-mode 1)    ; displays the current function name in the mode line
 (setq which-func-unknown "n/a")         ; Change ??? to n/a
 
-(require 'ido)
+(require 'ido)          ; ido: Interactively DO things
 (ido-mode t)            ; 启动ido-mode。如：键入C-x b时，可用ido快速地切换buffer
+(setq ido-enable-flex-matching t)       ; do flexible string matching
+(setq ido-use-filename-at-point 'guess) ; guess the context like ffap
 
 ;; 打开文件时回到上次打开文件的位置
 (save-place-mode +1)                    ; save-place-mode在Emacs 25.1中引入
@@ -230,8 +225,8 @@
 
 ;; 禁止grep mode中的line wrap，使用M-x toggle-truncate-lines可以再打开line wrap
 ;; https://www.reddit.com/r/emacs/comments/6zvw4d/grep_buffer_hide_find_command/
-(add-hook 'grep-mode-hook (lambda ()
-                            (setq truncate-lines t)))
+;; (add-hook 'grep-mode-hook (lambda ()
+;;                            (setq truncate-lines t)))
 
 (add-hook 'prog-mode-hook
           (lambda ()
@@ -239,7 +234,9 @@
                         (derived-mode-p 'dockerfile-mode)) ; dockerfile-mode不支持Imenu
               (imenu-add-menubar-index)) ; 启用Imenu（显示index菜单）
 
-            (linum-mode 1)              ; 显示行号
+            ;; linum-mode有性能问题，仅当buffer行数小于4000时才启用linum-mode
+            (if (< (count-lines (point-min) (point-max)) 4000)
+                (linum-mode 1))         ; 显示行号
 
             ;; Hideshow minor mode (A fold mode)
             (hs-minor-mode)
@@ -306,6 +303,8 @@
          (other-args (if current-prefix-arg
                          (read-string "Other grep options (default '-w'): " nil nil "-w")
                        nil))
+         ;; 仅当search-regex全为小写时忽略大小写
+         (ignore-case (string= (downcase search-regex) search-regex))
          (grep-program (if (string-suffix-p ".gz" current-file) "zgrep" "grep"))
          (grep-cmd
           ;; `i` case insensitive, `n` print line number,
@@ -315,7 +314,8 @@
           (concat
            grep-program
            " "
-           "--text -inHE --color=always"
+           (if ignore-case "-i ")
+           "--text -nHE --color=always"
            (if other-args (concat " " other-args) "")
            " -- "
            (shell-quote-argument search-regex)
@@ -346,6 +346,8 @@
                                     (concat "(default " (thing-at-point 'symbol) ")")
                                   ""))
                         nil nil (thing-at-point 'symbol)))
+         ;; 仅当search-regex全为小写时忽略大小写
+         (ignore-case (string= (downcase search-regex) search-regex))
          (use-ripgrep-p (and (executable-find "rg")
                              (not (file-remote-p target-dir)))) ; 远程机器上不使用rg
          (other-args-prompt (if use-ripgrep-p "Other ripgrep options (default '-w'): "
@@ -363,7 +365,8 @@
             (concat
              grep-program
              " "
-             "-inIEr --color=always --exclude-dir='.?*'"
+             (if ignore-case "-i ")
+             "-nIEr --color=always --exclude-dir='.?*'"
              (if other-args (concat " " other-args) "")
              " -- "
              (shell-quote-argument search-regex)
@@ -373,7 +376,8 @@
             (concat
              "rg"
              " "
-             "-in --color=always --no-heading --with-filename"
+             (if ignore-case "-i ")
+             "-n --color=always --no-heading --with-filename"
              (if other-args (concat " " other-args) "")
              " -- "
              (shell-quote-argument search-regex))))
@@ -757,7 +761,7 @@
   (setcar (cdr (assq 'highlight-symbol-mode minor-mode-alist)) "") ; clear modeline
   (setq highlight-symbol-idle-delay 0.3
         highlight-symbol-on-navigation-p t)
-  (highlight-symbol-mode)
+  (add-hook 'prog-mode-hook 'highlight-symbol-mode)
   (define-mac-hyper-key "g" 'highlight-symbol-next)  ; 跳转到下一个相同符号
   (define-mac-hyper-key "G" 'highlight-symbol-prev)) ; 跳转到上一个相同符号
 
