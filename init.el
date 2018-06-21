@@ -308,7 +308,6 @@
          (grep-program (if (string-suffix-p ".gz" current-file) "zgrep" "grep"))
          (grep-cmd
           ;; `i` case insensitive, `n` print line number,
-          ;; `I` ignore binary files,
           ;; `H` show file name always,
           ;; `E` extended regular expressions,
           (concat
@@ -327,6 +326,13 @@
       ;; 如果当前buffer不关联文件，则使用occur查找光标下单词
       (call-interactively 'internal-my-occur-symbol-at-point))
      (t (compilation-start grep-cmd 'grep-mode (lambda (mode) "*grep*") nil)))))
+
+(use-package ripgrep
+  :if (executable-find "rg")
+  :commands (ripgrep-regexp)
+  :config
+  ;; rg额外的参数，-g '!TAGS' 表示忽略名为TAGS的文件，可以指定多个 -g
+  (setq ripgrep-arguments '("-g '!TAGS'")))
 
 (defun internal-my-find-symbol-at-point-in-project (arg)
   "Recursively grep keyword in project root, use ripgrep (more faster than grep) if found."
@@ -372,19 +378,24 @@
              (shell-quote-argument search-regex)
              " "
              "."))
-           (ripgrep-cmd
+           (ripgrep-cmd      ; 由于无法在grep-mode中正常显示颜色，暂时没有使用它
             (concat
              "rg"
              " "
              (if ignore-case "-i ")
-             "-n --color=always --no-heading --with-filename"
+             ;; -g '!TAGS' 表示忽略名为TAGS的文件，可以指定多个 -g
+             "-n --color=always --no-heading --vimgrep -g '!TAGS'"
              (if other-args (concat " " other-args) "")
              " -- "
              (shell-quote-argument search-regex))))
       (cond
        ((string= "" search-regex) (message "Your regex is empty, do nothing."))
        (use-ripgrep-p
-        (compilation-start ripgrep-cmd 'grep-mode (lambda (mode) "*grep*") nil))
+        ;; 由于命令ripgrep输出的颜色无法正常在grep-mode中显示，所以不直接使用
+        ;; compilation-start调用rg命令，后面将使用ripgrep-regexp包（它对ripgrep
+        ;; 的颜色输出做了特殊处理，参见函数ripgrep-filter）
+        ;; (compilation-start ripgrep-cmd 'grep-mode (lambda (mode) "*grep*") nil)
+        (ripgrep-regexp search-regex default-directory (list other-args)))
        (t
         (compilation-start grep-cmd 'grep-mode (lambda (mode) "*grep*") nil))))))
 
