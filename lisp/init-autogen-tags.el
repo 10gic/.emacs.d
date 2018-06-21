@@ -11,9 +11,22 @@
             (unless (member major-mode '(emacs-lisp-mode scheme-mode lisp-mode))
               (add-timer-for-generating-tags t))))
 
+(defun async-shell-command-no-window (command)
+  "使用async-shell-command执行命令时，会弹出buffer *Async Shell Command*，
+下面wrapper函数可以让*Async Shell Command* buffer不弹出"
+  (let
+      ((display-buffer-alist
+        (list
+         (cons
+          "\\*Async Shell Command\\*.*"
+          (cons #'display-buffer-no-window nil)))))
+    (async-shell-command
+     command)))
+
+(defvar exuberant-ctags-available "unknown")
 (defun my-update-tags-for-current-project ()
   "Update (or generate) TAGS file for current project.
-   Firstly, try ctags, if fail, try `git grep --cached -Il '' | etags -`."
+Firstly, try ctags, if fail, try `git grep --cached -Il '' | etags -`."
   (interactive)
   (let ((project-dir (ignore-errors (projectile-project-root))))
     (if project-dir
@@ -21,24 +34,16 @@
         ;; 说明：TAGS文件中的文件名要为绝对路径！否则jtags可能工作不正常
         (let* ((default-directory (file-name-as-directory project-dir))
                (tags-file (concat default-directory "TAGS")))
-          (unless (ignore-errors
-                    ;; -R选项是Exuberant Ctags才有，原始ctags不支持
-                    ;; Mac下安装方法：`brew install ctags-exuberant`
-                    ;; 如果ctags出错返回为非零，则process-lines会抛出异常
-                    ;; 为了避免ctags运行很长时间导致Emacs hang，设置最长运行8秒
-                    (let ((lines
-                           (process-lines "perl"
-                                          (expand-file-name
-                                           "~/.emacs.d/bin/my_timeout.pl")
-                                          "8" ; timeout value in seconds
-                                          "ctags" "-Re" default-directory)))
-                      ;; (dolist (line lines)
-                      ;;  (message line)) ; only debug
-                      )
-                    (if (file-exists-p tags-file)
-                        (message "Generated tags %s" tags-file)))
-            (message "Generate TAGS fail (may be timeout or Exuberant Ctags is not installed), I will try etags")
-            ;; 尝试使用etags生成TAGS（不过更推荐Exuberant Ctags）
+          (if (string= exuberant-ctags-available "unknown")
+              (if (cl-search "Exuberant" (shell-command-to-string "ctags --version"))
+                  ;; `ctags --version` 的输出实例：
+                  ;; Exuberant Ctags 5.8, Copyright (C) 1996-2009 Darren Hiebert
+                  (setq exuberant-ctags-available "yes")
+                (setq exuberant-ctags-available "no")))
+          (if (string= exuberant-ctags-available "yes")
+              (async-shell-command-no-window
+               (concat "ctags -Re " (shell-quote-argument default-directory)))
+            ;; 如果Exuberant Ctags不可用，尝试使用etags生成TAGS
             (if (file-exists-p (concat default-directory ".git"))
                 ;; 若工程根目录存在.git目录，则使用下面命令生成TAGS
                 ;; `git grep --cached -Il '' | etags -`
@@ -57,9 +62,9 @@
 
 
 ;; 下面列表保存着工程名字，这些工程都存在还未执行的更新TAGS文件的timer
-(setq my-projects-with-pending-timer '())
+(defvar my-projects-with-pending-timer '())
 ;; 如果TAGS文件的大小大于下面阈值，则不更新（注：更新大文件会很慢）。
-(setq tag-file-size-threshold 500000000) ; 约500M
+(defvar tag-file-size-threshold 5000000000) ; 约5G
 (defun add-timer-for-generating-tags (skip-if-tags-exsits)
   "设置timer，它会在emacs空闲时调用my-update-tags-for-current-project更新工程TAGS"
   (let* ((project-dir (ignore-errors (projectile-project-root))))
