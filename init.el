@@ -132,9 +132,10 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(my-linum-hl ((t (:inherit linum
-                             :background "controlHighlightColor"
-                             :foreground "alternateSelectedControlColor"))))
+ '(line-number-current-line ((t (:inherit
+                                 linum
+                                 :background "controlHighlightColor"
+                                 :foreground "alternateSelectedControlColor"))))
  '(which-func ((t (:foreground nil))))
  '(org-level-4 ((t (:inherit outline-4 :foreground "pink1")))))
 
@@ -234,9 +235,15 @@
                         (derived-mode-p 'dockerfile-mode)) ; dockerfile-mode不支持Imenu
               (imenu-add-menubar-index)) ; 启用Imenu（显示index菜单）
 
-            ;; linum-mode有性能问题，仅当buffer行数小于4000时才启用linum-mode
-            (if (< (count-lines (point-min) (point-max)) 4000)
-                (linum-mode 1))         ; 显示行号
+            ;; 打开行号显示
+            (if (fboundp 'display-line-numbers-mode)
+                ;; 当display-line-numbers-mode可用时（Emacs 26.1中引入），就用它
+                ;; 设置 face line-number-current-line 可改变当前行号的展示形式
+                (display-line-numbers-mode t)
+              ;; display-line-numbers-mode不可用时，使用linum-mode。不过，
+              ;; linum-mode有性能问题，仅当buffer行数小于4000时才启用linum-mode
+              (if (< (count-lines (point-min) (point-max)) 4000)
+                  (linum-mode 1)))
 
             ;; Hideshow minor mode (A fold mode)
             (hs-minor-mode)
@@ -686,8 +693,7 @@
          ("C-M-S-<left>" . git-gutter:stage-hunk)    ; Ctrl + Alt + Shift + <-
          ("C-M-S-<right>" . git-gutter:revert-hunk)) ; Ctrl + Alt + Shift + ->
   :config
-  (global-git-gutter-mode t)            ; Enable global minor mode
-  (git-gutter:linum-setup))             ; Use git-gutter.el and linum-mode
+  (global-git-gutter-mode t))           ; Enable global minor mode
 
 ;; anzu 可在搜索过程中显示当前是第几个匹配
 (use-package anzu
@@ -1441,41 +1447,6 @@ reformat current entire buffer."
   (interactive)
   (let (kill-emacs-hook) ; set kill-emacs-hook to nil before calling kill-emacs
     (kill-emacs)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; 内置的hl-line-mode会高亮整个当前行，有点突兀。
-;; 下面通过advice的方式仅高亮当前行行号，代码摘自：
-;; https://stackoverflow.com/questions/10591334/colorize-current-line-number
-(require 'hl-line)
-(defface my-linum-hl
-  `((t :inherit linum :background ,(face-background 'hl-line nil t)))
-  "Face for the current line number."
-  :group 'linum)
-
-(defvar my-linum-format-string "%3d")
-
-(add-hook 'linum-before-numbering-hook 'my-linum-get-format-string)
-
-(defun my-linum-get-format-string ()
-  (let* ((width (1+ (length (number-to-string
-                             (count-lines (point-min) (point-max))))))
-         (format (concat "%" (number-to-string width) "d")))
-    (setq my-linum-format-string format)))
-
-(defvar my-linum-current-line-number 0)
-
-(setq linum-format 'my-linum-format)
-
-(defun my-linum-format (line-number)
-  (propertize (format my-linum-format-string line-number) 'face
-              (if (eq line-number my-linum-current-line-number)
-                  'my-linum-hl
-                'linum)))
-
-(defadvice linum-update (around my-linum-update)
-  (let ((my-linum-current-line-number (line-number-at-pos)))
-    ad-do-it))
-(ad-activate 'linum-update)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun my-generate-ascii-table ()
