@@ -42,13 +42,15 @@
 
 (defalias 'yes-or-no-p 'y-or-n-p)       ; 设置y/n可代替yes/no
 
+(run-with-idle-timer
+ 1                                      ; after idle 1 second
+ nil                                    ; no repeat, runs just once
+ (lambda ()
+   ;; 启用ffap-bindings比较耗时，放在空闲时间加载
+   (ffap-bindings)))
+
 (which-function-mode 1)    ; displays the current function name in the mode line
 (setq which-func-unknown "n/a")         ; Change ??? to n/a
-
-(require 'ido)          ; ido: Interactively DO things
-(ido-mode t)            ; 启动ido-mode。如：键入C-x b时，可用ido快速地切换buffer
-(setq ido-enable-flex-matching t)       ; do flexible string matching
-(setq ido-use-filename-at-point 'guess) ; guess the context like ffap
 
 ;; 打开文件时回到上次打开文件的位置
 (save-place-mode +1)                    ; save-place-mode在Emacs 25.1中引入
