@@ -77,6 +77,8 @@
 (add-to-list 'recentf-exclude "\\ido.last\\'")
 (add-to-list 'recentf-exclude "\\TAGS\\'")
 
+(setq ns-pop-up-frames nil)  ; Mac中打开文件时不创建新frame（使用已存在的frame）
+
 ;; set comment char to '#' in assembly mode (GNU Assembler style)
 (setq asm-comment-char 35)
 
