@@ -1,8 +1,8 @@
 ;;; init.el --- GNU Emacs/Aquamacs configuration file.
 ;; (setq debug-on-error t)
 
-(unless (version< "25.1" emacs-version)
-  (error "This init.el requires emacs version 25.1 or later"))
+(if (version< emacs-version "25.1")
+  (error "This init.el requires Emacs version 25.1 or later"))
 
 (setq gc-cons-threshold 100000000)      ; 调大gc阈值，可显著加快启动速度
 
@@ -55,6 +55,9 @@
 ;; 打开文件时回到上次打开文件的位置
 (save-place-mode +1)                    ; save-place-mode在Emacs 25.1中引入
 
+;; 由于大工程的TAGS可能很大，下面把打开大文件提示用户的阈值设大（2G）
+(setq large-file-warning-threshold 2000000000)
+
 ;; Winner Mode is a global minor mode. When activated, it allows you to “undo”
 ;; (and “redo”) changes in the window configuration with the key commands
 ;; ‘C-c left’ and ‘C-c right’.
@@ -100,7 +103,7 @@
 (cl-loop for dir in '("/usr/local/bin" "~/bin" "~/go/bin")
          do (when (file-exists-p dir)
               (setenv "PATH" (concat (getenv "PATH") ":" dir))
-              (add-to-list 'exec-path dir)))
+              (add-to-list 'exec-path (expand-file-name dir))))
 
 (add-to-list 'load-path "~/.emacs.d/lisp/")
 
@@ -144,11 +147,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 设置自动备份
 (setq
- version-control t    ; 启用版本控制，即可以备份多次。
+ version-control t            ; 启用版本控制，即可以备份多次。
+ vc-make-backup-files t       ; 备份受vc管理的文件（默认不会备份受vc管理的文件）
  backup-by-copying t  ; 用复制（而不是mv）的方式备份文件。这可维持文件的硬链接。
  backup-directory-alist '(("." . "~/.emacs.backups")) ; 设置自动备份目录。
  delete-old-versions t                                ; 自动删除旧的备份。
- kept-new-versions 3                                  ; 保留最近的3个备份。
+ kept-new-versions 5                                  ; 保留最近的5个备份。
  kept-old-versions 2) ; 保留最早的2个备份，即第1次编辑前的文件和第2次编辑前的文件。
 
 ;; buffer-local相关变量，用setq-default设置
@@ -336,12 +340,9 @@
       (call-interactively 'internal-my-occur-symbol-at-point))
      (t (compilation-start grep-cmd 'grep-mode (lambda (mode) "*grep*") nil)))))
 
-(use-package ripgrep
-  :if (executable-find "rg")
-  :commands (ripgrep-regexp)
-  :config
-  ;; rg额外的参数，-g '!TAGS' 表示忽略名为TAGS的文件，可以指定多个 -g
-  (setq ripgrep-arguments '("-g '!TAGS'")))
+;; ELPA中的ripgrep无法使用wgrep，下面是一个修改版本，主要参考：
+;; https://github.com/nlamirault/ripgrep.el/issues/17
+(require 'ripgrep)
 
 (defun internal-my-find-symbol-at-point-in-project (arg)
   "Recursively grep keyword in project root, use ripgrep (more faster than grep) if found."
@@ -393,7 +394,8 @@
              " "
              (if ignore-case "-i ")
              ;; -g '!TAGS' 表示忽略名为TAGS的文件，可以指定多个 -g
-             "-n --color=always --no-heading --vimgrep -g '!TAGS'"
+             ;; 不要使用--vimgrep选项显示列号，因为它会导致wgrep不能正常工作
+             "-n --color=always --no-heading -g '!TAGS'"
              (if other-args (concat " " other-args) "")
              " -- "
              (shell-quote-argument search-regex))))
@@ -403,7 +405,7 @@
         ;; 由于命令ripgrep输出的颜色无法正常在grep-mode中显示，所以不直接使用
         ;; compilation-start调用rg命令，后面将使用ripgrep-regexp包（它对ripgrep
         ;; 的颜色输出做了特殊处理，参见函数ripgrep-filter）
-        ;; (compilation-start ripgrep-cmd 'grep-mode (lambda (mode) "*grep*") nil)
+        ;; (compilation-start ripgrep-cmd 'grep-mode (lambda (mode) "*grep*") nil))
         (ripgrep-regexp search-regex default-directory (list other-args)))
        (t
         (compilation-start grep-cmd 'grep-mode (lambda (mode) "*grep*") nil))))))
@@ -672,7 +674,6 @@
 ;; 在grep mode中按 `g` (它来自compilation-mode中的recompile)可重新执行一次相同查
 ;; 找以确认改动生效；如果要修改grep（比如增加参数）再执行，可以按`C-u g`。
 (use-package wgrep
-  :defer 3
   :config
   ;; 把启动wgrep的快捷键设为e。默认，在grep mode中输入 `C-c C-p` 可启动wgrep
   (setq wgrep-enable-key "e")
@@ -695,7 +696,10 @@
          ("C-M-S-<left>" . git-gutter:stage-hunk)    ; Ctrl + Alt + Shift + <-
          ("C-M-S-<right>" . git-gutter:revert-hunk)) ; Ctrl + Alt + Shift + ->
   :config
-  (global-git-gutter-mode t))           ; Enable global minor mode
+  (global-git-gutter-mode t)            ; Enable global minor mode
+  (if (version< emacs-version "26.1")
+      ;; 在Emacs26.1中使用display-line-numbers-mode，不用进行下面设置
+      (git-gutter:linum-setup)))
 
 ;; anzu 可在搜索过程中显示当前是第几个匹配
 (use-package anzu
@@ -1562,7 +1566,7 @@ Version 2018-03-01"
     ;; 绑定my-goto-def到Command + Ctrl + j （Aquamacs中，Command键为A）
     (define-key osx-key-mode-map (kbd "A-C-j") 'my-goto-def))
 ;; 上面绑定仅在Aquamacs中有效，在Emacs中使用下面设定可绑定到Command + Ctrl + j
-;; (global-set-key (kbd "C-s-<268632074>") 'my-goto-def) ; ; Command + Ctrl + j
+(global-set-key (kbd "C-s-<268632074>") 'my-goto-def)  ; Command + Ctrl + j
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; You can run ‘M-x emacs-init-time’ to check emacs initialize time.
