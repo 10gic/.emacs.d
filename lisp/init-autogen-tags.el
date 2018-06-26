@@ -19,14 +19,20 @@
         (list
          (cons
           "\\*Async Shell Command\\*.*"
-          (cons #'display-buffer-no-window nil)))))
+          (cons #'display-buffer-no-window nil))))
+       ;; buffer *Async Shell Command* 正在被使用（有正在执行的异步命令）时，默
+       ;; 认，会提示用户进一步操作下面设置禁止提示，直接使用新buffer
+       (async-shell-command-buffer 'new-buffer))
     (async-shell-command
      command)))
 
 (defvar exuberant-ctags-available "unknown")
 (defun my-update-tags-for-current-project ()
   "Update (or generate) TAGS file for current project.
-Firstly, try ctags, if fail, try `git grep --cached -Il '' | etags -`."
+Firstly, try ctags, if fail, try `git grep --cached -Il '' | etags -`.
+注：exuberant ctags已经不再维护，推荐使用universal ctags，参考：
+https://github.com/universal-ctags/ctags
+"
   (interactive)
   (let ((project-dir (ignore-errors (projectile-project-root))))
     (if project-dir
@@ -34,15 +40,19 @@ Firstly, try ctags, if fail, try `git grep --cached -Il '' | etags -`."
         ;; 说明：TAGS文件中的文件名要为绝对路径！否则jtags可能工作不正常
         (let* ((default-directory (file-name-as-directory project-dir))
                (tags-file (concat default-directory "TAGS")))
+          ;; Mac中Emacs总使用/usr/bin/ctags，设置exec-path也不能解决
+          ;; 下面hardcode了位置/usr/local/bin/ctags
           (if (string= exuberant-ctags-available "unknown")
-              (if (cl-search "Exuberant" (shell-command-to-string "ctags --version"))
-                  ;; `ctags --version` 的输出实例：
-                  ;; Exuberant Ctags 5.8, Copyright (C) 1996-2009 Darren Hiebert
-                  (setq exuberant-ctags-available "yes")
-                (setq exuberant-ctags-available "no")))
+              (let ((output (shell-command-to-string "/usr/local/bin/ctags --version")))
+                ;; (message "%s" output)   ; just debug
+                (if (cl-search "Exuberant" output)
+                    ;; `ctags --version` 的输出实例：
+                    ;; Exuberant Ctags 5.8, Copyright (C) 1996-2009 Darren Hiebert
+                    (setq exuberant-ctags-available "yes")
+                  (setq exuberant-ctags-available "no"))))
           (if (string= exuberant-ctags-available "yes")
               (async-shell-command-no-window
-               (concat "ctags -Re " (shell-quote-argument default-directory)))
+               (concat "/usr/local/bin/ctags -Re " (shell-quote-argument default-directory)))
             ;; 如果Exuberant Ctags不可用，尝试使用etags生成TAGS
             (if (file-exists-p (concat default-directory ".git"))
                 ;; 若工程根目录存在.git目录，则使用下面命令生成TAGS
@@ -53,10 +63,9 @@ Firstly, try ctags, if fail, try `git grep --cached -Il '' | etags -`."
                 ;; '' : empty string matches any file
                 ;; 使用sed的目的是转换相对路径为绝对路径
                 (progn
-                  (shell-command-to-string
-                   (concat "git grep --cached -Il '' | sed 's@^@" default-directory "@' | etags -"))
-                  (if (file-exists-p tags-file)
-                      (message "Generated tags %s" tags-file)))
+                  (message "Exuberant Ctags is not available, use etags to generate TAGS")
+                  (async-shell-command-no-window
+                   (concat "git grep --cached -Il '' | sed 's@^@" default-directory "@' | etags -")))
               (message "Skip generating TAGS, only support git project"))))
       (message "Skip generating TAGS as fail to auto-detect project root"))))
 
