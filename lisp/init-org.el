@@ -73,7 +73,13 @@
                 (interactive "nGoto line: ")
                 (outline-show-all) (goto-line n)))
 
-            (linum-mode 1)
+            ;; 打开行号显示
+            (if (fboundp 'display-line-numbers-mode)
+                ;; 当display-line-numbers-mode可用时（Emacs 26.1中引入），就用它
+                ;; 设置 face line-number-current-line 可改变当前行号的展示形式
+                (display-line-numbers-mode t)
+              ;; display-line-numbers-mode不可用时，使用linum-mode
+              (linum-mode 1))
 
             (auto-fill-mode -1) ;; disable auto-fill-mode
 
