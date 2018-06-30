@@ -163,6 +163,8 @@
 (defconst unicad--sure-yes 0.99)
 (defconst unicad--sure-no 0.01)
 
+(defvar unicad-debug nil)
+
 (defvar unicad-best-guess nil
   "(MACHINE-BEST-GUESS BEST-CONFIDENCE)")
 
@@ -308,6 +310,7 @@ If optional argument HERE is non-nil, insert string at point."
                 (setq quick-start start
                       quick-end end))
               (let ((maxConfidence 0.0)
+                    (confidenceThreshold 0.3)
                     quick-status)
                 (cond
                  ((eq (setq quick-status
@@ -327,8 +330,8 @@ If optional argument HERE is non-nil, insert string at point."
 ;;                       (set (make-local-variable 'unicad-best-guess) unicad-singlebyte-best-guess)
                       (setq unicad-best-guess unicad-singlebyte-best-guess)
                     )
-                  (if (or (> maxConfidence 0.5)
-                          (> (cadr unicad-best-guess) 0.5))
+                  (if (or (> maxConfidence confidenceThreshold)
+                          (> (cadr unicad-best-guess) confidenceThreshold))
                       (if (> maxConfidence (cadr unicad-best-guess))
                           (setq prober-result (car unicad-latin-best-guess)
                                 unicad-best-guess unicad-latin-best-guess)
@@ -3657,7 +3660,7 @@ chardet and return the best guess."
       (setq chardet (pop lists))
       (setq state (funcall (unicad-chardet-prober chardet)
                            start end))
-      ;; (message "state=%s, chardet=%s" state chardet)
+      (if unicad-debug (message "state=%s, chardet=%s" state chardet))
       (cond
        ((eq state 'eFoundIt)
         (setq mBestGuess (unicad-chardet-name chardet))
@@ -3666,7 +3669,7 @@ chardet and return the best guess."
        ((eq state 'eNotMe) nil)
        (t
         (setq cf (unicad-chardet-confidence chardet))
-        ;; (message "confidence=%s, chardet=%s" cf chardet)
+        (if unicad-debug (message "confidence=%s, chardet=%s" cf chardet))
         (if (> cf bestConf)
             (progn
               (setq mBestGuess (unicad-chardet-name chardet))
