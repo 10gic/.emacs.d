@@ -48,4 +48,16 @@
 (global-set-key [(control tab)] 'tabbar-forward-tab)
 (global-set-key (kbd "C-S-<iso-lefttab>") 'tabbar-backward-tab) ; Ctrl+Shift+Tab
 
+;; 为了避免在Emacs中出现错误Symbol’s function definition is void
+;; 定义下面3个函数，这些函数在Aquamacs中存在，但在Emacs中不存在
+(defun old-delete-window ()
+  delete-window)
+
+(defun ns-frame-is-on-active-space-p (frame)
+  (and t t))
+
+(defsubst frame-iconified-p (frame)
+  "Return non-nil if FRAME is `frame-live-p' and `frame-visible-p'."
+  (and (frame-live-p frame)  (eq (frame-visible-p frame) 'icon)))
+
 (provide 'init-aquamacs-tabbar)
