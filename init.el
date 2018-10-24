@@ -342,7 +342,21 @@
       (call-interactively 'internal-my-occur-symbol-at-point))
      (t (compilation-start grep-cmd 'grep-mode (lambda (mode) "*grep*") nil)))))
 
-;; ELPA中的ripgrep无法使用wgrep，下面是一个修改版本，主要参考：
+;; wgrep（Writable grep）可直接在grep mode中编辑找到的结果，改动可保存到原文件中
+;; 比如，我们在10个文件中找到了AAA，想把它们都改为BBB，直接在grep mode中修改即可
+;; 修改完后按 `C-x C-s` 可保存，再执行wgrep-save-all-buffers可把改动保存到原文件
+;; https://github.com/mhayashi1120/Emacs-wgrep
+;; Some tips:
+;; 在grep mode中按 `g` (它来自compilation-mode中的recompile)可重新执行一次相同查
+;; 找以确认改动生效；如果要修改grep（比如增加参数）再执行，可以按`C-u g`。
+(use-package wgrep
+  :config
+  ;; 把启动wgrep的快捷键设为e。默认，在grep mode中输入 `C-c C-p` 可启动wgrep
+  (setq wgrep-enable-key "e")
+  ;; 自动保存文件，相当于自动执行M-x wgrep-save-all-buffers
+  (setq wgrep-auto-save-buffer t))
+
+;; ELPA中的ripgrep无法使用wgrep，下面是一个ripgrep修改版本，主要参考：
 ;; https://github.com/nlamirault/ripgrep.el/issues/17
 (require 'ripgrep)
 
@@ -668,20 +682,6 @@
   :bind (("C-." . goto-last-change)
          ("C-," . goto-last-change-reverse)))
 
-;; wgrep（Writable grep）可直接在grep mode中编辑找到的结果，改动可保存到原文件中
-;; 比如，我们在10个文件中找到了AAA，想把它们都改为BBB，直接在grep mode中修改即可
-;; 修改完后按 `C-x C-s` 可保存，再执行wgrep-save-all-buffers可把改动保存到原文件
-;; https://github.com/mhayashi1120/Emacs-wgrep
-;; Some tips:
-;; 在grep mode中按 `g` (它来自compilation-mode中的recompile)可重新执行一次相同查
-;; 找以确认改动生效；如果要修改grep（比如增加参数）再执行，可以按`C-u g`。
-(use-package wgrep
-  :config
-  ;; 把启动wgrep的快捷键设为e。默认，在grep mode中输入 `C-c C-p` 可启动wgrep
-  (setq wgrep-enable-key "e")
-  ;; 自动保存文件，相当于自动执行M-x wgrep-save-all-buffers
-  (setq wgrep-auto-save-buffer t))
-
 ;; fill-column-indicator可在第81列显示一个标尺，使用`M-x fci-mode`可打开或关闭它
 (use-package fill-column-indicator
   :defer 3
@@ -959,6 +959,9 @@ Using find-file-in-project, or the current buffer directory."
 (setq-default c-basic-offset 4  ; 设置缩进为4个空格
               tab-width 4)      ; 显示tab为4个空格
 
+(setq flycheck-gcc-language-standard "c++11")
+(setq flycheck-clang-language-standard "c++11")
+
 ;; 格式化C/C++程序代码
 ;; 参考：
 ;; https://en.wikipedia.org/wiki/Indent_style
@@ -1034,6 +1037,11 @@ reformat current entire buffer."
                            ;; sh-mode中把"C-c C-f"绑定到了sh-for，下面将其取消
                            ;; 注："C-c C-f"已经全局地绑定到了打开recent files
                            (define-key sh-mode-map (kbd "C-c C-f") nil))))
+
+(use-package swift-mode
+  :commands swift-mode
+  :ensure t
+  :mode ("\\.swift\\'"))
 
 (use-package web-mode
   :commands web-mode
@@ -1526,6 +1534,7 @@ Version 2018-03-01"
            ("tex" . "pdflatex")
            ("latex" . "pdflatex")
            ("java" . "javac")
+           ("swift" . "swift")
            ))
         $fname
         $fSuffix

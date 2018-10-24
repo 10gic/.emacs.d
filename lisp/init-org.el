@@ -460,6 +460,7 @@
 \\newunicodechar{⌥}{\\textfallback{⌥}}   % Mac Option key
 \\newunicodechar{⌃}{\\textfallback{⌃}}   % Mac Control key
 \\newunicodechar{⇪}{\\textfallback{⇪}}   % Mac Caps Lock key
+\\newunicodechar{✓}{\\textfallback{✓}}   % Check mark
 % 如果还有其它字符显示为“豆腐块”，你可以在这里增加相应条目，设置它使用“Arial Unicode MS”字体。
 % 注：尝试过ucharclasses包中的\\setTransitionsForXXXX方法来避免“豆腐块”，但这种方法当无法显示的字符左右没有空格，直接夹中文之间时还是会无法显示。
 
