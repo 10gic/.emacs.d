@@ -560,17 +560,17 @@
      ;; 下面设置中文字体，优先使用排在前面的字体
      ;; 注：cygwin中使用emacs-X11时无法加载Windows默认路径中字体（使用emacs-w32
      ;; 则没有问题），如果你使用emacs-X11，请把相应的中文字体复制到~/.fonts
-     ((find-font (font-spec :name "Microsoft Yahei"))
-      (dolist (charset '(kana han symbol cjk-misc bopomofo))
-        (set-fontset-font (frame-parameter nil 'font)
-                          charset
-                          (font-spec :family "Microsoft Yahei"
-                                     :size chinese-font-size))))
      ((find-font (font-spec :name "STHeiti"))
       (dolist (charset '(kana han symbol cjk-misc bopomofo))
         (set-fontset-font (frame-parameter nil 'font)
                           charset
                           (font-spec :family "STHeiti" ; Mac中内置STHeiti
+                                     :size chinese-font-size))))
+     ((find-font (font-spec :name "Microsoft Yahei"))
+      (dolist (charset '(kana han symbol cjk-misc bopomofo))
+        (set-fontset-font (frame-parameter nil 'font)
+                          charset
+                          (font-spec :family "Microsoft Yahei"
                                      :size chinese-font-size))))
      ((find-font (font-spec :name "WenQuanYi Zen Hei Mono"))
       (dolist (charset '(kana han symbol cjk-misc bopomofo))
