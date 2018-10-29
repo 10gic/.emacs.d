@@ -433,7 +433,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 字体相关设置
-(defconst font-size-pair-list-unix
+(defconst font-size-pair-list-1
   '((6    8)
     (8   10)
     (10  12)
@@ -460,9 +460,9 @@
     (45  54)
     (46  56)
     (48  58))
-  "一个列表，元素为“字体大小对”：(英文字号 中文字号)，Mac/Linux(Redhat)下测试可实现2个英文为1个中文等宽.")
+  "一个列表，元素为“字体大小对”：(英文字号 中文字号)，期待2个英文为1个中文等宽.")
 
-(defconst font-size-pair-list-ms
+(defconst font-size-pair-list-2
   '((8    8)
     (10  10)
     (11  12)
@@ -489,13 +489,29 @@
     (50  54)
     (51  56)
     (52  58))
-  "一个列表，元素为“字体大小对”：(英文字号 中文字号)，Windows 8.1下测试可实现2个英文为1个中文等宽.")
+  "另一个列表，元素为“字体大小对”：(英文字号 中文字号)，期待2个英文为1个中文等宽.")
+
+(defvar always-use-pair-list-1 nil "设置它为t，会强制使用font-size-pair-list-1")
+(defvar always-use-pair-list-2 nil "设置它为t，会强制使用font-size-pair-list-2，但它优先级比always-use-pair-list-1低")
 
 (defun get-mix-mono-font-size-pair ()
-  (if (or (string-equal system-type "cygwin")
-          (string-equal system-type "windows-nt"))
-      font-size-pair-list-ms            ; MS Windows
-    font-size-pair-list-unix))          ; Linux, Mac
+  (if (or always-use-pair-list-1 always-use-pair-list-2)
+      ;; 当always-use-pair-list-1和t时，使用font-size-pair-list-1
+      ;; 当always-use-pair-list-t和t时，使用font-size-pair-list-2
+      ;; 当always-use-pair-list-1/always-use-pair-list-2都为t时，前者优先级更高
+      (progn
+        (if always-use-pair-list-1 font-size-pair-list-1
+          font-size-pair-list-2))
+    ;; 如果always-use-pair-list-1/always-use-pair-list-2都不是t，则自动设置
+    ;; 使用时发现：
+    ;; 1、在Windows 8.1下使用 font-size-pair-list-2 可实现2个英文为1个中文等宽；
+    ;; 2、在Linux(Redhat)下使用 font-size-pair-list-1 可实现2个英文为1个中文等宽；
+    ;; 3、在Mac中行为不定：
+    ;; 3.1、MacBook Pro中需要使用 font-size-pair-list-1 可实现2个英文为1个中文等宽；
+    ;; 3.2、iMac一体机中需要使用 font-size-pair-list-2 才能实现2个英文为1个中文等宽
+    (cond ((string-equal system-type "cygwin") font-size-pair-list-2)
+          ((string-equal system-type "windows-nt") font-size-pair-list-2)
+          (t font-size-pair-list-1))))
 
 (defun get-font-size-for-face-default ()
   "Get the font size of face default."
@@ -591,11 +607,9 @@
 (defun internal-my-set-frame()
   ;; 英文为16/15，中文为18，可实现Windows/Unix下1个中文和2个英文等宽，
   ;; 从get-mix-mono-font-size-pair中，可以找到其它中英文等宽的“字体大小对”
-  (if (or (string-equal system-type "cygwin")
-          (string-equal system-type "windows-nt"))
-      (internal-my-set-font-size 16 18)
-    (internal-my-set-font-size 15 18))
-
+  (if (eq (get-mix-mono-font-size-pair) font-size-pair-list-1)
+      (internal-my-set-font-size 15 18)
+    (internal-my-set-font-size 16 18))
   (setq-default frame-title-format
                 '(:eval
                   (format "%s"
