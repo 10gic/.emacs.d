@@ -690,6 +690,8 @@
   :defer 3
   :config
   (setcar (cdr (assq 'dtrt-indent-mode minor-mode-alist)) "") ; clear modeline
+  ;; 下面设置可自动识别golang中的缩进
+  (add-to-list 'dtrt-indent-hook-mapping-list '(go-mode c/c++/java tab-width))
   (dtrt-indent-global-mode 1))
 
 (use-package goto-chg
