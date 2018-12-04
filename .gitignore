@@ -16,6 +16,7 @@
 /auto-save-list/
 /packages/extract/
 /semanticdb/
+/anaconda-mode/
 
 /.elpa/
 /lisp/init-proxy.el
