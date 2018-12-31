@@ -1100,32 +1100,32 @@ reformat current entire buffer."
     ;; 下面在Aquamacs中启用Emacs中内置的python mode
     (require 'python))
 
-;; anaconda-mode: Code navigation, doc lookup and completion for Python
-;; 说明1：它依赖于python库jedi和service_factory，缺失时会自动安装它们，但可能安
-;; 装失败，最好提前手动安装，如：
-;; $ pip install jedi
-;; $ pip install service_factory
-;; 说明2：若在url-proxy-services中设置了代理，则需要把127.0.0.1设置为no_proxy：
-;; (setq url-proxy-services
-;;       '(("no_proxy" . "127.0.0.1")
-;;         ("http" . "proxy.com:8080")
-;;         ("https" . "proxy.com:8080")))
-(use-package anaconda-mode
-  :commands anaconda-mode
-  :init
-  (add-hook 'python-mode-hook
-            (lambda ()
-              (anaconda-mode)
-              (anaconda-eldoc-mode)
-              (local-set-key (kbd "<f1>") 'anaconda-mode-show-doc)
-              (local-set-key (kbd "C-c C-f") 'recentf-open-files)))
-  :config
-  (setcar (cdr (assq 'anaconda-mode minor-mode-alist)) "")) ; clear modeline
+;; ;; anaconda-mode: Code navigation, doc lookup and completion for Python
+;; ;; 说明1：它依赖于python库jedi和service_factory，缺失时会自动安装它们，但可能安
+;; ;; 装失败，最好提前手动安装，如：
+;; ;; $ pip install jedi
+;; ;; $ pip install service_factory
+;; ;; 说明2：若在url-proxy-services中设置了代理，则需要把127.0.0.1设置为no_proxy：
+;; ;; (setq url-proxy-services
+;; ;;       '(("no_proxy" . "127.0.0.1")
+;; ;;         ("http" . "proxy.com:8080")
+;; ;;         ("https" . "proxy.com:8080")))
+;; (use-package anaconda-mode
+;;   :commands anaconda-mode
+;;   :init
+;;   (add-hook 'python-mode-hook
+;;             (lambda ()
+;;               (anaconda-mode)
+;;               (anaconda-eldoc-mode)
+;;               (local-set-key (kbd "<f1>") 'anaconda-mode-show-doc)
+;;               (local-set-key (kbd "C-c C-f") 'recentf-open-files)))
+;;   :config
+;;   (setcar (cdr (assq 'anaconda-mode minor-mode-alist)) "")) ; clear modeline
 
-(use-package company-anaconda
-  :after (anaconda-mode company)
-  :config
-  (add-to-list 'company-backends 'company-anaconda))
+;; (use-package company-anaconda
+;;   :after (anaconda-mode company)
+;;   :config
+;;   (add-to-list 'company-backends 'company-anaconda))
 
 (use-package flycheck-pyflakes
   :defer 3
