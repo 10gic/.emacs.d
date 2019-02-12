@@ -976,7 +976,11 @@ Using find-file-in-project, or the current buffer directory."
               tab-width 4)      ; 显示tab为4个空格
 
 (setq flycheck-gcc-language-standard "c++11")
-(setq flycheck-clang-language-standard "c++11")
+
+;; (setq flycheck-clang-language-standard "c++11")
+;; 为避免打开.c文件时clang报错：'-std=c++11' not allowed with 'C'，不要全局设置变量
+;; flycheck-clang-language-standard为c++11，而是像下面这样仅在c++ mode中设置它
+(add-hook 'c++-mode-hook (lambda () (setq flycheck-clang-language-standard "c++11")))
 
 ;; 格式化C/C++程序代码
 ;; 参考：
