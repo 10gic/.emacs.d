@@ -1589,7 +1589,9 @@ Version 2018-03-01"
               (shell-command $cmd-str $outputb ))
           (message "No recognized program file suffix for this file."))))))
 
-(define-key prog-mode-map (kbd "<f12>") 'my-run-current-file)
+(add-hook 'prog-mode-hook
+          (function (lambda ()
+                      (local-set-key [f12] 'my-run-current-file))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (autoload 'my-goto-def "init-goto-def" "Goto definition" t)
