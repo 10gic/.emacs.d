@@ -1,4 +1,11 @@
 ;;; init.el --- GNU Emacs/Aquamacs configuration file.
+
+;;; Commentary:
+
+;; It's just my Emacs configuration file.
+
+;;; Code:
+
 ;; (setq debug-on-error t)
 
 (if (version< emacs-version "25.1")
@@ -1095,6 +1102,9 @@ reformat current entire buffer."
 (use-package dockerfile-mode
   :mode "Dockerfile\\'")
 
+(use-package lua-mode
+  :mode "\\.lua\\'")
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; Begin configure python
 (if (boundp 'aquamacs-version)
@@ -1568,6 +1578,7 @@ Version 2018-03-01"
            ("latex" . "pdflatex")
            ("java" . "javac")
            ("swift" . "swift")
+           ("lua" . "lua")
            ))
         $fname
         $fSuffix
@@ -1632,3 +1643,6 @@ Version 2018-03-01"
 ;; do something......
 ;; M-x profiler-report
 ;; 注：在报告中加号位置按回车可以展开更详细的报告，`Ctrl + u i`可以展开所有报告
+
+(provide 'init)
+;;; init.el ends here
