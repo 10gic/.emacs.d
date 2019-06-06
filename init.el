@@ -1168,6 +1168,19 @@ reformat current entire buffer."
 (use-package htmlize                    ; need by org-mode when publish html
   :defer 3)
 
+;; Aquamacs中内置的markdown-mode的版本比较低，下面使用较新版本
+(use-package markdown-mode
+  :ensure t
+  :commands (markdown-mode gfm-mode)
+  :mode (("README\\.md\\'" . gfm-mode)
+         ("\\.md\\'" . gfm-mode)
+         ("\\.markdown\\'" . gfm-mode))
+  :init
+  :config
+  ;; table使用了markdown-table-face（它仅继承于markdown-code-face），但它没有实现中英文对齐
+  ;; 下面把它的继承属性去掉
+  (set-face-attribute 'markdown-table-face nil :inherit 'unspecified))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Idea from http://www.enigmacurry.com/2008/12/26/emacs-ansi-term-tricks/
