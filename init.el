@@ -1175,6 +1175,13 @@ reformat current entire buffer."
   :after (go-mode))
 ;;;; End configure golang
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; Begin configure rust
+(use-package rust-mode
+  :mode "\\.rs\\'"
+  :config
+  (setq rust-format-on-save t))         ; need command rustfmt
+
 (use-package htmlize                    ; need by org-mode when publish html
   :defer 3)
 
