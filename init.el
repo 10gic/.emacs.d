@@ -379,12 +379,15 @@
                            project-dir
                          ;; 若没有提供前缀参数，且当前文件不在工程中，则提示用户输入查找目录
                          (read-directory-name "Find keyword in directory: "))))
-         (search-regex (read-string
-                        (format "Keyword regexp %s: "
-                                (if (thing-at-point 'symbol)
-                                    (concat "(default " (thing-at-point 'symbol) ")")
-                                  ""))
-                        nil nil (thing-at-point 'symbol)))
+         (search-regex (if (or current-prefix-arg (not (thing-at-point 'symbol)))
+                           ;; 若提供了前缀参数，或者当前光标下找不到符号，则提示用户输入要查找的内容
+                           (read-string
+                            (format "Keyword regexp %s: "
+                                    (if (thing-at-point 'symbol)
+                                        (concat "(default " (thing-at-point 'symbol) ")")
+                                      ""))
+                            nil nil (thing-at-point 'symbol))
+                         (thing-at-point 'symbol)))
          ;; 仅当search-regex全为小写时忽略大小写
          (ignore-case (string= (downcase search-regex) search-regex))
          (use-ripgrep-p (and (executable-find "rg")
