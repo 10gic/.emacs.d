@@ -256,8 +256,8 @@
                 ;; 设置 face line-number-current-line 可改变当前行号的展示形式
                 (display-line-numbers-mode t)
               ;; display-line-numbers-mode不可用时，使用linum-mode。不过，
-              ;; linum-mode有性能问题，仅当buffer行数小于4000时才启用linum-mode
-              (if (< (count-lines (point-min) (point-max)) 4000)
+              ;; linum-mode有性能问题，仅当buffer行数小于5000时才启用linum-mode
+              (if (< (count-lines (point-min) (point-max)) 5000)
                   (linum-mode 1)))
 
             ;; Hideshow minor mode (A fold mode)
@@ -310,7 +310,7 @@
         (push (regexp-quote sym) regexp-history)) ; regexp-history defvared in replace.el
     (call-interactively 'occur)))
 
-(defun internal-my-find-symbol-at-point-in-current-buffer (search-regex arg)
+(defun my-find-symbol-in-current-buffer (search-regex arg)
   "Find keyword (using grep or occur) at point in current buffer."
   (interactive
    (list (read-string
@@ -367,7 +367,7 @@
 ;; https://github.com/nlamirault/ripgrep.el/issues/17
 (require 'ripgrep)
 
-(defun internal-my-find-symbol-at-point-in-project (arg)
+(defun my-find-symbol-in-project (arg)
   "Recursively grep keyword in project root, use ripgrep (more faster than grep) if found."
   (interactive "p")
   (let* ((project-dir (ignore-errors (projectile-project-root)))
@@ -437,9 +437,9 @@
         (compilation-start grep-cmd 'grep-mode (lambda (mode) "*grep*") nil))))))
 
 ;; 设置 Command + f 为在当前文件中查找光标下单词
-(define-mac-hyper-key "f" 'internal-my-find-symbol-at-point-in-current-buffer)
+(define-mac-hyper-key "f" 'my-find-symbol-in-current-buffer)
 ;; 设置 Command + Shift + f 为在当前工程中查找光标下单词
-(define-mac-hyper-key "F" 'internal-my-find-symbol-at-point-in-project)
+(define-mac-hyper-key "F" 'my-find-symbol-in-project)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 字体相关设置
@@ -915,6 +915,11 @@ Using find-file-in-project, or the current buffer directory."
   ;; C-M-g (dumb-jump-go)         跳到光标下符号的定义处
   ;; C-M-p (dumb-jump-back)       回到跳转前位置
   ;; C-M-q (dumb-jump-quick-look) 以tooltip形式显示光标下符号的定义的相关信息
+
+  (define-key dumb-jump-mode-map (kbd "s-[") 'dumb-jump-back) ; ⌘[, GNU Emacs
+  (define-key dumb-jump-mode-map (kbd "s-]") 'dumb-jump-go) ; ⌘], GNU Emacs
+  (define-key dumb-jump-mode-map (kbd "A-[") 'dumb-jump-back) ; ⌘[, Aquamacs
+  (define-key dumb-jump-mode-map (kbd "A-]") 'dumb-jump-go) ; ⌘], Aquamacs
 
   ;; 取消Dumb Jump中的部分绑定，因为它覆盖了Emacs内置的绑定
   (define-key dumb-jump-mode-map (kbd "C-M-p") nil)
