@@ -20,9 +20,9 @@
 (require 'package)
 (setq package-user-dir "~/.emacs.d/.elpa")
 (add-to-list 'package-archives
-             '("melpa-stable" . "http://stable.melpa.org/packages/"))
+             '("melpa-stable" . "https://stable.melpa.org/packages/"))
 (add-to-list 'package-archives
-             '("melpa" . "http://melpa.org/packages/"))
+             '("melpa" . "https://melpa.org/packages/"))
 
 (package-initialize)
 
@@ -256,8 +256,8 @@
                 ;; 设置 face line-number-current-line 可改变当前行号的展示形式
                 (display-line-numbers-mode t)
               ;; display-line-numbers-mode不可用时，使用linum-mode。不过，
-              ;; linum-mode有性能问题，仅当buffer行数小于5000时才启用linum-mode
-              (if (< (count-lines (point-min) (point-max)) 5000)
+              ;; linum-mode有性能问题，仅当buffer行数小于6000时才启用linum-mode
+              (if (< (count-lines (point-min) (point-max)) 6000)
                   (linum-mode 1)))
 
             ;; Hideshow minor mode (A fold mode)
@@ -1112,6 +1112,11 @@ reformat current entire buffer."
 
 (use-package lua-mode
   :mode "\\.lua\\'")
+
+(use-package solidity-mode
+  :ensure t
+  :init
+  (setq solidity-comment-style 'slash))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; Begin configure python
