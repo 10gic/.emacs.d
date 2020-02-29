@@ -52,7 +52,9 @@ https://github.com/universal-ctags/ctags
                   (setq exuberant-ctags-available "no"))))
           (if (string= exuberant-ctags-available "yes")
               (async-shell-command-no-window
-               (concat "/usr/local/bin/ctags -Re " (shell-quote-argument default-directory)))
+               ;; node_modules 目录一般很大，会影响速度，排除它
+               (concat "/usr/local/bin/ctags -Re --exclude=node_modules "
+                       (shell-quote-argument default-directory)))
             ;; 如果Exuberant Ctags不可用，尝试使用etags生成TAGS
             (if (file-exists-p (concat default-directory ".git"))
                 ;; 若工程根目录存在.git目录，则使用下面命令生成TAGS
